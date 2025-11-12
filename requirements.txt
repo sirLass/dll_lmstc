@@ -10,6 +10,7 @@ dj-database-url==3.0.1
 Django==5.2.4
 django-allauth==65.10.0
 et_xmlfile==2.0.0
+gunicorn==23.0.0
 idna==3.10
 lxml==6.0.2
 MarkupSafe==3.0.2
