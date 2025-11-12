@@ -1,39 +1,42 @@
 """
 Django settings for DLL_LMSTC project.
-Configured for Render deployment with static handling.
+Configured for Render deployment and local development.
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-# Load environment variables from .env (for local dev)
+# Load local .env for development
 load_dotenv()
 
-# Base directory
+# BASE_DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security
+# SECURITY
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-development-key")
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
-# Site ID (needed for allauth)
+# SITE_ID for django-allauth
 SITE_ID = 2
 
 # Installed apps
 INSTALLED_APPS = [
+    # Default Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+
+    # Your apps
     'Applicant',
 
     # Authentication
-    'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -43,7 +46,7 @@ INSTALLED_APPS = [
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,9 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# URLs & WSGI
 ROOT_URLCONF = 'DLL_LMSTC.urls'
-WSGI_APPLICATION = 'DLL_LMSTC.wsgi.application'
 
 # Templates
 TEMPLATES = [
@@ -74,24 +75,25 @@ TEMPLATES = [
     },
 ]
 
+WSGI_APPLICATION = 'DLL_LMSTC.wsgi.application'
+
 # Database configuration
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    # Production Postgres (Render)
+if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True
+            ssl_require=DATABASE_URL.startswith("postgres://")  # only for Postgres
         )
     }
 else:
-    # Default SQLite (local)
     DATABASES = {
-        'default': dj_database_url.config(
-            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
 
 # Password validation
@@ -110,15 +112,17 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Collected static files
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Your local static folder
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # optional, for local static files
+]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Email configuration (Gmail SMTP)
+# Email (Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -152,7 +156,7 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-# Security (cookies)
+# Security
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = True
