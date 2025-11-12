@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainor Process Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define color variables for easier management */
+        :root {
+            --text-dark: #333333;
+            --text-medium: #666666;
+            --background-light: #F0F2F5; /* Main content background */
+            --card-background: #FFFFFF;
+            --green-icon: #28A745; /* Standard green for approved */
+            --red-icon: #DC3545;   /* Standard red for drop out */
+            --purple-icon: #6F42C1; /* Muted purple for programs */
+            --sidebar-logo-color: #2a6dbd; /* Adjusted to match the darker end of the gradient */
+            --sidebar-active-hover-color: rgba(255, 255, 255, 0.2); /* A subtle white overlay for hover/active */
+            --dark-blue-card-bg: #2C5EBD; /* Dark blue background for new cards */
+            --dark-blue-card-text: #FFFFFF; /* White text for dark blue cards */
+            --light-blue-pie: #5C88E5; /* Light blue for pie chart segment */
+            --red-pie: #FF6B6B; /* Red for pie chart segment */
+            --table-header-blue: #4A89DC; /* Blue for job table header */
+            --status-active-bg: #E6F7D9; /* Light green for active status */
+            --status-active-text: #52C41A; /* Dark green for active status text */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: var(--background-light);
+        }
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #4a90e2 0%, #2a6dbd 100%); /* Applied the gradient */
+            color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .sidebar-header .logo {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            color: var(--sidebar-logo-color); /* Logo text color from the darker end of the gradient */
+            font-size: 1.5rem;
+        }
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: var(--sidebar-active-hover-color); /* Subtle white overlay for active/hover */
+        }
+        .sidebar-nav a i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--card-background);
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-info .icon {
+            margin-right: 10px;
+            color: var(--text-medium);
+        }
+        .user-info .avatar {
+            width: 35px;
+            height: 35px;
+            background-color: var(--sidebar-logo-color); /* Avatar background same as the darker end of the gradient */
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        /* Common styles for content sections */
+        .content-section {
+            display: none; /* Hidden by default */
+        }
+        .content-section.active {
+            display: block; /* Shown when active */
+        }
+
+        /* Overview Specific Styles */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjusted minmax for new card sizes */
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-title {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-bottom: 5px;
+        }
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-medium);
+            margin-top: 5px;
+        }
+        .dark-blue-card {
+            background-color: var(--dark-blue-card-bg);
+            color: var(--dark-blue-card-text);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 250px; /* Adjusted height for charts/content */
+            position: relative; /* For absolute positioning of legend */
+            transition: transform 0.2s ease;
+        }
+        .dark-blue-card:hover {
+            transform: translateY(-5px);
+        }
+        .dark-blue-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .dark-blue-card .content-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .dark-blue-card .sub-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .chart-placeholder {
+            flex-grow: 1;
+            background-color: var(--background-light); /* Placeholder background matches main content bg */
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ccc;
+            font-size: 1.5rem;
+            border: 1px dashed #e0e0e0;
+            position: relative; /* For absolute positioning of pie chart legend */
+        }
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .ongoing-training-card .program-name {
+            font-size: 1.7rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .ongoing-training-card .detail-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .ongoing-training-card .detail-row i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .ongoing-training-card .last-updated {
+            margin-top: auto; /* Pushes to the bottom */
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        /* Common Table Styles */
+        .list-container {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .list-header .left-controls,
+        .list-header .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .list-header select,
+        .list-header input[type="search"] {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        .list-header input[type="search"] {
+            width: 200px;
+        }
+        .list-header .add-button {
+            background-color: var(--table-header-blue);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .list-header .add-button:hover {
+            background-color: #3a7bd5;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: var(--table-header-blue);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        .data-table td {
+            color: var(--text-dark);
+        }
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .data-table .actions a {
+            color: white;
+            text-decoration: none;
+            margin-right: 10px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .data-table .actions a.view {
+            background-color: #2a6dbd;
+        }
+        .data-table .actions a.view:hover {
+            background-color: #1a5ca0;
+        }
+        .data-table .actions a.archive {
+            background-color: #dc3545;
+        }
+        .data-table .actions a.archive:hover {
+            background-color: #c82333;
+        }
+        .data-table .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .data-table .status-badge.active {
+            background-color: var(--status-active-bg);
+            color: var(--status-active-text);
+        }
+        .data-table .status-badge.pending {
+            background-color: #FFF3CD;
+            color: #FFC107;
+        }
+        .data-table .status-badge.approved {
+            background-color: #D4EDDA;
+            color: #28A745;
+        }
+
+        /* Pagination styles */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        .pagination span {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-right: 10px;
+        }
+        .pagination button {
+            background-color: var(--card-background);
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        .pagination button:hover:not(.active-page):not(:disabled) {
+            background-color: #f0f0f0;
+        }
+        .pagination button.active-page {
+            background-color: var(--table-header-blue);
+            color: white;
+            border-color: var(--table-header-blue);
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: var(--card-background);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 450px;
+            transform: translateY(-20px);
+            opacity: 0;
+            animation: fadeInScale 0.3s forwards;
+        }
+        @keyframes fadeInScale {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-content label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .modal-content input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-buttons button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .modal-buttons .cancel-button {
+            background-color: #e0e0e0;
+            color: var(--text-dark);
+            border: none;
+        }
+        .modal-buttons .cancel-button:hover {
+            background-color: #d0d0d0;
+        }
+        .modal-buttons .add-button-modal {
+            background-color: var(--table-header-blue);
+            color: white;
+            border: none;
+        }
+        .modal-buttons .add-button-modal:hover {
+            background-color: #3a7bd5;
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                padding: 15px 10px;
+            }
+            .sidebar-header h2, .sidebar-nav span, .user-info span {
+                display: none;
+            }
+            .sidebar-nav a {
+                justify-content: center;
+                padding: 10px 0;
+            }
+            .sidebar-nav a i {
+                margin-right: 0;
+            }
+            .main-content {
+                margin-left: 80px;
+                padding: 15px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .list-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .list-header input[type="search"] {
+                width: 100%;
+            }
+            .list-header .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .task-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="logo">L</div>
+                <h2>DLL - LMSTC</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-section="overview" class="active"><i class="fas fa-tachometer-alt"></i> <span>Overview</span></a></li>
+                    <li><a href="#" data-section="masterlist"><i class="fas fa-list-alt"></i> <span>Master List</span></a></li>
+                    <li><a href="#" data-section="schedule"><i class="fas fa-calendar-alt"></i> <span>Schedule</span></a></li>
+                    <li><a href="#" data-section="task"><i class="fas fa-tasks"></i> <span>Task</span></a></li>
+                </ul>
+            </nav>
+        </div>
+        <div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-sign-out-alt"></i> <span>Sign Out</span></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Trainor Process Dashboard</h1>
+            <div class="user-info">
+                <i class="fas fa-bell icon"></i>
+                <span>Welcome Back</span>
+                <div class="avatar">U</div>
+                <span>User</span>
+            </div>
+        </div>
+
+        <div id="overview-section" class="content-section active">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Overview</h2>
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-title">Number of applicants currently enrolled</div>
+                    <div class="card-value">5</div>
+                    <div class="card-subtitle">5 of 10 Approval Pending</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Time Duration</div>
+                    <div class="card-value">3 Months 1 week</div>
+                    <div class="card-subtitle">Last Active Today</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <div class="dark-blue-card">
+                    <h3>Ongoing Program Completion</h3>
+                    <div class="chart-placeholder" style="background-color: transparent; border: none;">
+                        <svg width="150" height="150" viewBox="0 0 32 32" style="transform: rotate(-90deg);">
+                            <circle r="15.915494309189535" cx="16" cy="16" fill="transparent"
+                                    stroke="var(--light-blue-pie)" stroke-width="3"
+                                    stroke-dasharray="60 100" stroke-dashoffset="0"></circle>
+                            <circle r="15.915494309189535" cx="16" cy="16" fill="transparent"
+                                    stroke="var(--red-pie)" stroke-width="3"
+                                    stroke-dasharray="40 100" stroke-dashoffset="-60"></circle>
+                        </svg>
+                        <div style="position: absolute; bottom: 10px; font-size: 0.8rem; color: var(--dark-blue-card-text);">
+                            <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--light-blue-pie); margin-right: 5px;"></span>Complete
+                            <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--red-pie); margin-left: 10px; margin-right: 5px;"></span>Remaining
+                        </div>
+                    </div>
+                </div>
+                <div class="dark-blue-card ongoing-training-card">
+                    <h3>Ongoing Training</h3>
+                    <div class="program-name">Computer Hardware Servicing</div>
+                    <div class="detail-row">
+                        <i class="fas fa-users"></i> Number of Trainees: 5 Trainees
+                    </div>
+                    <div class="detail-row">
+                        <i class="fas fa-calendar-alt"></i> Started On: 2025-05-01
+                    </div>
+                    <div class="last-updated">Last updated: Today</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="masterlist-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Master List</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Applicant List</h3>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="masterlistEntriesPerPage">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="masterlistSearchInput" placeholder="Search...">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="masterlistTable">
+                        <thead>
+                            <tr>
+                                <th>APPLICANT NAME</th>
+                                <th>PROGRAM APPLIED</th>
+                                <th>APPLICATION DATE</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Doe</td>
+                                <td>Auto Electrical Assembly NCII</td>
+                                <td>2024-01-15</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Jane Smith</td>
+                                <td>Bread and Pastry Production NC II</td>
+                                <td>2024-01-20</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Peter Jones</td>
+                                <td>Auto Mechanical Assembly NCII</td>
+                                <td>2024-01-22</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Alice Brown</td>
+                                <td>RAC SERVICING (DomRAC) NC II</td>
+                                <td>2024-01-25</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Bob White</td>
+                                <td>Shielded Metal Arc Welding NC II</td>
+                                <td>2024-01-28</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Charlie Green</td>
+                                <td>Dressmaking NC II</td>
+                                <td>2024-02-01</td>
+                                <td><span class="status-badge approved">Approved</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Diana Prince</td>
+                                <td>Hairdressing NC II</td>
+                                <td>2024-02-05</td>
+                                <td><span class="status-badge approved">Approved</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Eve Adams</td>
+                                <td>Massage Therapy NC II</td>
+                                <td>2024-02-10</td>
+                                <td><span class="status-badge pending">Pending</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Frank Black</td>
+                                <td>Auto Electrical Assembly NCII</td>
+                                <td>2024-02-12</td>
+                                <td><span class="status-badge approved">Approved</span></td>
+                                <td class="actions">
+                                    <a href="#" class="view">View</a>
+                                    <a href="#" class="decline">Decline</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="schedule-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Schedule</h2>
+            <div class="list-container">
+                <p class="text-center text-gray-500 py-20">Schedule content will go here.</p>
+            </div>
+        </div>
+
+        <div id="task-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Task</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Trainee Task Completion</h3>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="taskEntriesPerPage">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="taskSearchInput" placeholder="Search by Trainee Name...">
+                        <a href="#" id="addTaskButton" class="add-button">
+                            <i class="fas fa-plus"></i> Add Task
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table" id="taskTable">
+                        <thead>
+                            <tr>
+                                <th>TRAINEE NAME</th>
+                                <th class="task-column-header" data-task-name="Quiz 1">
+                                    <input type="checkbox" class="check-all-task-checkbox" data-task-id="Quiz1"> Quiz 1
+                                </th>
+                                <th>PROGRESS</th> </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Doe</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td> </tr>
+                            <tr>
+                                <td>Jane Smith</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Peter Jones</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Alice Brown</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Bob White</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1" checked></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Charlie Green</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Diana Prince</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Eve Adams</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>Frank Black</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>New Trainee 1</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>New Trainee 2</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1" checked></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                            <tr>
+                                <td>New Trainee 3</td>
+                                <td><input type="checkbox" class="task-checkbox-Quiz1"></td>
+                                <td class="trainee-progress">0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <span id="taskPaginationInfo">Showing 1 to 10 of 12 entries</span>
+                    <button id="taskPrevPage" disabled>Previous</button>
+                    <button class="active-page">1</button>
+                    <button>2</button>
+                    <button id="taskNextPage">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addTaskModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Add New Task</h3>
+            <label for="newTaskNameInput">Task Name:</label>
+            <input type="text" id="newTaskNameInput" placeholder="e.g., Module 2 Exam">
+            <div class="modal-buttons">
+                <button id="cancelAddTask" class="cancel-button">Cancel</button>
+                <button id="confirmAddTask" class="add-button-modal">Add Task</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            // Modal elements
+            const addTaskModal = document.getElementById('addTaskModal');
+            const newTaskNameInput = document.getElementById('newTaskNameInput');
+            const confirmAddTaskBtn = document.getElementById('confirmAddTask');
+            const cancelAddTaskBtn = document.getElementById('cancelAddTask');
+
+            // Function to show a specific section and update active sidebar link
+            function showSection(sectionId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelector(`.sidebar-nav a[data-section="${sectionId.replace('-section', '')}"]`).classList.add('active');
+            }
+
+            // Add event listeners to sidebar links for section switching
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.dataset.section + '-section';
+                    showSection(sectionId);
+                });
+            });
+
+            // --- Master List Table Functionality ---
+            const masterlistSearchInput = document.getElementById('masterlistSearchInput');
+            const masterlistTable = document.getElementById('masterlistTable');
+            const masterlistTableBody = masterlistTable.querySelector('tbody');
+            const masterlistTableRows = masterlistTableBody.querySelectorAll('tr');
+            const masterlistEntriesPerPageSelect = document.getElementById('masterlistEntriesPerPage');
+
+            function filterMasterlistTable() {
+                const searchTerm = masterlistSearchInput.value.toLowerCase();
+                let visibleCount = 0;
+                const selectedEntries = parseInt(masterlistEntriesPerPageSelect.value);
+
+                masterlistTableRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    const isMatchingSearch = rowText.includes(searchTerm);
+
+                    if (isMatchingSearch) {
+                        if (visibleCount < selectedEntries) {
+                            row.style.display = ''; // Show row
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none'; // Hide row if beyond current page limit
+                        }
+                    } else {
+                        row.style.display = 'none'; // Hide if not matching search
+                    }
+                });
+            }
+
+            masterlistSearchInput.addEventListener('keyup', filterMasterlistTable);
+            masterlistEntriesPerPageSelect.addEventListener('change', filterMasterlistTable);
+            
+            // Initial call for Master List
+            filterMasterlistTable();
+
+
+            // --- Task Table Functionality ---
+            const taskSearchInput = document.getElementById('taskSearchInput');
+            const taskTable = document.getElementById('taskTable');
+            const taskTableHeaderRow = taskTable.querySelector('thead tr');
+            const taskTableBody = taskTable.querySelector('tbody');
+            const taskEntriesPerPageSelect = document.getElementById('taskEntriesPerPage');
+            const taskPrevPageBtn = document.getElementById('taskPrevPage');
+            const taskNextPageBtn = document.getElementById('taskNextPage');
+            const taskPaginationInfo = document.getElementById('taskPaginationInfo');
+            const addTaskButton = document.getElementById('addTaskButton');
+
+            let currentTaskPage = 1;
+            let taskRowsPerPage = parseInt(taskEntriesPerPageSelect.value);
+            let allTraineeRows = Array.from(taskTableBody.querySelectorAll('tr')); // Store all trainee rows initially
+
+            // Function to update the state of a specific "Check All" checkbox
+            function updateCheckAllCheckboxState(headerCheckboxId, individualCheckboxClass) {
+                const headerCheckbox = document.getElementById(headerCheckboxId);
+                if (!headerCheckbox) return; // Exit if header checkbox doesn't exist
+
+                // Only consider visible checkboxes for the indeterminate state
+                const visibleIndividualCheckboxes = Array.from(taskTableBody.querySelectorAll(`.${individualCheckboxClass}`)).filter(cb => cb.closest('tr').style.display !== 'none');
+                
+                if (visibleIndividualCheckboxes.length === 0) {
+                    headerCheckbox.checked = false;
+                    headerCheckbox.indeterminate = false;
+                } else {
+                    const allChecked = visibleIndividualCheckboxes.every(checkbox => checkbox.checked);
+                    const anyChecked = visibleIndividualCheckboxes.some(checkbox => checkbox.checked);
+
+                    if (allChecked) {
+                        headerCheckbox.checked = true;
+                        headerCheckbox.indeterminate = false;
+                    } else if (anyChecked) {
+                        headerCheckbox.checked = false;
+                        headerCheckbox.indeterminate = true;
+                    } else {
+                        headerCheckbox.checked = false;
+                        headerCheckbox.indeterminate = false;
+                    }
+                }
+            }
+
+            // Function to handle "Check All" header checkbox click
+            function handleCheckAllClick(event) {
+                const headerCheckbox = event.target;
+                const taskId = headerCheckbox.dataset.taskId;
+                const individualCheckboxClass = `task-checkbox-${taskId}`;
+                const isChecked = headerCheckbox.checked;
+
+                // This now targets ALL checkboxes for the task, not just visible ones
+                const allIndividualCheckboxes = taskTableBody.querySelectorAll(`.${individualCheckboxClass}`);
+                allIndividualCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                // After changing all checkboxes, update the header checkbox state based on visible ones
+                updateCheckAllCheckboxState(taskId, individualCheckboxClass);
+
+                // Also update progress for all affected trainees
+                allTraineeRows.forEach(row => updateTraineeProgress(row));
+            }
+
+            // Function to calculate and update progress for a single trainee row
+            function updateTraineeProgress(traineeRow) {
+                const progressCell = traineeRow.querySelector('.trainee-progress');
+                if (!progressCell) return;
+
+                const taskCheckboxesInRow = traineeRow.querySelectorAll('input[type="checkbox"].task-checkbox-Quiz1, input[type="checkbox"].dynamic-task-checkbox');
+                let checkedCount = 0;
+                let totalTasks = 0;
+
+                taskCheckboxesInRow.forEach(checkbox => {
+                    // Only count checkboxes that are part of a visible task column
+                    // This is a bit tricky with dynamic columns, but a simple way is to check if the parent <th> exists
+                    const taskId = checkbox.classList.contains('task-checkbox-Quiz1') ? 'Quiz1' : checkbox.dataset.taskId;
+                    const taskHeader = taskTableHeaderRow.querySelector(`[data-task-id="${taskId}"]`);
+                    if (taskHeader) { // Ensure the column for this checkbox exists in the header
+                        totalTasks++;
+                        if (checkbox.checked) {
+                            checkedCount++;
+                        }
+                    }
+                });
+
+                const progress = totalTasks > 0 ? Math.round((checkedCount / totalTasks) * 100) : 0;
+                progressCell.textContent = `${progress}%`;
+            }
+
+
+            // Function to handle individual task checkbox click (event delegation)
+            taskTableBody.addEventListener('change', function(event) {
+                if (event.target.classList.contains('task-checkbox-Quiz1') || event.target.classList.contains('dynamic-task-checkbox')) {
+                    const taskId = event.target.classList.contains('task-checkbox-Quiz1') ? 'Quiz1' : event.target.dataset.taskId;
+                    updateCheckAllCheckboxState(taskId, `task-checkbox-${taskId}`);
+                    updateTraineeProgress(event.target.closest('tr')); // Update progress for this trainee
+                }
+            });
+
+            // Event listener for dynamically added "Check All" checkboxes in headers
+            taskTableHeaderRow.addEventListener('change', function(event) {
+                if (event.target.classList.contains('check-all-task-checkbox')) {
+                    handleCheckAllClick(event);
+                }
+            });
+
+
+            function updateTaskPagination() {
+                taskRowsPerPage = parseInt(taskEntriesPerPageSelect.value);
+                const searchTerm = taskSearchInput.value.toLowerCase();
+                
+                // Filter rows based on search term (only trainee name column)
+                let filteredTaskRows = allTraineeRows.filter(row => {
+                    return row.querySelector('td:first-child').textContent.toLowerCase().includes(searchTerm);
+                });
+
+                const totalPages = Math.ceil(filteredTaskRows.length / taskRowsPerPage);
+
+                if (currentTaskPage > totalPages && totalPages > 0) {
+                    currentTaskPage = totalPages;
+                } else if (totalPages === 0) {
+                    currentTaskPage = 1;
+                }
+
+                const startIndex = (currentTaskPage - 1) * taskRowsPerPage;
+                const endIndex = startIndex + taskRowsPerPage;
+
+                allTraineeRows.forEach(row => row.style.display = 'none'); 
+
+                for (let i = startIndex; i < endIndex && i < filteredTaskRows.length; i++) {
+                    filteredTaskRows[i].style.display = ''; 
+                }
+
+                taskPrevPageBtn.disabled = currentTaskPage === 1;
+                taskNextPageBtn.disabled = currentTaskPage === totalPages || totalPages === 0;
+
+                const startEntry = filteredTaskRows.length > 0 ? startIndex + 1 : 0;
+                const endEntry = Math.min(endIndex, filteredTaskRows.length);
+                taskPaginationInfo.textContent = `Showing ${startEntry} to ${endEntry} of ${filteredTaskRows.length} entries`;
+
+                const pageButtonsContainer = taskTable.closest('.list-container').querySelector('.pagination');
+                // Remove existing page number buttons (except prev/next)
+                Array.from(pageButtonsContainer.children).forEach(child => {
+                    if (child.tagName === 'BUTTON' && child.id !== 'taskPrevPage' && child.id !== 'taskNextPage' && !child.classList.contains('page-number-button')) {
+                        child.remove();
+                    }
+                });
+
+                // Add new page number buttons
+                document.querySelectorAll('.page-number-button').forEach(button => button.remove());
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.classList.add('page-number-button'); // Add a class for easy selection
+                    if (i === currentTaskPage) {
+                        pageButton.classList.add('active-page');
+                    }
+                    pageButton.addEventListener('click', () => {
+                        currentTaskPage = i;
+                        updateTaskPagination();
+                    });
+                    taskNextPageBtn.before(pageButton); // Insert before the 'Next' button
+                }
+
+                // After updating pagination, update the state of all "Check All" checkboxes
+                document.querySelectorAll('.check-all-task-checkbox').forEach(headerCheckbox => {
+                    const taskId = headerCheckbox.dataset.taskId;
+                    updateCheckAllCheckboxState(taskId, `task-checkbox-${taskId}`);
+                });
+
+                // Update progress for all visible rows after pagination
+                filteredTaskRows.forEach(row => updateTraineeProgress(row));
+            }
+
+            taskSearchInput.addEventListener('keyup', function() {
+                currentTaskPage = 1; 
+                updateTaskPagination();
+            });
+
+            taskEntriesPerPageSelect.addEventListener('change', function() {
+                currentTaskPage = 1; 
+                updateTaskPagination();
+            });
+
+            taskPrevPageBtn.addEventListener('click', function() {
+                if (currentTaskPage > 1) {
+                    currentTaskPage--;
+                    updateTaskPagination();
+                }
+            });
+
+            taskNextPageBtn.addEventListener('click', function() {
+                const totalPages = Math.ceil(filteredTaskRows.length / taskRowsPerPage);
+                if (currentTaskPage < totalPages) {
+                    currentTaskPage++;
+                    updateTaskPagination();
+                }
+            });
+
+            // Modal related event listeners
+            addTaskButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                newTaskNameInput.value = ''; // Clear input field
+                addTaskModal.classList.remove('hidden');
+            });
+
+            cancelAddTaskBtn.addEventListener('click', function() {
+                addTaskModal.classList.add('hidden');
+            });
+
+            confirmAddTaskBtn.addEventListener('click', function() {
+                const taskName = newTaskNameInput.value.trim();
+                if (taskName) {
+                    const taskId = taskName.replace(/\s+/g, ''); // Simple ID for the task
+                    
+                    // Add new header column
+                    const newTh = document.createElement('th');
+                    newTh.classList.add('task-column-header');
+                    newTh.dataset.taskName = taskName;
+                    newTh.innerHTML = `<input type="checkbox" class="check-all-task-checkbox" data-task-id="${taskId}"> ${taskName}`;
+                    
+                    // Find the 'PROGRESS' header and insert before it
+                    const progressHeader = taskTableHeaderRow.querySelector('th:last-child');
+                    if (progressHeader && progressHeader.textContent.trim() === 'PROGRESS') {
+                        taskTableHeaderRow.insertBefore(newTh, progressHeader);
+                    } else {
+                        // Fallback if 'PROGRESS' header is not found (shouldn't happen with current structure)
+                        taskTableHeaderRow.appendChild(newTh);
+                    }
+
+
+                    // Add new checkbox cell for each trainee row
+                    allTraineeRows.forEach(row => {
+                        const newTd = document.createElement('td');
+                        newTd.innerHTML = `<input type="checkbox" class="task-checkbox-${taskId} dynamic-task-checkbox" data-task-id="${taskId}">`;
+                        
+                        // Find the progress cell in the current row and insert before it
+                        const progressCellInRow = row.querySelector('.trainee-progress');
+                        if (progressCellInRow) {
+                            row.insertBefore(newTd, progressCellInRow);
+                        } else {
+                            // Fallback
+                            row.appendChild(newTd);
+                        }
+                    });
+
+                    // Re-run pagination update to ensure new checkboxes are considered for check-all state
+                    // and to recalculate progress for all trainees with the new task added.
+                    updateTaskPagination();
+                    addTaskModal.classList.add('hidden'); // Hide modal after adding task
+                } else {
+                    console.log("Task name cannot be empty.");
+                }
+            });
+
+            // Close modal if clicking outside the content (on the overlay)
+            addTaskModal.addEventListener('click', function(event) {
+                if (event.target === addTaskModal) {
+                    addTaskModal.classList.add('hidden');
+                }
+            });
+
+
+            // Initial calls
+            updateTaskPagination();
+            showSection('overview-section'); // Ensure Overview is the default active section
+        });
+    </script>
+</body>
+</html>

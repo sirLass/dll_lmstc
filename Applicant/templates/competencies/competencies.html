@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define color variables for easier management */
+        :root {
+            --text-dark: #333333;
+            --text-medium: #666666;
+            --background-light: #F0F2F5; /* Main content background */
+            --card-background: #FFFFFF;
+            --green-icon: #28A745; /* Standard green for approved */
+            --red-icon: #DC3545;   /* Standard red for drop out */
+            --purple-icon: #6F42C1; /* Muted purple for programs */
+            --sidebar-logo-color: #2a6dbd; /* Adjusted to match the darker end of the gradient */
+            --sidebar-active-hover-color: rgba(255, 255, 255, 0.2); /* A subtle white overlay for hover/active */
+            --dark-blue-card-bg: #2C5EBD; /* Dark blue background for new cards */
+            --dark-blue-card-text: #FFFFFF; /* White text for dark blue cards */
+            --light-blue-pie: #5C88E5; /* Light blue for pie chart segment */
+            --red-pie: #FF6B6B; /* Red for pie chart segment */
+            --table-header-blue: #4A89DC; /* Blue for job table header */
+            --status-active-bg: #E6F7D9;
+            --status-active-text: #52C41A;
+            --progress-chart-header-bg: #2A6DBB;
+            --progress-chart-header-text: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: var(--background-light);
+        }
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #4a90e2 0%, #2a6dbd 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .sidebar-header .logo {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            color: var(--sidebar-logo-color);
+            font-size: 1.5rem;
+        }
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: var(--sidebar-active-hover-color);
+        }
+        .sidebar-nav a i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--card-background);
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-info .icon {
+            margin-right: 10px;
+            color: var(--text-medium);
+        }
+        .user-info .avatar {
+            width: 35px;
+            height: 35px;
+            background-color: var(--sidebar-logo-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        /* Common styles for content sections */
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+
+        /* Overview Specific Styles */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-title {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-bottom: 5px;
+        }
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-medium);
+            margin-top: 5px;
+        }
+        .dark-blue-card {
+            background-color: var(--dark-blue-card-bg);
+            color: var(--dark-blue-card-text);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 250px;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        .dark-blue-card:hover {
+            transform: translateY(-5px);
+        }
+        .dark-blue-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .dark-blue-card .content-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .dark-blue-card .sub-text {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .chart-placeholder {
+            flex-grow: 1;
+            background-color: var(--background-light);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ccc;
+            font-size: 1.5rem;
+            border: 1px dashed #e0e0e0;
+            position: relative;
+        }
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .ongoing-training-card .program-name {
+            font-size: 1.7rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .ongoing-training-card .detail-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .ongoing-training-card .detail-row i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .ongoing-training-card .last-updated {
+            margin-top: auto;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        /* Common Table Styles */
+        .list-container {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .list-header .left-controls,
+        .list-header .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .list-header select,
+        .list-header input[type="search"] {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        .list-header input[type="search"] {
+            width: 200px;
+        }
+        .list-header .add-button {
+            background-color: var(--table-header-blue);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .list-header .add-button:hover {
+            background-color: #3a7bd5;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: var(--table-header-blue);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        .data-table td {
+            color: var(--text-dark);
+        }
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .data-table .actions a {
+            color: white;
+            text-decoration: none;
+            margin-right: 10px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .data-table .actions a.view {
+            background-color: #2a6dbd;
+        }
+        .data-table .actions a.view:hover {
+            background-color: #1a5ca0;
+        }
+        .data-table .actions a.archive {
+            background-color: #dc3545;
+        }
+        .data-table .actions a.archive:hover {
+            background-color: #c82333;
+        }
+        .data-table .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .data-table .status-badge.pending {
+            background-color: #FFF3CD;
+            color: #FFC107;
+        }
+        .data-table .status-badge.approved {
+            background-color: #D4EDDA;
+            color: #28A745;
+        }
+
+        /* Pagination styles */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        .pagination span {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-right: 10px;
+        }
+        .pagination button {
+            background-color: var(--card-background);
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        .pagination button:hover:not(.active-page):not(:disabled) {
+            background-color: #f0f0f0;
+        }
+        .pagination button.active-page {
+            background-color: var(--table-header-blue);
+            color: white;
+            border-color: var(--table-header-blue);
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Progress chart specific styles */
+        .progress-chart-table-container {
+            display: block;
+            overflow-x: auto;
+        }
+        .progress-chart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .progress-chart-table th,
+        .progress-chart-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            text-align: center;
+        }
+        .progress-chart-table th {
+            background-color: var(--progress-chart-header-bg);
+            color: var(--progress-chart-header-text);
+            font-weight: 600;
+        }
+        .progress-chart-table td {
+            font-size: 0.9rem;
+        }
+        .progress-chart-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .progress-chart-table tr:hover {
+            background-color: #f0f0f0;
+        }
+        .progress-chart-table .trainee-name-cell {
+            text-align: left;
+            font-weight: bold;
+        }
+        .competency-list {
+            list-style: none;
+            padding: 0;
+            font-size: 1rem;
+        }
+        .competency-list h4 {
+            font-weight: 600;
+            margin-top: 15px;
+            color: var(--text-dark);
+        }
+        .competency-list li {
+            padding: 4px 0;
+            color: var(--text-medium);
+        }
+        .competency-list li span {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-right: 8px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                padding: 15px 10px;
+            }
+            .sidebar-header h2, .sidebar-nav span, .user-info span {
+                display: none;
+            }
+            .sidebar-nav a {
+                justify-content: center;
+                padding: 10px 0;
+            }
+            .sidebar-nav a i {
+                margin-right: 0;
+            }
+            .main-content {
+                margin-left: 80px;
+                padding: 15px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .list-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .list-header input[type="search"] {
+                width: 100%;
+            }
+            .list-header .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .task-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="logo">L</div>
+                <h2>DLL - LMSTC</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-section="overview" class="active"><i class="fas fa-tachometer-alt"></i> <span>Overview</span></a></li>
+                    <li><a href="#" data-section="masterlist"><i class="fas fa-list-alt"></i> <span>Master List</span></a></li>
+                    <li><a href="#" data-section="schedule"><i class="fas fa-calendar-alt"></i> <span>Schedule</span></a></li>
+                    <li><a href="#" data-section="bpp" ><i class="fas fa-tasks"></i> <span>BPP</span></a></li>
+                    <li><a href="#" data-section="massage" ><i class="fas fa-spa"></i> <span>Massage</span></a></li>
+                    <li><a href="#" data-section="automotive-mechanical"><i class="fas fa-cogs"></i> <span>Auto Mechanical</span></a></li>
+                    <li><a href="#" data-section="auto-electrical"><i class="fas fa-car-battery"></i> <span>Auto Electrical</span></a></li>
+                    <li><a href="#" data-section="domrac"><i class="fas fa-snowflake"></i> <span>DomRAC</span></a></li>
+                    <li><a href="#" data-section="smaw"><i class="fas fa-tools"></i> <span>SMAW NC l</span></a></li>
+                </ul>
+            </nav>
+        </div>
+        <div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-sign-out-alt"></i> <span>Sign Out</span></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Admin Control Panel Dashboard</h1>
+            <div class="user-info">
+                <i class="fas fa-bell icon"></i>
+                <span>Welcome Back</span>
+                <div class="avatar">U</div>
+                <span>User</span>
+            </div>
+        </div>
+
+        <div id="overview-section" class="content-section active">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Overview</h2>
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-title">Number of applicants currently enrolled</div>
+                    <div class="card-value">5</div>
+                    <div class="card-subtitle">5 of 10 Approval Pending</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Time Duration</div>
+                    <div class="card-value">3 Months 1 week</div>
+                    <div class="card-subtitle">Last Active Today</div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <div class="dark-blue-card">
+                    <h3>Ongoing Program Completion</h3>
+                    <div class="chart-placeholder" style="background-color: transparent; border: none;">
+                        <svg width="150" height="150" viewBox="0 0 32 32" style="transform: rotate(-90deg);">
+                            <circle r="15.915494309189535" cx="16" cy="16" fill="transparent"
+                                    stroke="var(--light-blue-pie)" stroke-width="3"
+                                    stroke-dasharray="60 100" stroke-dashoffset="0"></circle>
+                            <circle r="15.915494309189535" cx="16" cy="16" fill="transparent"
+                                    stroke="var(--red-pie)" stroke-width="3"
+                                    stroke-dasharray="40 100" stroke-dashoffset="-60"></circle>
+                        </svg>
+                        <div style="position: absolute; bottom: 10px; font-size: 0.8rem; color: var(--dark-blue-card-text);">
+                            <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--light-blue-pie); margin-right: 5px;"></span>Complete
+                            <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--red-pie); margin-left: 10px; margin-right: 5px;"></span>Remaining
+                        </div>
+                    </div>
+                </div>
+                <div class="dark-blue-card ongoing-training-card">
+                    <h3>Ongoing Training</h3>
+                    <div class="program-name">Computer Hardware Servicing</div>
+                    <div class="detail-row">
+                        <i class="fas fa-users"></i> Number of Trainees: 5 Trainees
+                    </div>
+                    <div class="detail-row">
+                        <i class="fas fa-calendar-alt"></i> Started On: 2025-05-01
+                    </div>
+                    <div class="last-updated">Last updated: Today</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="masterlist-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Master List</h2>
+            <div class="list-container">
+                <p class="text-center text-gray-500 py-20">Master List content will go here.</p>
+            </div>
+        </div>
+
+        <div id="schedule-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Schedule</h2>
+            <div class="list-container">
+                <p class="text-center text-gray-500 py-20">Schedule content will go here.</p>
+            </div>
+        </div>
+
+        <div id="bpp-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Bread and Pastry Production NC II Progress Chart</h3>
+                
+                <!-- Competencies Section -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in workplace communication</li>
+                                <li><span>B.</span> Work in team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Develop and update industry knowledge</li>
+                                <li><span>B.</span> Observe workplace hygiene procedures</li>
+                                <li><span>C.</span> Perform computer operations</li>
+                                <li><span>D.</span> Perform workplace and safety practices</li>
+                                <li><span>E.</span> Provide effective customer service</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Prepare and produce bakery products</li>
+                                <li><span>B.</span> Prepare and produce pastry products</li>
+                                <li><span>C.</span> Prepare and present pastries, cookies, and cakes</li>
+                                <li><span>D.</span> Prepare and display petits fours</li>
+                                <li><span>E.</span> Present desserts</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Commis - Pastry</li>
+                        <li>Baker</li>
+                    </ul>
+                </div>
+                <!-- End of Competencies Section -->
+                
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="show-entries-select">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="search-input" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="progress-chart-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="5">COMMON COMPETENCIES</th>
+                                <th colspan="5">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="bpp-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="bpp-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="bpp-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="bpp-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="bpp-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="bpp-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="bpp-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="bpp-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="bpp-common-e"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="bpp-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="bpp-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="bpp-core-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="bpp-core-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="bpp-core-e"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainee-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="massage-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Massage Therapy Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Massage Therapy NC II Progress Chart</h3>
+                
+                <!-- Competencies Section -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Maintain effective relationship with clients</li>
+                                <li><span>B.</span> Respond effectively to difficult/challenging behavior</li>
+                                <li><span>C.</span> Apply basic first aid</li>
+                                <li><span>D.</span> Maintain high standard of client services</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Maintain effective relationship with clients</li>
+                                <li><span>B.</span> Respond effectively to difficult/challenging behavior</li>
+                                <li><span>C.</span> Apply basic first aid</li>
+                                <li><span>D.</span> Maintain high standard of client services</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Develop massage practice</li>
+                                <li><span>B.</span> Perform client consultation</li>
+                                <li><span>C.</span> Perform body massage</li>
+                                <li><span>D.</span> Maintain and organize tools, equipment, supplies and work area</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Massage Therapist</li>
+                    </ul>
+                </div>
+                <!-- End of Competencies Section -->
+                
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="massage-show-entries-select">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="massage-search-input" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="massage-progress-chart-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="4">COMMON COMPETENCIES</th>
+                                <th colspan="4">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="massage-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="massage-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="massage-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="massage-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="massage-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="massage-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="massage-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="massage-common-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="massage-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="massage-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="massage-core-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="massage-core-d"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="massage-trainee-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="automotive-mechanical-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Automotive Mechanical Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Automotive Mechanical Assembly NC II Progress Chart</h3>
+                
+                <!-- Competencies Section -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in Workplace Communication</li>
+                                <li><span>B.</span> Work in Team Environment</li>
+                                <li><span>C.</span> Practice Career Professionalism</li>
+                                <li><span>D.</span> Practice Occupational Health and Safety Procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Perform Mensuration and Calculation</li>
+                                <li><span>B.</span> Read, Interpret and Apply Engineering Drawings</li>
+                                <li><span>C.</span> Move and Position Vehicle</li>
+                                <li><span>D.</span> Apply Appropriate Sealant/Adhesive</li>
+                                <li><span>E.</span> Perform Shop Maintenance</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Assemble Mechanical Assemblies using Jigs/Fixtures</li>
+                                <li><span>B.</span> Mount/Install Brake and Fuel Systems</li>
+                                <li><span>C.</span> Mount/Install Power Drive System</li>
+                                <li><span>D.</span> Mount/Install Suspension Drive Train</li>
+                                <li><span>E.</span> Install/Fit out Trim Parts and Assemblies</li>
+                                <li><span>F.</span> Perform Final Engine Run</li>
+                                <li><span>G.</span> Perform Wheel Alignment Operations</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be an:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Automotive Mechanical Assembly Technician</li>
+                    </ul>
+                </div>
+                <!-- End of Competencies Section -->
+                
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="automotive-show-entries-select">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="automotive-search-input" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="automotive-progress-chart-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="5">COMMON COMPETENCIES</th>
+                                <th colspan="7">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="automotive-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="automotive-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="automotive-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="automotive-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="automotive-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="automotive-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="automotive-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="automotive-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="automotive-common-e"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-f"></th>
+                                <th>G <input type="checkbox" class="competency-check-all" data-competency-group="automotive-core-g"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="automotive-trainee-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="auto-electrical-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Automotive Electrical Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Automotive Electrical Assembly Technician Competencies</h3>
+                
+                <!-- Competencies Section -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in Workplace Communication</li>
+                                <li><span>B.</span> Work in a Team Environment</li>
+                                <li><span>C.</span> Practice Career Professionalism</li>
+                                <li><span>D.</span> Practice Occupational Health and Safety Procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Perform Mensuration and Calculation</li>
+                                <li><span>B.</span> Read, Interpret and Apply Engineering Drawings</li>
+                                <li><span>C.</span> Move and Position a Vehicle</li>
+                                <li><span>D.</span> Apply Appropriate Sealant/Adhesive</li>
+                                <li><span>E.</span> Perform Shop Maintenance</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Install/Fit Out Electrical Parts to Engine Assembly</li>
+                                <li><span>B.</span> Install/Fit Out Electrical Parts and Electronic Units to Body Interior Compartment</li>
+                                <li><span>C.</span> Install/Fit Out Electrical Parts and Electronic Units to Dash Instrument Panel</li>
+                                <li><span>D.</span> Install/Fit Out Electrical Parts to Exterior and Engine Compartment</li>
+                                <li><span>E.</span> Install/Fit Out Audio and Video Systems</li>
+                                <li><span>F.</span> Perform Headlight Focus Aiming Operations</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be an:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Automotive Electrical Assembly Technician</li>
+                    </ul>
+                </div>
+                <!-- End of Competencies Section -->
+                
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="auto-electrical-show-entries-select">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="auto-electrical-search-input" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="auto-electrical-progress-chart-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="5">COMMON COMPETENCIES</th>
+                                <th colspan="6">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-common-e"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-core-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-core-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-core-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="auto-electrical-core-f"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="auto-electrical-trainee-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="domrac-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">DomRAC Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">REFRIGERATION AND AIR-CONDITIONING (RAC) SERVICING NC II Progress Chart</h3>
+                
+                <!-- Competencies Section -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in workplace communication</li>
+                                <li><span>B.</span> Work in team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Prepare materials and tools</li>
+                                <li><span>B.</span> Interpret technical drawings</li>
+                                <li><span>C.</span> Observe procedures, specifications and manuals of instructions</li>
+                                <li><span>D.</span> Perform mensurations and calculations</li>
+                                <li><span>E.</span> Perform basic benchworks</li>
+                                <li><span>F.</span> Perform basic electrical works</li>
+                                <li><span>G.</span> Maintain tools and equipment</li>
+                                <li><span>H.</span> Perform housekeeping and safety practices</li>
+                                <li><span>I.</span> Document work accomplished</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Install domestic refrigeration and air-conditioning (DomRAC) units</li>
+                                <li><span>B.</span> Service and maintain domestic refrigeration and air-conditioning (DomRAC) units</li>
+                                <li><span>C.</span> Troubleshoot and repair domestic refrigeration and air-conditioning (DomRAC) systems</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be a:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Domestic Refrigeration and Air-conditioning Technician</li>
+                    </ul>
+                </div>
+                <!-- End of Competencies Section -->
+                
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="domrac-show-entries-select">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="domrac-search-input" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="domrac-progress-chart-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="9">COMMON COMPETENCIES</th>
+                                <th colspan="3">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="domrac-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="domrac-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="domrac-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="domrac-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-f"></th>
+                                <th>G <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-g"></th>
+                                <th>H <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-h"></th>
+                                <th>I <input type="checkbox" class="competency-check-all" data-competency-group="domrac-common-i"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="domrac-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="domrac-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="domrac-core-c"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="domrac-trainee-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="smaw-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">SMAW NC I Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">SHIELDED METAL ARC WELDING (SMAW) I Progress Chart</h3>
+                
+                <!-- Competencies Section -->
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Receive and respond to workplace communication</li>
+                                <li><span>B.</span> Work with others</li>
+                                <li><span>C.</span> Demonstrate work values</li>
+                                <li><span>D.</span> Practice basic housekeeping procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Apply Safety Practices</li>
+                                <li><span>B.</span> Interpret Drawings and Sketches</li>
+                                <li><span>C.</span> Perform Industry Calculations</li>
+                                <li><span>D.</span> Contribute to Quality System</li>
+                                <li><span>E.</span> Use Hand Tools</li>
+                                <li><span>F.</span> Prepare Weld Materials</li>
+                                <li><span>G.</span> Setup Welding Equipment</li>
+                                <li><span>H.</span> Fit up Weld Materials</li>
+                                <li><span>I.</span> Repair Welds</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCY</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Weld Carbon Steel Plates Using SMAW</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be a:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Plate Welder (SMAW)</li>
+                    </ul>
+                </div>
+                <!-- End of Competencies Section -->
+                
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="smaw-show-entries-select">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="smaw-search-input" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="smaw-progress-chart-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="9">COMMON COMPETENCIES</th>
+                                <th colspan="1">CORE COMPETENCY</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-f"></th>
+                                <th>G <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-g"></th>
+                                <th>H <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-h"></th>
+                                <th>I <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-i"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="smaw-core-a"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="smaw-trainee-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            // BPP Section Elements
+            const bppShowEntriesSelect = document.getElementById('show-entries-select');
+            const bppSearchInput = document.getElementById('search-input');
+            const bppTraineeTableBody = document.getElementById('trainee-table-body');
+            const bppTable = document.getElementById('progress-chart-table');
+
+            // Massage Section Elements
+            const massageShowEntriesSelect = document.getElementById('massage-show-entries-select');
+            const massageSearchInput = document.getElementById('massage-search-input');
+            const massageTraineeTableBody = document.getElementById('massage-trainee-table-body');
+            const massageTable = document.getElementById('massage-progress-chart-table');
+
+            // Automotive Mechanical Section Elements
+            const automotiveShowEntriesSelect = document.getElementById('automotive-show-entries-select');
+            const automotiveSearchInput = document.getElementById('automotive-search-input');
+            const automotiveTraineeTableBody = document.getElementById('automotive-trainee-table-body');
+            const automotiveTable = document.getElementById('automotive-progress-chart-table');
+
+            // Automotive Electrical Section Elements
+            const autoElectricalShowEntriesSelect = document.getElementById('auto-electrical-show-entries-select');
+            const autoElectricalSearchInput = document.getElementById('auto-electrical-search-input');
+            const autoElectricalTraineeTableBody = document.getElementById('auto-electrical-trainee-table-body');
+            const autoElectricalTable = document.getElementById('auto-electrical-progress-chart-table');
+
+            // DomRAC Section Elements
+            const domracShowEntriesSelect = document.getElementById('domrac-show-entries-select');
+            const domracSearchInput = document.getElementById('domrac-search-input');
+            const domracTraineeTableBody = document.getElementById('domrac-trainee-table-body');
+            const domracTable = document.getElementById('domrac-progress-chart-table');
+            
+            // SMAW Section Elements
+            const smawShowEntriesSelect = document.getElementById('smaw-show-entries-select');
+            const smawSearchInput = document.getElementById('smaw-search-input');
+            const smawTraineeTableBody = document.getElementById('smaw-trainee-table-body');
+            const smawTable = document.getElementById('smaw-progress-chart-table');
+
+            // Sample data for BPP
+            const bppTrainees = [
+                { name: 'John Doe', competencies: { 'bpp-basic-a': false, 'bpp-basic-b': false, 'bpp-basic-c': false, 'bpp-basic-d': false, 'bpp-common-a': false, 'bpp-common-b': false, 'bpp-common-c': false, 'bpp-common-d': false, 'bpp-common-e': false, 'bpp-core-a': false, 'bpp-core-b': false, 'bpp-core-c': false, 'bpp-core-d': false, 'bpp-core-e': false } },
+                { name: 'Jane Smith', competencies: { 'bpp-basic-a': false, 'bpp-basic-b': false, 'bpp-basic-c': false, 'bpp-basic-d': false, 'bpp-common-a': false, 'bpp-common-b': false, 'bpp-common-c': false, 'bpp-common-d': false, 'bpp-common-e': false, 'bpp-core-a': false, 'bpp-core-b': false, 'bpp-core-c': false, 'bpp-core-d': false, 'bpp-core-e': false } },
+                { name: 'Peter Jones', competencies: { 'bpp-basic-a': false, 'bpp-basic-b': false, 'bpp-basic-c': false, 'bpp-basic-d': false, 'bpp-common-a': false, 'bpp-common-b': false, 'bpp-common-c': false, 'bpp-common-d': false, 'bpp-common-e': false, 'bpp-core-a': false, 'bpp-core-b': false, 'bpp-core-c': false, 'bpp-core-d': false, 'bpp-core-e': false } },
+                { name: 'Sarah Brown', competencies: { 'bpp-basic-a': false, 'bpp-basic-b': false, 'bpp-basic-c': false, 'bpp-basic-d': false, 'bpp-common-a': false, 'bpp-common-b': false, 'bpp-common-c': false, 'bpp-common-d': false, 'bpp-common-e': false, 'bpp-core-a': false, 'bpp-core-b': false, 'bpp-core-c': false, 'bpp-core-d': false, 'bpp-core-e': false } },
+                { name: 'Michael Davis', competencies: { 'bpp-basic-a': false, 'bpp-basic-b': false, 'bpp-basic-c': false, 'bpp-basic-d': false, 'bpp-common-a': false, 'bpp-common-b': false, 'bpp-common-c': false, 'bpp-common-d': false, 'bpp-common-e': false, 'bpp-core-a': false, 'bpp-core-b': false, 'bpp-core-c': false, 'bpp-core-d': false, 'bpp-core-e': false } },
+            ];
+
+            // Sample data for Massage Therapy
+            const massageTrainees = [
+                { name: 'Alex Johnson', competencies: { 'massage-basic-a': false, 'massage-basic-b': false, 'massage-basic-c': false, 'massage-basic-d': false, 'massage-common-a': false, 'massage-common-b': false, 'massage-common-c': false, 'massage-common-d': false, 'massage-core-a': false, 'massage-core-b': false, 'massage-core-c': false, 'massage-core-d': false } },
+                { name: 'Maria Garcia', competencies: { 'massage-basic-a': false, 'massage-basic-b': false, 'massage-basic-c': false, 'massage-basic-d': false, 'massage-common-a': false, 'massage-common-b': false, 'massage-common-c': false, 'massage-common-d': false, 'massage-core-a': false, 'massage-core-b': false, 'massage-core-c': false, 'massage-core-d': false } },
+                { name: 'David Lee', competencies: { 'massage-basic-a': false, 'massage-basic-b': false, 'massage-basic-c': false, 'massage-basic-d': false, 'massage-common-a': false, 'massage-common-b': false, 'massage-common-c': false, 'massage-common-d': false, 'massage-core-a': false, 'massage-core-b': false, 'massage-core-c': false, 'massage-core-d': false } },
+            ];
+
+            // Sample data for Automotive Mechanical Assembly
+            const automotiveTrainees = [
+                { name: 'Chris Evans', competencies: { 'automotive-basic-a': false, 'automotive-basic-b': false, 'automotive-basic-c': false, 'automotive-basic-d': false, 'automotive-common-a': false, 'automotive-common-b': false, 'automotive-common-c': false, 'automotive-common-d': false, 'automotive-common-e': false, 'automotive-core-a': false, 'automotive-core-b': false, 'automotive-core-c': false, 'automotive-core-d': false, 'automotive-core-e': false, 'automotive-core-f': false, 'automotive-core-g': false } },
+                { name: 'Jessica Chen', competencies: { 'automotive-basic-a': false, 'automotive-basic-b': false, 'automotive-basic-c': false, 'automotive-basic-d': false, 'automotive-common-a': false, 'automotive-common-b': false, 'automotive-common-c': false, 'automotive-common-d': false, 'automotive-common-e': false, 'automotive-core-a': false, 'automotive-core-b': false, 'automotive-core-c': false, 'automotive-core-d': false, 'automotive-core-e': false, 'automotive-core-f': false, 'automotive-core-g': false } },
+            ];
+
+            // Sample data for Automotive Electrical Assembly
+            const autoElectricalTrainees = [
+                { name: 'Robert Miller', competencies: { 'auto-electrical-basic-a': false, 'auto-electrical-basic-b': false, 'auto-electrical-basic-c': false, 'auto-electrical-basic-d': false, 'auto-electrical-common-a': false, 'auto-electrical-common-b': false, 'auto-electrical-common-c': false, 'auto-electrical-common-d': false, 'auto-electrical-common-e': false, 'auto-electrical-core-a': false, 'auto-electrical-core-b': false, 'auto-electrical-core-c': false, 'auto-electrical-core-d': false, 'auto-electrical-core-e': false, 'auto-electrical-core-f': false } },
+                { name: 'Linda Wilson', competencies: { 'auto-electrical-basic-a': false, 'auto-electrical-basic-b': false, 'auto-electrical-basic-c': false, 'auto-electrical-basic-d': false, 'auto-electrical-common-a': false, 'auto-electrical-common-b': false, 'auto-electrical-common-c': false, 'auto-electrical-common-d': false, 'auto-electrical-common-e': false, 'auto-electrical-core-a': false, 'auto-electrical-core-b': false, 'auto-electrical-core-c': false, 'auto-electrical-core-d': false, 'auto-electrical-core-e': false, 'auto-electrical-core-f': false } },
+            ];
+
+            // Sample data for DomRAC
+            const domracTrainees = [
+                { name: 'Kevin Brown', competencies: { 'domrac-basic-a': false, 'domrac-basic-b': false, 'domrac-basic-c': false, 'domrac-basic-d': false, 'domrac-common-a': false, 'domrac-common-b': false, 'domrac-common-c': false, 'domrac-common-d': false, 'domrac-common-e': false, 'domrac-common-f': false, 'domrac-common-g': false, 'domrac-common-h': false, 'domrac-common-i': false, 'domrac-core-a': false, 'domrac-core-b': false, 'domrac-core-c': false } },
+                { name: 'Olivia Perez', competencies: { 'domrac-basic-a': false, 'domrac-basic-b': false, 'domrac-basic-c': false, 'domrac-basic-d': false, 'domrac-common-a': false, 'domrac-common-b': false, 'domrac-common-c': false, 'domrac-common-d': false, 'domrac-common-e': false, 'domrac-common-f': false, 'domrac-common-g': false, 'domrac-common-h': false, 'domrac-common-i': false, 'domrac-core-a': false, 'domrac-core-b': false, 'domrac-core-c': false } },
+            ];
+            
+            // Sample data for SMAW NC l
+            const smawTrainees = [
+                { name: 'Thomas Gray', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+                { name: 'Alice Walker', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+            ];
+
+            function showSection(sectionId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelector(`.sidebar-nav a[data-section="${sectionId.replace('-section', '')}"]`).classList.add('active');
+            }
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.dataset.section + '-section';
+                    showSection(sectionId);
+                });
+            });
+
+            // Set the initial active section
+            showSection('overview-section');
+
+            // --- Progress Chart Logic for BPP ---
+            function calculateBppProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            function renderBppTable() {
+                const searchQuery = bppSearchInput.value.toLowerCase();
+                const entriesToShow = parseInt(bppShowEntriesSelect.value, 10);
+
+                const filteredTrainees = bppTrainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                bppTraineeTableBody.innerHTML = '';
+                
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateBppProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`;
+                    
+                    row.innerHTML = rowHtml;
+                    bppTraineeTableBody.appendChild(row);
+                });
+            }
+
+            bppTable.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+                        bppTrainees.forEach(trainee => {
+                            if (trainee.competencies.hasOwnProperty(competencyGroup)) {
+                                trainee.competencies[competencyGroup] = isChecked;
+                            }
+                        });
+                    } else {
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        const trainee = bppTrainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    renderBppTable();
+                }
+            });
+
+            bppSearchInput.addEventListener('input', renderBppTable);
+            bppShowEntriesSelect.addEventListener('change', renderBppTable);
+
+            renderBppTable();
+
+            // --- Progress Chart Logic for Massage Therapy ---
+            function calculateMassageProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            function renderMassageTable() {
+                const searchQuery = massageSearchInput.value.toLowerCase();
+                const entriesToShow = parseInt(massageShowEntriesSelect.value, 10);
+
+                const filteredTrainees = massageTrainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                massageTraineeTableBody.innerHTML = '';
+                
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateMassageProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`;
+                    
+                    row.innerHTML = rowHtml;
+                    massageTraineeTableBody.appendChild(row);
+                });
+            }
+
+            massageTable.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+                        massageTrainees.forEach(trainee => {
+                            if (trainee.competencies.hasOwnProperty(competencyGroup)) {
+                                trainee.competencies[competencyGroup] = isChecked;
+                            }
+                        });
+                    } else {
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        const trainee = massageTrainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    renderMassageTable();
+                }
+            });
+
+            massageSearchInput.addEventListener('input', renderMassageTable);
+            massageShowEntriesSelect.addEventListener('change', renderMassageTable);
+
+            renderMassageTable();
+
+            // --- Progress Chart Logic for Automotive Mechanical ---
+            function calculateAutomotiveProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            function renderAutomotiveTable() {
+                const searchQuery = automotiveSearchInput.value.toLowerCase();
+                const entriesToShow = parseInt(automotiveShowEntriesSelect.value, 10);
+
+                const filteredTrainees = automotiveTrainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                automotiveTraineeTableBody.innerHTML = '';
+                
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateAutomotiveProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`;
+                    
+                    row.innerHTML = rowHtml;
+                    automotiveTraineeTableBody.appendChild(row);
+                });
+            }
+
+            automotiveTable.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+                        automotiveTrainees.forEach(trainee => {
+                            if (trainee.competencies.hasOwnProperty(competencyGroup)) {
+                                trainee.competencies[competencyGroup] = isChecked;
+                            }
+                        });
+                    } else {
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        const trainee = automotiveTrainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    renderAutomotiveTable();
+                }
+            });
+
+            automotiveSearchInput.addEventListener('input', renderAutomotiveTable);
+            automotiveShowEntriesSelect.addEventListener('change', renderAutomotiveTable);
+
+            renderAutomotiveTable();
+
+            // --- Progress Chart Logic for Automotive Electrical ---
+            function calculateAutoElectricalProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            function renderAutoElectricalTable() {
+                const searchQuery = autoElectricalSearchInput.value.toLowerCase();
+                const entriesToShow = parseInt(autoElectricalShowEntriesSelect.value, 10);
+
+                const filteredTrainees = autoElectricalTrainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                autoElectricalTraineeTableBody.innerHTML = '';
+                
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateAutoElectricalProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`;
+                    
+                    row.innerHTML = rowHtml;
+                    autoElectricalTraineeTableBody.appendChild(row);
+                });
+            }
+
+            autoElectricalTable.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+                        autoElectricalTrainees.forEach(trainee => {
+                            if (trainee.competencies.hasOwnProperty(competencyGroup)) {
+                                trainee.competencies[competencyGroup] = isChecked;
+                            }
+                        });
+                    } else {
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        const trainee = autoElectricalTrainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    renderAutoElectricalTable();
+                }
+            });
+
+            autoElectricalSearchInput.addEventListener('input', renderAutoElectricalTable);
+            autoElectricalShowEntriesSelect.addEventListener('change', renderAutoElectricalTable);
+
+            renderAutoElectricalTable();
+            
+            // --- Progress Chart Logic for DomRAC ---
+            function calculateDomracProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            function renderDomracTable() {
+                const searchQuery = domracSearchInput.value.toLowerCase();
+                const entriesToShow = parseInt(domracShowEntriesSelect.value, 10);
+
+                const filteredTrainees = domracTrainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                domracTraineeTableBody.innerHTML = '';
+                
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateDomracProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`;
+                    
+                    row.innerHTML = rowHtml;
+                    domracTraineeTableBody.appendChild(row);
+                });
+            }
+
+            domracTable.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+                        domracTrainees.forEach(trainee => {
+                            if (trainee.competencies.hasOwnProperty(competencyGroup)) {
+                                trainee.competencies[competencyGroup] = isChecked;
+                            }
+                        });
+                    } else {
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        const trainee = domracTrainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    renderDomracTable();
+                }
+            });
+
+            domracSearchInput.addEventListener('input', renderDomracTable);
+            domracShowEntriesSelect.addEventListener('change', renderDomracTable);
+
+            renderDomracTable();
+
+            // --- Progress Chart Logic for SMAW NC l ---
+            function calculateSmawProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            function renderSmawTable() {
+                const searchQuery = smawSearchInput.value.toLowerCase();
+                const entriesToShow = parseInt(smawShowEntriesSelect.value, 10);
+
+                const filteredTrainees = smawTrainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                smawTraineeTableBody.innerHTML = '';
+                
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateSmawProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`;
+                    
+                    row.innerHTML = rowHtml;
+                    smawTraineeTableBody.appendChild(row);
+                });
+            }
+
+            smawTable.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+                        smawTrainees.forEach(trainee => {
+                            if (trainee.competencies.hasOwnProperty(competencyGroup)) {
+                                trainee.competencies[competencyGroup] = isChecked;
+                            }
+                        });
+                    } else {
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        const trainee = smawTrainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    renderSmawTable();
+                }
+            });
+
+            smawSearchInput.addEventListener('input', renderSmawTable);
+            smawShowEntriesSelect.addEventListener('change', renderSmawTable);
+
+            renderSmawTable();
+        });
+    </script>
+</body>
+</html>

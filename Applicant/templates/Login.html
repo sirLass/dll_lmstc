@@ -1,0 +1,469 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - DLL LMSTC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes morphShape {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+            50% { border-radius: 70% 30% 40% 60% / 40% 70% 60% 30%; }
+            75% { border-radius: 40% 70% 60% 30% / 70% 40% 50% 70%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+
+        .morphing-shape {
+            animation: morphShape 8s ease-in-out infinite;
+        }
+
+        .glass-effect {
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-field {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .login-button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .login-button:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.3);
+        }
+
+        .google-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .google-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+        }
+
+        .hero-overlay {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+        }
+
+        .decorative-element {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .decorative-element:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            animation-delay: 0s;
+        }
+
+        .decorative-element:nth-child(2) {
+            top: 70%;
+            right: 15%;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            animation-delay: 2s;
+        }
+
+        .decorative-element:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            animation-delay: 4s;
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            .decorative-element {
+                display: none;
+            }
+            
+            .input-field:focus {
+                transform: none;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            
+            .login-button:hover {
+                transform: none;
+            }
+            
+            .google-button:hover {
+                transform: none;
+            }
+
+            /* Enable scrolling for main content on mobile */
+            .main-content {
+                max-height: 100vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* Large desktop styles */
+        @media (min-width: 1024px) {
+            .decorative-element:nth-child(1) {
+                width: 100px;
+                height: 100px;
+            }
+
+            .decorative-element:nth-child(2) {
+                width: 150px;
+                height: 150px;
+            }
+
+            .decorative-element:nth-child(3) {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative">
+    <!-- Decorative Background Elements -->
+    <div class="decorative-element"></div>
+    <div class="decorative-element"></div>
+    <div class="decorative-element"></div>
+    
+    <!-- Hero Overlay -->
+    <div class="absolute inset-0 hero-overlay"></div>
+
+    <!-- Back to Home Button -->
+    <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-20">
+        <a href="{% url 'Home' %}" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-semibold transition-all duration-300 group">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <i class="fas fa-arrow-left text-blue-600 text-sm sm:text-base"></i>
+            </div>
+            <span class="hidden sm:block text-sm sm:text-base">Back to Home</span>
+        </a>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <div x-data="{ show: true }" 
+         x-init="setTimeout(() => show = false, 5000)" 
+         x-show="show"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform -translate-y-2"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 transform translate-y-0"
+         x-transition:leave-end="opacity-0 transform -translate-y-2"
+         class="fixed top-4 left-4 right-4 sm:top-6 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 sm:max-w-md {% if message.tags == 'success' %}bg-gradient-to-r from-green-500 to-green-600 border-green-400{% elif message.tags == 'error' %}bg-gradient-to-r from-red-500 to-red-600 border-red-400{% elif message.tags == 'warning' %}bg-gradient-to-r from-yellow-500 to-orange-500 border-yellow-400{% else %}bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400{% endif %} text-white px-4 py-3 sm:px-6 sm:py-4 rounded-xl sm:rounded-2xl shadow-2xl z-50 border">
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            {% if message.tags == 'success' %}
+                <i class="fas fa-check-circle text-lg sm:text-xl"></i>
+            {% elif message.tags == 'error' %}
+                <i class="fas fa-exclamation-triangle text-lg sm:text-xl"></i>
+            {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-circle text-lg sm:text-xl"></i>
+            {% else %}
+                <i class="fas fa-info-circle text-lg sm:text-xl"></i>
+            {% endif %}
+            <div class="flex-1">
+                <p class="font-medium text-sm sm:text-base">{{ message }}</p>
+            </div>
+            <button @click="show = false" class="text-white hover:opacity-80 transition-colors">
+                <i class="fas fa-times text-sm sm:text-base"></i>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+        <div class="max-w-6xl w-full">
+            <!-- Login Container -->
+            <div class="glass-effect rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden fade-in-up">
+                <div class="flex flex-col lg:flex-row min-h-[500px] lg:min-h-[580px]">
+                    <!-- Left Side - Login Form -->
+                    <div class="lg:w-1/2 p-4 sm:p-6 md:p-8 lg:p-12 flex flex-col justify-center">
+                        <!-- Header -->
+                        <div class="text-center lg:text-left mb-6 sm:mb-8">
+                            <div class="flex items-center justify-center lg:justify-start space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-graduation-cap text-white text-lg sm:text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-blue-800 font-bold text-base sm:text-lg">DLL - LMSTC</h3>
+                                    <p class="text-blue-600 text-xs sm:text-sm">Learning Management</p>
+                                </div>
+                            </div>
+                            <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-2 sm:mb-3">Welcome Back</h1>
+                            <p class="text-gray-600 text-sm sm:text-base lg:text-lg">Sign in to continue your learning journey</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form method="POST" action="{% url 'Login' %}" class="space-y-5 sm:space-y-6">
+                            {% csrf_token %}
+                            
+                            <!-- Email Field -->
+                            <div class="relative" x-data="{ focused: false, hasValue: false }">
+                                <label class="absolute left-4 top-4 text-gray-500 transition-all duration-300 pointer-events-none"
+                                    :class="(focused || hasValue) ? 'top-1 left-3 text-xs text-blue-600 bg-white px-2 rounded' : 'text-base'">
+                                    <i class="fas fa-envelope mr-2"></i>Email Address
+                                </label>
+                                <input type="text"
+                                       name="username"
+                                       class="input-field w-full p-4 pt-6 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none bg-white/80 backdrop-blur-sm text-gray-800 font-medium"
+                                       @focus="focused = true"
+                                       @blur="focused = false; hasValue = $event.target.value !== ''"
+                                       placeholder="Username"
+                                       required>
+                            </div>
+
+                            <!-- Password Field -->
+                            <div class="relative" x-data="{ focused: false, hasValue: false, showPassword: false }">
+                                <label class="absolute left-4 top-4 text-gray-500 transition-all duration-300 pointer-events-none"
+                                    :class="(focused || hasValue) ? 'top-1 left-3 text-xs text-blue-600 bg-white px-2 rounded' : 'text-base'">
+                                    <i class="fas fa-lock mr-2"></i>Password
+                                </label>
+                                <input :type="showPassword ? 'text' : 'password'"
+                                       name="password"
+                                       class="input-field w-full p-4 pt-6 pr-12 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none bg-white/80 backdrop-blur-sm text-gray-800 font-medium"
+                                       @focus="focused = true"
+                                       @blur="focused = false; hasValue = $event.target.value !== ''"
+                                       placeholder="Password"
+                                       required>
+                                <button type="button" 
+                                        @click="showPassword = !showPassword"
+                                        class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                                    <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                </button>
+                            </div>
+
+                            <!-- Remember Me & Forgot Password -->
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center text-gray-600 cursor-pointer group">
+                                    <input type="checkbox" class="w-4 h-4 text-blue-600 border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 transition-all">
+                                    <span class="ml-3 font-medium group-hover:text-blue-600 transition-colors">Remember me</span>
+                                </label>
+                                <a href="{% url 'forgot_password' %}" class="text-blue-600 hover:text-blue-800 font-semibold transition-colors relative group">
+                                    Forgot password?
+                                    <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                                </a>
+                            </div>
+
+                            <!-- Login Button -->
+                            <button type="submit" class="login-button w-full py-4 text-white font-bold text-lg rounded-2xl shadow-lg">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                            </button>
+
+                            <!-- Register Link -->
+                            <p class="text-center text-gray-600">
+                                Don't have an account? 
+                                <a href="{% url 'Register' %}" class="text-blue-600 hover:text-blue-800 font-bold transition-colors relative group">
+                                    Create Account
+                                    <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                                </a>
+                            </p>
+
+                            <!-- Divider -->
+                            <div class="relative my-6">
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-gray-200"></div>
+                                </div>
+                                <div class="relative flex justify-center text-sm">
+                                    <span class="px-4 bg-white text-gray-500 font-medium">Or continue with</span>
+                                </div>
+                            </div>
+
+                            <!-- Google Sign-In Button -->
+                            {% load socialaccount %}
+                            <a href="{% provider_login_url 'google' %}?next=/Homepage_user"
+                               class="google-button w-full flex items-center justify-center gap-3 py-4 bg-white border-2 border-gray-200 rounded-2xl text-gray-700 font-semibold hover:bg-gray-50 shadow-lg">
+                                <img src="{% static 'Images/search.png' %}" alt="Google Logo" class="w-6 h-6">
+                                Sign in with Google
+                            </a>
+                        </form>
+                    </div>
+
+                    <!-- Right Side - Logo & Branding -->
+                    <div class="lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 p-8 lg:p-12 flex flex-col justify-center items-center text-white relative overflow-hidden">
+                        <!-- Background Pattern -->
+                        <div class="absolute inset-0 opacity-10">
+                            <div class="absolute top-10 left-10 w-32 h-32 border-2 border-white rounded-full"></div>
+                            <div class="absolute bottom-20 right-10 w-24 h-24 border-2 border-white rounded-full"></div>
+                            <div class="absolute top-1/2 left-1/4 w-16 h-16 border-2 border-white rounded-full"></div>
+                        </div>
+
+                        <!-- Logo Section -->
+                        <div class="relative z-10 text-center">
+                            <div class="float-animation mb-8">
+                                <div class="morphing-shape w-48 h-48 mx-auto bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl">
+                                    <img src="{% static 'Images/lmstclogo.png' %}" alt="LMSTC Logo" class="w-32 h-32 object-contain">
+                                </div>
+                            </div>
+                            
+                            <h2 class="text-3xl lg:text-4xl font-bold mb-4 leading-tight">
+                                Lucena Manpower<br>
+                                <span class="text-yellow-300">Skills Training Center</span>
+                            </h2>
+                            
+                            <p class="text-xl opacity-90 mb-8 leading-relaxed">
+                                Empowering your future with industry-leading education and hands-on training
+                            </p>
+
+                            <!-- Feature Highlights -->
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-yellow-300"></i>
+                                    </div>
+                                    <span>Expert Trainers</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-yellow-300"></i>
+                                    </div>
+                                    <span>Modern Facilities</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-yellow-300"></i>
+                                    </div>
+                                    <span>Job Placement</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-check text-yellow-300"></i>
+                                    </div>
+                                    <span>Certification</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-gray-600">
+                <p class="text-sm">
+                    © 2025 Lucena Manpower Skills Training Center. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced form interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-focus first input
+            const firstInput = document.querySelector('input[name="username"]');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 500);
+            }
+
+            // Form validation feedback
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input[required]');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.value.trim() === '') {
+                        this.classList.add('border-red-300');
+                        this.classList.remove('border-gray-200', 'border-blue-500');
+                    } else {
+                        this.classList.remove('border-red-300');
+                        this.classList.add('border-green-300');
+                    }
+                });
+
+                input.addEventListener('input', function() {
+                    if (this.classList.contains('border-red-300')) {
+                        this.classList.remove('border-red-300');
+                        this.classList.add('border-gray-200');
+                    }
+                });
+            });
+
+            // Enhanced form submission
+            form.addEventListener('submit', function(e) {
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing In...';
+                submitButton.disabled = true;
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Alt + H to go home
+            if (e.altKey && e.key === 'h') {
+                e.preventDefault();
+                window.location.href = "{% url 'Home' %}";
+            }
+        });
+    </script>
+</body>
+</html>

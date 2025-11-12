@@ -1,0 +1,867 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - DLL LMSTC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .scroll-smooth {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+        }
+        
+        /* Mobile Menu Scrollbar - Enhanced for easier swiping */
+        .mobile-menu ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            border-radius: 10px;
+            border: 2px solid #f1f5f9;
+            min-height: 80px;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #2563eb, #7c3aed);
+            border: 2px solid #e2e8f0;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(180deg, #1d4ed8, #6d28d9);
+        }
+        
+        .chatbot-bounce {
+            animation: float 2s ease-in-out infinite;
+        }
+        
+        .section-divider {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            height: 2px;
+            width: 100px;
+            margin: 0 auto;
+        }
+        
+        .team-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* User dropdown styles */
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            min-width: 200px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: #f3f4f6;
+            color: #3b82f6;
+        }
+        
+        .dropdown-item i {
+            margin-right: 0.5rem;
+            width: 16px;
+        }
+
+        /* Mobile Menu Styles */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+        
+        .mobile-menu-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="scroll-smooth bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+    <!-- Enhanced Navbar -->
+    <nav class="fixed top-0 left-0 w-full glass-effect shadow-xl z-50 transition-all duration-300 border-b border-white/20" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-14 w-14 rounded-full shadow-lg border-2 border-white">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 blur"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-blue-800 font-bold text-xl leading-tight">Lucena Manpower Skills Training Center</h3>
+                        <p class="text-blue-600 text-sm font-medium">Dalubhasaan Ng Lungsod Ng Lucena</p>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'Homepage_user' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Home
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="{% url 'Program_user' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Programs
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="{% url 'About_user' %}" class="text-blue-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        About
+                        <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-3">
+                    {% if has_learner_profile %}
+                        <a href="{% url 'Dashboard' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'Program_user' %}" class="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-rocket mr-2"></i>Apply Now
+                        </a>
+                    {% endif %}
+                    
+                    <!-- User Dropdown -->
+                    <div class="user-dropdown">
+                        <button id="userDropdownBtn" class="flex items-center space-x-3 bg-white/80 backdrop-blur-sm border-2 border-blue-200 rounded-full px-4 py-2 hover:border-blue-400 transition-all duration-300 shadow-md hover:shadow-lg">
+                            {% if user_profile_picture %}
+                                <img src="{{ user_profile_picture }}" class="w-10 h-10 rounded-full border-2 border-blue-200 object-cover" alt="User" onerror="this.src='{% static 'Images/user.png' %}'" />
+                            {% else %}
+                                <img src="{% static 'Images/user.png' %}" class="w-10 h-10 rounded-full border-2 border-blue-200" alt="User" />
+                            {% endif %}
+                            <div class="text-left hidden sm:block">
+                                <p class="font-bold text-sm text-blue-800">Hi, {{ user }}</p>
+                                <p class="text-xs text-gray-600">Student</p>
+                            </div>
+                            <i class="fas fa-chevron-down text-blue-600 text-sm transition-transform duration-300" id="dropdownIcon"></i>
+                        </button>
+                        
+                        <div id="userDropdownMenu" class="dropdown-menu">
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-sm font-medium text-gray-900">{{ user }}</p>
+                                <p class="text-xs text-gray-500">Student Account</p>
+                            </div>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-book"></i>
+                                My Courses
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-certificate"></i>
+                                Certificates
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                Settings
+                            </a>
+                            <div class="border-t border-gray-100">
+                                <a href="{% url 'logout_view' %}" class="dropdown-item text-red-600 hover:text-red-700 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Log Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="lg:hidden">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-700 hover:text-blue-600 p-2">
+                        <i class="fas text-xl" :class="mobileMenuOpen ? 'fa-times' : 'fa-bars'"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+            <!-- Mobile Menu -->
+            <div x-show="mobileMenuOpen" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95"
+                 class="lg:hidden bg-white border-t border-gray-200 shadow-lg">
+                <div class="px-4 py-6 space-y-4">
+                    <a href="{% url 'Homepage_user' %}" class="block text-gray-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-home mr-3"></i>Home
+                    </a>
+                    <a href="{% url 'Program_user' %}" class="block text-gray-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-graduation-cap mr-3"></i>Programs
+                    </a>
+                    <a href="{% url 'About_user' %}" class="block text-blue-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-info-circle mr-3"></i>About
+                    </a>
+                    <div class="border-t border-gray-200 pt-4 space-y-3">
+                        {% if not has_learner_profile %}
+                        <a href="{% url 'Program_user' %}" class="block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg text-center">
+                            <i class="fas fa-rocket mr-2"></i>Apply Now
+                        </a>
+                        {% else %}
+                        <a href="{% url 'Dashboard' %}" class="block bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg text-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'logout_view' %}" class="block border-2 border-red-500 text-red-500 px-6 py-3 rounded-full font-semibold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md text-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Log Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 overflow-hidden">
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-white">
+                <div class="section-divider bg-gradient-to-r from-transparent via-white to-transparent mb-8"></div>
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight fade-in-up">
+                    About <span class="text-yellow-300">LMSTC</span>
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 opacity-90 max-w-4xl mx-auto fade-in-up">
+                    Discover our mission, meet our team, and learn about our commitment to excellence in skills training
+                </p>
+            </div>
+        </div>
+        
+        <!-- Decorative elements -->
+        <div class="absolute top-20 left-10 w-20 h-20 bg-yellow-400 rounded-full opacity-10 animate-pulse"></div>
+        <div class="absolute bottom-20 right-10 w-32 h-32 bg-white rounded-full opacity-5 animate-pulse"></div>
+    </section>
+
+    <!-- Mission Statement Section -->
+    <section class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl p-8 md:p-16 text-white shadow-2xl">
+                <div class="text-center mb-12">
+                    <div class="section-divider bg-gradient-to-r from-transparent via-white to-transparent mb-8"></div>
+                    <h2 class="text-4xl md:text-5xl font-bold mb-8">Our Mission</h2>
+                </div>
+                
+                <div class="max-w-5xl mx-auto">
+                    <p class="text-xl leading-relaxed mb-8 text-center">
+                        Welcome to the official website of <span class="text-yellow-300 font-bold text-2xl">Lucena Manpower Skills Training Center!</span>
+                    </p>
+                    
+                    <div class="grid md:grid-cols-2 gap-8 text-lg leading-relaxed">
+                        <div>
+                            <p class="mb-6">
+                                We're thrilled to have you here. At LMSTC, we believe that every individual has the potential to achieve greatness when equipped with the right skills and guidance. Our mission is to empower students, job seekers, and career shifters with practical, in-demand skills that open doors to real opportunities in today's competitive job market.
+                            </p>
+                        </div>
+                        <div>
+                            <p class="mb-6">
+                                Whether you're looking to start a new career, enhance your current abilities, or explore new learning pathways, our hands-on training programs are designed with your future in mind. We offer a supportive, inclusive, and inspiring environment where learning is practical, fun, and truly life-changing.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-12">
+                        <p class="text-xl font-semibold text-yellow-300">
+                            Join us as we build a stronger workforce—one skilled individual at a time. Discover what makes LMSTC a trusted partner in training and education, and take the next step toward a brighter, more confident tomorrow!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Head Program Section -->
+    <section class="py-24 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <div class="section-divider mb-6"></div>
+                <h2 class="text-5xl md:text-6xl font-bold gradient-text mb-6">Head Program</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Meet our dedicated coordinator who leads our institution with passion and expertise</p>
+            </div>
+            
+            <div class="flex justify-center">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-4xl w-full border border-blue-100">
+                    <div class="flex flex-col lg:flex-row items-center gap-12">
+                        <!-- Image -->
+                        <div class="lg:w-1/3">
+                            <div class="relative">
+                                <img src="{% static 'Images/lmstc_admin.png' %}" alt="Glenda J. Maglonso" class="w-80 h-80 rounded-3xl shadow-2xl object-cover mx-auto">
+                                <div class="absolute -inset-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl opacity-20 blur-2xl"></div>
+                                <!-- Decorative frame -->
+                                <div class="absolute -inset-2 border-2 border-blue-200 rounded-3xl"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="lg:w-2/3 text-center lg:text-left">
+                            <div class="mb-8">
+                                <h3 class="text-4xl md:text-5xl font-bold text-yellow-500 mb-4">
+                                    Glenda J. Maglonso
+                                </h3>
+                                <div class="w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-6"></div>
+                                <p class="text-2xl md:text-3xl font-semibold text-blue-700">
+                                    DLL-LMSTC Coordinator
+                                </p>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
+                                <div class="flex items-center justify-center lg:justify-start space-x-4 mb-4">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-quote-left text-white text-lg"></i>
+                                    </div>
+                                    <span class="text-lg font-semibold text-gray-700">Leadership Excellence</span>
+                                </div>
+                                <p class="text-gray-600 leading-relaxed">
+                                    Leading our institution with dedication, vision, and a commitment to providing quality education and training that transforms lives and builds careers.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Professors Section -->
+    <section class="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <div class="section-divider bg-gradient-to-r from-transparent via-white to-transparent mb-6"></div>
+                <h2 class="text-5xl md:text-6xl font-bold text-white mb-6">Our Trainor</h2>
+                <p class="text-xl text-white/90 max-w-3xl mx-auto">Meet our experienced faculty members who bring expertise and passion to every classroom</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% if trainors %}
+                    {% for trainor in trainors %}
+                    <!-- Trainor Card -->
+                    <div class="team-card rounded-3xl p-8 shadow-2xl card-hover">
+                        <div class="text-center">
+                            <div class="relative mb-6">
+                                <img src="{% static 'Images/user.png' %}" alt="{{ trainor }}" class="w-48 h-48 rounded-full object-cover mx-auto shadow-2xl border-4 border-white">
+                                <div class="absolute -inset-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full opacity-20 blur-lg"></div>
+                            </div>
+                            <h3 class="text-2xl font-bold text-yellow-300 mb-2">
+                                {{ trainor }}
+                            </h3>
+                            <div class="w-16 h-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mx-auto mb-4"></div>
+                            <p class="text-blue-200 text-lg font-semibold">DLL-LMSTC Trainor</p>
+                            
+                            <div class="mt-6 flex justify-center space-x-3">
+                                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
+                                    <i class="fas fa-envelope text-white"></i>
+                                </div>
+                                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
+                                    <i class="fas fa-phone text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Default Card if no trainors -->
+                    <div class="team-card rounded-3xl p-8 shadow-2xl card-hover">
+                        <div class="text-center">
+                            <div class="relative mb-6">
+                                <img src="{% static 'Images/user.png' %}" alt="Trainor" class="w-48 h-48 rounded-full object-cover mx-auto shadow-2xl border-4 border-white">
+                                <div class="absolute -inset-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full opacity-20 blur-lg"></div>
+                            </div>
+                            <h3 class="text-2xl font-bold text-yellow-300 mb-2">
+                                No Trainors Available
+                            </h3>
+                            <div class="w-16 h-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mx-auto mb-4"></div>
+                            <p class="text-blue-200 text-lg font-semibold">DLL-LMSTC Trainor</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Staff Section -->
+    <section class="py-24 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <div class="section-divider mb-6"></div>
+                <h2 class="text-5xl md:text-6xl font-bold gradient-text mb-6">Our Staff</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Our dedicated support staff who ensure smooth operations and excellent student experience</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Staff Card 1 -->
+                <div class="bg-white rounded-3xl shadow-2xl p-8 card-hover border border-blue-100">
+                    <div class="text-center">
+                        <div class="relative mb-6">
+                            <img src="{% static 'Images/user.png' %}" alt="Staff" class="w-48 h-48 rounded-full object-cover mx-auto shadow-2xl border-4 border-blue-100">
+                            <div class="absolute -inset-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 blur-lg"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-yellow-500 mb-2">
+                            Glenda J. Maglonso
+                        </h3>
+                        <div class="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4"></div>
+                        <p class="text-blue-700 text-lg font-semibold">DLL-LMSTC Staff</p>
+                        
+                        <div class="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4">
+                            <p class="text-gray-600 text-sm">Administrative Support</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Staff Card 2 -->
+                <div class="bg-white rounded-3xl shadow-2xl p-8 card-hover border border-blue-100">
+                    <div class="text-center">
+                        <div class="relative mb-6">
+                            <img src="{% static 'Images/user.png' %}" alt="Staff" class="w-48 h-48 rounded-full object-cover mx-auto shadow-2xl border-4 border-blue-100">
+                            <div class="absolute -inset-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 blur-lg"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-yellow-500 mb-2">
+                            Glenda J. Maglonso
+                        </h3>
+                        <div class="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4"></div>
+                        <p class="text-blue-700 text-lg font-semibold">DLL-LMSTC Staff</p>
+                        
+                        <div class="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4">
+                            <p class="text-gray-600 text-sm">Student Services</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Staff Card 3 -->
+                <div class="bg-white rounded-3xl shadow-2xl p-8 card-hover border border-blue-100">
+                    <div class="text-center">
+                        <div class="relative mb-6">
+                            <img src="{% static 'Images/user.png' %}" alt="Staff" class="w-48 h-48 rounded-full object-cover mx-auto shadow-2xl border-4 border-blue-100">
+                            <div class="absolute -inset-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 blur-lg"></div>
+                        </div>
+                        <h3 class="text-2xl font-bold text-yellow-500 mb-2">
+                            Glenda J. Maglonso
+                        </h3>
+                        <div class="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4"></div>
+                        <p class="text-blue-700 text-lg font-semibold">DLL-LMSTC Staff</p>
+                        
+                        <div class="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4">
+                            <p class="text-gray-600 text-sm">Technical Support</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Chatbot -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="chatbot-toggle" class="chatbot-bounce bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 border-4 border-white">
+            <img src="{% static 'Images/chatlogo.png' %}" alt="" class="h-12 w-auto">
+        </button>
+        
+        <div id="chatbot-window" class="hidden absolute bottom-20 right-0 w-80 h-96 bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">LMSTC Assistant</h3>
+                        <p class="text-sm opacity-90">Online now</p>
+                    </div>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-all duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                <div class="text-center text-gray-500 text-sm mb-6">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-robot text-blue-500 text-xl"></i>
+                    </div>
+                    <p class="font-medium">Welcome to LMSTC!</p>
+                    <p>Ask me about our programs, coordinators, or anything else.</p>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t bg-white">
+                <div class="flex space-x-3">
+                    <input type="text" id="chat-input" placeholder="Type your message..." class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="chat-send" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Footer -->
+    <footer class="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-16 w-16 rounded-full border-2 border-white shadow-lg">
+                        <div>
+                            <h3 class="text-2xl font-bold">LMSTC</h3>
+                            <p class="text-sm opacity-75">Skills Training Center</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
+                        Empowering individuals with practical skills and knowledge for today's dynamic job market. Your success is our mission.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
+                            <i class="fab fa-facebook-f text-lg"></i>
+                        </a>
+                        <a href="#" class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors shadow-lg">
+                            <i class="fab fa-twitter text-lg"></i>
+                        </a>
+                        <a href="#" class="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors shadow-lg">
+                            <i class="fab fa-instagram text-lg"></i>
+                        </a>
+                        <a href="#" class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors shadow-lg">
+                            <i class="fab fa-youtube text-lg"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Quick Links</h4>
+                    <div class="space-y-3">
+                        <a href="{% url 'Homepage_user' %}" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="{% url 'About_user' %}" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-info-circle mr-2"></i>About
+                        </a>
+                        <a href="{% url 'Program_user' %}" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-graduation-cap mr-2"></i>Programs
+                        </a>
+                        <a href="#" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-envelope mr-2"></i>Contact
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Contact Info</h4>
+                    <div class="space-y-3 text-gray-300">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-map-marker-alt text-yellow-400"></i>
+                            <span class="text-sm">Isabang Verse, Lucena City</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-phone text-yellow-400"></i>
+                            <span class="text-sm">(+1) 234-4567-789</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-envelope text-yellow-400"></i>
+                            <span class="text-sm">email@gmail.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 pt-8 text-center">
+                <p class="text-gray-400">
+                    © 2025 Lucena Manpower Skills Training Center. All rights reserved. | Made with <i class="fas fa-heart text-red-500"></i> for education
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // User Dropdown Functionality
+        const userDropdownBtn = document.getElementById('userDropdownBtn');
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+        const dropdownIcon = document.getElementById('dropdownIcon');
+
+        userDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdownMenu.classList.toggle('show');
+            dropdownIcon.classList.toggle('rotate-180');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userDropdownBtn.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                userDropdownMenu.classList.remove('show');
+                dropdownIcon.classList.remove('rotate-180');
+            }
+        });
+
+        // Enhanced Chatbot Functionality
+        const chatToggle = document.getElementById('chatbot-toggle');
+        const chatWindow = document.getElementById('chatbot-window');
+        const chatClose = document.getElementById('chatbot-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+
+        chatToggle.addEventListener('click', () => {
+            chatWindow.classList.toggle('hidden');
+            if (!chatWindow.classList.contains('hidden')) {
+                chatInput.focus();
+            }
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWindow.classList.add('hidden');
+        });
+
+        const responses = {
+            documentation: "Our documentator is Irish Valerie Martinez.",
+            frontend: "Our frontend developer is Jiro Miko Viñas.",
+            backend: "Our backend developer is Brian Perez.",
+            coordinator: "Glenda J. Maglonso is our DLL-LMSTC Coordinator.",
+            available_programs: "Currently, DLL-LMSTC has 10 available programs.",
+            glenda: "Ma'am Glenda or Glenda J. Maglonso, is the DLL-LMSTC Coordinator",
+            hi: "Hello there! How can I help you today?",
+            hello: "Hello there! How can I help you today?",
+            thank_you: "You're welcome! Is there anything else you'd like to know? Don't hesitate to ask!",
+            programs: "We offer various training programs including technical skills, vocational training, and professional development courses.",
+            location: "We're located at Isabang Verse, Lucena City. You can find us easily using the map on our website.",
+            contact: "You can reach us through Facebook, email at email@gmail.com, or call us at (+1) 234-4567-789.",
+            about: "LMSTC is dedicated to empowering individuals with practical skills and knowledge for today's job market.",
+            mission: "Our mission is to provide hands-on training, industry-relevant education, and a supportive learning environment."
+        };
+
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `inline-block max-w-xs px-4 py-3 rounded-2xl ${
+                sender === 'user'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-sm'
+                    : 'bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm'
+            }`;
+            bubble.textContent = message;
+            
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = chatInput.value.trim().toLowerCase();
+            if (!message) return;
+            
+            addMessage(chatInput.value, 'user');
+            
+            let reply = "Sorry, I didn't understand that. Please try asking about our coordinator, programs, location, or team members.";
+            
+            for (const [key, response] of Object.entries(responses)) {
+                if (message.includes(key.replace('_', ' '))) {
+                    reply = response;
+                    break;
+                }
+            }
+
+            setTimeout(() => addMessage(reply, 'bot'), 800);
+            chatInput.value = '';
+        }
+
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Enhanced navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('nav');
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-white/95', 'shadow-xl');
+            } else {
+                navbar.classList.remove('bg-white/95', 'shadow-xl');
+            }
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-up');
+                }
+            });
+        }, observerOptions);
+
+        // Observe sections for animations
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Auto-hide chatbot on scroll
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (scrollTop > lastScrollTop && scrollTop > 200) {
+                // Scrolling down
+                chatWindow.classList.add('hidden');
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+
+        // Mobile Menu Functionality
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const menuIcon = document.getElementById('menu-icon');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('active');
+            mobileMenuOverlay.classList.add('active');
+            menuIcon.classList.remove('fa-bars');
+            menuIcon.classList.add('fa-times');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('active');
+            mobileMenuOverlay.classList.remove('active');
+            menuIcon.classList.remove('fa-times');
+            menuIcon.classList.add('fa-bars');
+            document.body.style.overflow = '';
+        }
+
+        mobileMenuBtn.addEventListener('click', () => {
+            if (mobileMenu.classList.contains('active')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        });
+
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+        // Close mobile menu when clicking on menu links
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // Close mobile menu on window resize if screen becomes large
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024) {
+                closeMobileMenu();
+            }
+        });
+    </script>
+</body>
+</html>

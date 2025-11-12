@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Error Modal</title>
+  <link rel="stylesheet" href="modals.css">
+</head>
+<body>
+
+<div class="overlay">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()">×</button>
+    <h2>This is a modal 2</h2>
+
+    <!-- Error Alert -->
+    <div class="alert error">
+      <span class="icon">❌</span>
+      <strong>Error:</strong> You have been rejected from the program.
+    </div>
+
+    <p>
+      Pellentesque habitant morbi tristique senectus et netus...
+    </p>
+
+    <div class="modal-actions">
+      <button class="btn accept">Read</button>
+      <button class="btn decline">Delete<button>
+    </div>
+  </div>
+</div>
+
+<script>
+function closeModal() {
+  document.querySelector('.overlay').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

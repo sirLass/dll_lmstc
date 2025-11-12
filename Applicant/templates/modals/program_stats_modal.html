@@ -1,0 +1,42 @@
+<!-- Program Statistics Modal -->
+<div id="programStatsModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <button class="modal-close-btn" onclick="closeProgramStatsModal()">&times;</button>
+        <h3 class="text-2xl font-bold text-purple-500 mb-6 text-center">All Programs Overview</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4 bg-purple-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tl-md">Program Name</th>
+                        <th class="py-3 px-4 bg-purple-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Description</th>
+                        <th class="py-3 px-4 bg-purple-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Schedule</th>
+                        <th class="py-3 px-4 bg-purple-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tr-md">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for program in Programss %}
+                        <tr class="odd:bg-gray-100">
+                            <td class="py-2 px-4 whitespace-nowrap font-medium">{{ program.program_name }}</td>
+                            <td class="py-2 px-4">
+                                <div class="max-w-xs truncate" title="{{ program.program_detail }}">
+                                    {{ program.program_detail|truncatechars:50 }}
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 whitespace-nowrap text-sm">{{ program.program_sched }}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center py-4">No programs found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-6 text-center">
+            <p class="text-lg font-semibold text-gray-700">Total Programs: <span class="text-purple-600">{{ counted_programs }}</span></p>
+        </div>
+    </div>
+</div>

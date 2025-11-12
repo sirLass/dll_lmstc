@@ -1,0 +1,1135 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLL | Lucena Manpower Skills Training Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes fadeInOut {
+            0%, 30% { opacity: 1; }
+            33%, 66% { opacity: 0; }
+            70%, 100% { opacity: 1; }
+        }
+        
+        .hero-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        
+        .hero-image.active {
+            opacity: 1;
+        }
+        
+        .hero-image:nth-child(1) {
+            animation: fadeInOut 15s infinite;
+        }
+        
+        .hero-image:nth-child(2) {
+            animation: fadeInOut 15s infinite 5s;
+        }
+        
+        .hero-image:nth-child(3) {
+            animation: fadeInOut 15s infinite 10s;
+        }
+                
+        @keyframes morphShape {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+            50% { border-radius: 70% 30% 40% 60% / 40% 70% 60% 30%; }
+            75% { border-radius: 40% 70% 60% 30% / 70% 40% 50% 70%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+                
+        .morphing-image {
+            animation: morphShape 8s ease-in-out infinite;
+        }
+                
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+                
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+                
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+                
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+                
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+                
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+                
+        .glass-effect {
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+                
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+                
+        .card-hover:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.2);
+        }
+                
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+                
+        .scroll-smooth {
+            scroll-behavior: smooth;
+        }
+                
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+                
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+                
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+        }
+        
+        /* Mobile Menu Styles */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+        
+        .mobile-menu-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+                
+        .carousel-container {
+            scroll-snap-type: x mandatory;
+        }
+                
+        .carousel-item {
+            scroll-snap-align: start;
+        }
+                
+        .chatbot-bounce {
+            animation: float 2s ease-in-out infinite;
+        }
+                
+        .hero-overlay {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(139, 92, 246, 0.6));
+        }
+                
+        .section-divider {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            height: 2px;
+            width: 100px;
+            margin: 0 auto;
+        }
+        
+        /* Mobile Menu Styles */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+        
+        .mobile-menu-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Enrollment Banner Styles */
+        @keyframes slideRight {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .enrollment-banner {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .enrollment-text {
+            animation: slideRight 20s linear infinite;
+            white-space: nowrap;
+        }
+        
+        .enrollment-banner:hover .enrollment-text {
+            animation-play-state: paused;
+        }
+        
+        /* Modal backdrop */
+        .modal-backdrop {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
+        /* Countdown timer styles */
+        .countdown-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body class="scroll-smooth bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+    <!-- Enhanced Navbar -->
+    <nav class="fixed top-0 left-0 w-full glass-effect shadow-xl z-50 transition-all duration-300 border-b border-white/20" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full shadow-lg border-2 border-white">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 blur"></div>
+                    </div>
+                    <div class="hidden sm:block">
+                        <h3 class="text-blue-800 font-bold text-sm md:text-base lg:text-lg xl:text-xl leading-tight">Lucena Manpower Skills Training Center</h3>
+                        <p class="text-blue-600 text-xs md:text-xs xl:text-sm font-medium">Dalubhasaan Ng Lungsod Ng Lucena</p>
+                    </div>
+                </div>
+                                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'Home' %}" class="text-blue-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Home
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="{% url 'Program' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Programs
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="{% url 'About' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        About
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+                                
+                <div class="hidden lg:flex items-center space-x-3">
+                    <a href="{% url 'Program' %}" class="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-rocket mr-2"></i>Apply Now
+                    </a>
+                    <a href="{% url 'Login' %}" class="border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Log In
+                    </a>
+                </div>
+                                
+                <!-- Mobile menu button -->
+                <div class="lg:hidden">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-700 hover:text-blue-600 p-2">
+                        <i class="fas text-xl" :class="mobileMenuOpen ? 'fa-times' : 'fa-bars'"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+            <!-- Mobile Menu -->
+            <div x-show="mobileMenuOpen" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95"
+                 class="lg:hidden bg-white border-t border-gray-200 shadow-lg">
+                <div class="px-4 py-6 space-y-4">
+                    <a href="{% url 'Home' %}" class="block text-blue-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-home mr-3"></i>Home
+                    </a>
+                    <a href="{% url 'Program' %}" class="block text-gray-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-graduation-cap mr-3"></i>Programs
+                    </a>
+                    <a href="{% url 'About' %}" class="block text-gray-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-info-circle mr-3"></i>About
+                    </a>
+                    <div class="border-t border-gray-200 pt-4 space-y-3">
+                        <a href="{% url 'Program' %}" class="block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg text-center">
+                            <i class="fas fa-rocket mr-2"></i>Apply Now
+                        </a>
+                        <a href="{% url 'Login' %}" class="block border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md text-center">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Log In
+                        </a>
+                    </div>
+                </div>
+            </div>
+    </nav>
+
+    <!-- Enrollment News Banner (Only visible during enrollment period) -->
+    {% if enrollment_info.is_active and enrollment_info.event %}
+    <div class="enrollment-banner fixed top-20 left-0 w-full z-40 py-3 cursor-pointer shadow-lg" onclick="openEnrollmentCountdown()">
+        <div class="overflow-hidden">
+            <div class="enrollment-text inline-block">
+                <span class="text-white font-bold text-lg px-8">
+                    <i class="fas fa-bullhorn mr-3 animate-pulse"></i>
+                    🎓 ENROLLMENT NOW OPEN! 
+                    <span class="mx-4">|</span>
+                    📅 Starts: {{ enrollment_info.event.start_date }} 
+                    <span class="mx-4">|</span>
+                    ⏰ Ends: {{ enrollment_info.event.end_date }}
+                    <span class="mx-4">|</span>
+                    🎯 {{ enrollment_info.batch_display }}
+                    <span class="mx-4">|</span>
+                    👉 Click here for countdown timer!
+                    <span class="mx-8">•</span>
+                    🎓 ENROLLMENT NOW OPEN! 
+                    <span class="mx-4">|</span>
+                    📅 Starts: {{ enrollment_info.event.start_date }} 
+                    <span class="mx-4">|</span>
+                    ⏰ Ends: {{ enrollment_info.event.end_date }}
+                    <span class="mx-4">|</span>
+                    🎯 {{ enrollment_info.batch_display }}
+                    <span class="mx-4">|</span>
+                    👉 Click here for countdown timer!
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Enhanced Hero Section with Fading Images -->
+    <section class="relative h-screen overflow-hidden">
+        <!-- Background Images -->
+        <div class="hero-image">
+            <img src="{% static 'Images/lmstc_B.jpg' %}" alt="Training A" class="w-full h-full object-cover">
+            <div class="absolute inset-0 hero-overlay"></div>
+        </div>
+        
+        <div class="hero-image">
+            <img src="{% static 'Images/lmstc_C.jpg' %}" alt="Training B" class="w-full h-full object-cover">
+            <div class="absolute inset-0 hero-overlay"></div>
+        </div>
+        
+        <div class="hero-image">
+            <img src="{% static 'Images/headline.jpg' %}" alt="Training C" class="w-full h-full object-cover">
+            <div class="absolute inset-0 hero-overlay"></div>
+        </div>
+
+        <!-- Fixed Content -->
+        <div class="absolute inset-0 flex items-center justify-center z-10">
+            <div class="text-center text-white max-w-5xl px-4 sm:px-6 fade-in-up">
+                <h1 class="text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-4 sm:mb-6 leading-tight">
+                    Empower Your <span class="text-yellow-300">Future</span>
+                </h1>
+                <p class="text-sm sm:text-base md:text-xl lg:text-2xl mb-6 sm:mb-8 opacity-90 max-w-3xl mx-auto px-2">Join our comprehensive training programs and unlock your potential with industry-leading education and expert guidance</p>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                    <a href="{% url 'Program' %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105">
+                        <i class="fas fa-graduation-cap mr-2"></i>Start Your Journey
+                    </a>
+                    <a href="{% url 'About' %}" class="inline-block border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg transition-all duration-300">
+                        <i class="fas fa-info-circle mr-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+                
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-0 right-0 text-white animate-bounce z-10">
+            <div class="flex flex-col items-center justify-center">
+                <span class="text-sm mb-2 opacity-75">Scroll Down</span>
+                <i class="fas fa-chevron-down text-2xl"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Programs Section -->
+    <section class="py-24 bg-gradient-to-br from-white via-blue-50 to-indigo-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 sm:mb-16 md:mb-20">
+                <div class="section-divider mb-4 sm:mb-6"></div>
+                <h2 class="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold gradient-text mb-4 sm:mb-6 px-4">Our Programs</h2>
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">Discover our comprehensive training programs designed to equip you with cutting-edge, industry-relevant skills for tomorrow's workforce</p>
+            </div>
+                        
+            <div class="relative">
+                <!-- Enhanced Carousel -->
+                <div id="programs-carousel" class="flex overflow-x-auto carousel-container space-x-4 sm:space-x-6 md:space-x-8 pb-6 sm:pb-8 scrollbar-hide">
+                    {% for prog in Programss %}
+                    <div class="flex-none w-64 sm:w-72 md:w-80 carousel-item">
+                        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl card-hover overflow-hidden h-[480px] sm:h-[520px] md:h-[550px] flex flex-col border border-blue-100">
+                            <!-- Enhanced Image Section -->
+                            <div class="relative bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 p-4 sm:p-6 md:p-8 h-36 sm:h-44 md:h-48">
+                                {% if prog.images.all %}
+                                    {% for img in prog.images.all %}
+                                        {% if forloop.first %}
+                                            <div class="mx-auto w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-white shadow-2xl">
+                                                <img src="{{ img.image.url }}" alt="{{ prog.program_name }}" class="w-full h-full object-cover">
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="mx-auto w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full bg-white/20 flex items-center justify-center text-white border-2 sm:border-3 md:border-4 border-white shadow-2xl">
+                                        <i class="fas fa-graduation-cap text-2xl sm:text-3xl md:text-4xl"></i>
+                                    </div>
+                                {% endif %}
+                                                                
+                                <div class="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-full shadow-lg">
+                                    <i class="fas fa-star mr-1"></i>Featured
+                                </div>
+                                                                
+                                <!-- Decorative elements -->
+                                <div class="absolute top-4 left-4 w-8 h-8 bg-white/20 rounded-full"></div>
+                                <div class="absolute bottom-4 left-4 w-6 h-6 bg-white/10 rounded-full"></div>
+                            </div>
+                                                        
+                            <!-- Enhanced Content -->
+                            <div class="flex-1 p-4 sm:p-6 md:p-8 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 text-center leading-tight">
+                                        {{ prog.program_name }}
+                                    </h3>
+                                    <p class="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 text-center">
+                                        {{ prog.program_detail }}
+                                    </p>
+                                    <div class="text-center mb-4 sm:mb-6">
+                                        <div class="inline-flex items-center bg-blue-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                                            <i class="fas fa-user-tie text-blue-600 mr-1 sm:mr-2 text-xs sm:text-sm"></i>
+                                            <span class="text-blue-700 font-semibold text-xs sm:text-sm">{{ prog.program_trainor }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                                                
+                                <div class="text-center">
+                                    <a href="{% url 'Prog_Info' prog.id %}" class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs sm:text-sm md:text-base">
+                                        <i class="fas fa-arrow-right mr-1 sm:mr-2"></i>Learn More
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                                
+                <!-- Enhanced Navigation Buttons -->
+                <button onclick="scrollCarousel('left')" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white shadow-2xl rounded-full p-4 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-300 z-10 border border-blue-100">
+                    <i class="fas fa-chevron-left text-xl"></i>
+                </button>
+                <button onclick="scrollCarousel('right')" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white shadow-2xl rounded-full p-4 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-300 z-10 border border-blue-100">
+                    <i class="fas fa-chevron-right text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Main Content Section -->
+    <section class="py-12 sm:py-16 md:py-20 lg:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-8 sm:gap-12 md:gap-16">
+                <div class="lg:w-1/2 space-y-4 sm:space-y-6 md:space-y-8">
+                    <div class="section-divider mb-4 sm:mb-6 md:mb-8"></div>
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-blue-800 leading-tight">
+                        Dalubhasaan Ng Lungsod Ng Lucena
+                    </h2>
+                    <h3 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold gradient-text">
+                        Lucena Manpower Skills Training Center
+                    </h3>
+                    <p class="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed">
+                        Join the dynamic community at DLL-LMSTC, where your educational journey takes off and your future soars. Experience hands-on training, gain industry-relevant skills, and set the stage for success with us!
+                    </p>
+                                        
+                    <!-- Feature highlights -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-blue-600"></i>
+                            </div>
+                            <span class="text-gray-700 font-medium">Expert Trainors</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-blue-600"></i>
+                            </div>
+                            <span class="text-gray-700 font-medium">Hands-on Training</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-blue-600"></i>
+                            </div>
+                            <span class="text-gray-700 font-medium">Industry Certification</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-blue-600"></i>
+                            </div>
+                            <span class="text-gray-700 font-medium">Job Placement</span>
+                        </div>
+                    </div>
+                                        
+                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <a href="{% url 'Program' %}" class="inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-center text-sm sm:text-base">
+                            <i class="fas fa-phone mr-2"></i>INQUIRE NOW!
+                        </a>
+                        <a href="{% url 'About' %}" class="inline-block border-2 border-blue-500 text-blue-500 font-bold px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full hover:bg-blue-500 hover:text-white transition-all duration-300 text-center text-sm sm:text-base">
+                            <i class="fas fa-info-circle mr-2"></i>Learn More
+                        </a>
+                    </div>
+                </div>
+                                
+                <div class="lg:w-1/2 flex justify-center">
+                    <div class="relative float-animation">
+                        <img src="{% static 'Images/Homepage_image.jpg' %}" alt="Home" class="morphing-image w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 object-cover shadow-2xl">
+                        <div class="absolute -inset-6 bg-gradient-to-r from-blue-400 via-purple-500 to-yellow-400 rounded-full opacity-20 blur-2xl"></div>
+                        <!-- Decorative elements -->
+                        <div class="absolute -top-4 -right-4 w-20 h-20 bg-yellow-400 rounded-full opacity-20 animate-pulse"></div>
+                        <div class="absolute -bottom-4 -left-4 w-16 h-16 bg-blue-400 rounded-full opacity-20 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced About Section -->
+    <section class="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-8 sm:gap-12 md:gap-16">
+                <div class="lg:w-1/3">
+                    <div class="relative">
+                        <img src="{% static 'Images/lmstc_admin.png' %}" alt="Coordinator" class="w-full max-w-sm mx-auto rounded-3xl shadow-2xl">
+                        <div class="absolute -inset-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-3xl opacity-20 blur-2xl"></div>
+                        <!-- Decorative frame -->
+                        <div class="absolute -inset-2 border-2 border-white/20 rounded-3xl"></div>
+                    </div>
+                </div>
+                                
+                <div class="lg:w-2/3 text-white">
+                    <div class="section-divider bg-gradient-to-r from-transparent via-white to-transparent mb-4 sm:mb-6 md:mb-8"></div>
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 md:mb-8 leading-tight">
+                        Welcome to the Official Website of
+                        <span class="text-yellow-300 block mt-2 sm:mt-3 md:mt-4">Lucena Manpower Skills Training Center</span>
+                    </h2>
+                                        
+                    <p class="text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed mb-6 sm:mb-8 opacity-90">
+                        Our mission is to empower individuals with practical skills and knowledge needed to excel in today's dynamic job market. We are committed to providing hands-on training, industry-relevant education, and a supportive learning environment.
+                    </p>
+                                        
+                    <!-- Stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-300">10+</div>
+                            <div class="text-xs sm:text-sm opacity-75">Programs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-300">100+</div>
+                            <div class="text-xs sm:text-sm opacity-75">Graduates</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-300">5+</div>
+                            <div class="text-xs sm:text-sm opacity-75">Years</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-300">95%</div>
+                            <div class="text-xs sm:text-sm opacity-75">Success Rate</div>
+                        </div>
+                    </div>
+                                        
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20">
+                        <div class="flex items-center space-x-3 sm:space-x-4">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-yellow-400 rounded-full flex items-center justify-center">
+                                <i class="fas fa-quote-left text-white text-base sm:text-lg md:text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-lg sm:text-xl md:text-2xl font-bold text-yellow-300 mb-1 sm:mb-2">Glenda J. Maglonso</p>
+                                <p class="text-sm sm:text-base md:text-lg opacity-90">DLL-LMSTC Coordinator</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Contact Section -->
+    <section class="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12 md:mb-16">
+                <div class="section-divider mb-4 sm:mb-6"></div>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold gradient-text mb-4 sm:mb-6 px-4">Get In Touch</h2>
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto px-4">We're here to help you start your learning journey. Reach out to us through any of these channels</p>
+            </div>
+                        
+            <div class="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 lg:p-12 border border-blue-100">
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+                    <!-- Live Chat -->
+                    <div class="text-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl sm:rounded-3xl hover:shadow-lg transition-all duration-300 card-hover border border-blue-200">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-5 md:mb-6 shadow-lg">
+                            <i class="fab fa-facebook-messenger text-white text-xl sm:text-2xl md:text-3xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-2 sm:mb-3 text-base sm:text-lg">Live Chat</h3>
+                        <p class="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5 md:mb-6">Connect with us on Facebook for instant support</p>
+                        <a href="https://web.facebook.com/lmstcbagonglucena" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 text-sm">
+                            <i class="fab fa-facebook-f mr-2"></i>Visit Page
+                        </a>
+                    </div>
+                                        
+                    <!-- Email -->
+                    <div class="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-3xl hover:shadow-lg transition-all duration-300 card-hover border border-green-200">
+                        <div class="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <i class="fas fa-envelope text-white text-3xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-3 text-lg">Email Support</h3>
+                        <p class="text-sm text-gray-600 mb-6">Send us your questions and we'll respond quickly</p>
+                        <a href="mailto:email@gmail.com" class="inline-block bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 text-sm">
+                            <i class="fas fa-paper-plane mr-2"></i>Send Email
+                        </a>
+                    </div>
+                                        
+                    <!-- Location -->
+                    <div class="text-center p-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl hover:shadow-lg transition-all duration-300 card-hover border border-purple-200">
+                        <div class="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <i class="fas fa-map-marker-alt text-white text-3xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-3 text-lg">Visit Our Office</h3>
+                        <p class="text-sm text-gray-600 mb-6">Come see us in person for a campus tour</p>
+                        <div class="inline-block bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 text-sm">
+                            <i class="fas fa-building mr-2"></i>Isabang Verse
+                        </div>
+                    </div>
+                                        
+                    <!-- Phone -->
+                    <div class="text-center p-8 bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl hover:shadow-lg transition-all duration-300 card-hover border border-orange-200">
+                        <div class="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <i class="fas fa-phone text-white text-3xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-800 mb-3 text-lg">Call Us</h3>
+                        <p class="text-sm text-gray-600 mb-6">Available during office hours for consultation</p>
+                        <div class="inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 text-sm">
+                            <i class="fas fa-phone-alt mr-2"></i>(+1) 234-4567-789
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Map Section -->
+    <section class="py-12 sm:py-16 md:py-20 lg:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12 md:mb-16">
+                <div class="section-divider mb-4 sm:mb-6"></div>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-4 sm:mb-6 px-4">Find Us Here</h2>
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 px-4">Located in the heart of Lucena City, easily accessible by public transport</p>
+            </div>
+                        
+            <div class="rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border-2 sm:border-4 border-white">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d1675.7683600865482!2d121.59004937991764!3d13.946276052286747!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bd4b64769fffc1%3A0x2e9552cc614c2e98!2sDalubhasaan%20ng%20Lungsod%20ng%20Lucena!5e0!3m2!1sen!2sph!4v1742537781894!5m2!1sen!2sph"
+                    width="100%"
+                    height="300"
+                    class="sm:h-[400px] md:h-[500px]"
+                    style="border:0;"
+                    allowfullscreen=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Chatbot -->
+    <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+        <button id="chatbot-toggle" class="chatbot-bounce bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 border-2 sm:border-4 border-white">
+            <img src="{% static 'Images/chatlogo.png' %}" alt="" class="h-10 w-auto sm:h-12">
+        </button>
+                
+        <div id="chatbot-window" class="hidden fixed sm:absolute bottom-0 sm:bottom-20 right-0 left-0 sm:left-auto w-full sm:w-80 h-[500px] sm:h-96 bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 sm:p-6 flex justify-between items-center">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm sm:text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base sm:text-lg">LMSTC Assistant</h3>
+                        <p class="text-xs sm:text-sm opacity-90">Online now</p>
+                    </div>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200 p-1 sm:p-2 rounded-full hover:bg-white/10 transition-all duration-300">
+                    <i class="fas fa-times text-lg sm:text-xl"></i>
+                </button>
+            </div>
+                        
+            <div id="chat-messages" class="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                <div class="text-center text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                        <i class="fas fa-robot text-blue-500 text-base sm:text-xl"></i>
+                    </div>
+                    <p class="font-medium">Welcome to LMSTC!</p>
+                    <p class="text-xs sm:text-sm">Ask me about our programs, coordinators, or anything else.</p>
+                </div>
+            </div>
+                        
+            <div class="p-3 sm:p-4 border-t bg-white">
+                <div class="flex space-x-2 sm:space-x-3">
+                    <input type="text" id="chat-input" placeholder="Type your message..." class="flex-1 p-2 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="chat-send" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-2 sm:p-3 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-paper-plane text-sm sm:text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Footer -->
+    <footer class="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div class="md:col-span-2">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-16 w-16 rounded-full border-2 border-white shadow-lg">
+                        <div>
+                            <h3 class="text-2xl font-bold">LMSTC</h3>
+                            <p class="text-sm opacity-75">Skills Training Center</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 leading-relaxed mb-6 max-w-md">
+                        Empowering individuals with practical skills and knowledge for today's dynamic job market. Your success is our mission.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
+                            <i class="fab fa-facebook-f text-lg"></i>
+                        </a>
+                    </div>
+                </div>
+                                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Quick Links</h4>
+                    <div class="space-y-3">
+                        <a href="{% url 'Home' %}" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-home mr-2"></i>Home
+                        </a>
+                        <a href="{% url 'About' %}" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-info-circle mr-2"></i>About
+                        </a>
+                        <a href="{% url 'Program' %}" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-graduation-cap mr-2"></i>Programs
+                        </a>
+                        <a href="#" class="block text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-300">
+                            <i class="fas fa-envelope mr-2"></i>Contact
+                        </a>
+                    </div>
+                </div>
+                                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Contact Info</h4>
+                    <div class="space-y-3 text-gray-300">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-map-marker-alt text-yellow-400"></i>
+                            <span class="text-sm">Isabang Verse, Lucena City</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-phone text-yellow-400"></i>
+                            <span class="text-sm">(+1) 234-4567-789</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-envelope text-yellow-400"></i>
+                            <span class="text-sm">email@gmail.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                        
+            <div class="border-t border-gray-700 pt-8 text-center">
+                <p class="text-gray-400">
+                    © 2025 Lucena Manpower Skills Training Center. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Enrollment Countdown Modal -->
+    {% if enrollment_info.is_active and enrollment_info.event %}
+    <div id="enrollmentCountdownModal" class="fixed inset-0 modal-backdrop flex justify-center items-center z-50 hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border-4 border-blue-500">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white relative">
+                <button onclick="closeEnrollmentCountdown()" class="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+                <div class="text-center">
+                    <i class="fas fa-calendar-check text-5xl mb-4 animate-pulse"></i>
+                    <h2 class="text-3xl font-bold mb-2">Enrollment Period Active!</h2>
+                    <p class="text-lg opacity-90">{{ enrollment_info.batch_display }} - Don't miss out!</p>
+                </div>
+            </div>
+
+            <!-- Countdown Timer -->
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Time Remaining Until Enrollment Ends</h3>
+                    <p class="text-gray-600">
+                        <i class="far fa-calendar-alt mr-2"></i>
+                        {{ enrollment_info.event.start_date }} - {{ enrollment_info.event.end_date }}
+                    </p>
+                </div>
+
+                <!-- Countdown Boxes -->
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="countdown-box rounded-2xl p-6 text-center transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-5xl font-bold text-white mb-2" id="countdown-days">00</div>
+                        <div class="text-white text-sm uppercase tracking-wider">Days</div>
+                    </div>
+                    <div class="countdown-box rounded-2xl p-6 text-center transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-5xl font-bold text-white mb-2" id="countdown-hours">00</div>
+                        <div class="text-white text-sm uppercase tracking-wider">Hours</div>
+                    </div>
+                    <div class="countdown-box rounded-2xl p-6 text-center transform hover:scale-105 transition-transform duration-300">
+                        <div class="text-5xl font-bold text-white mb-2" id="countdown-minutes">00</div>
+                        <div class="text-white text-sm uppercase tracking-wider">Minutes</div>
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6">
+                    <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        Important Information
+                    </h4>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                            <span>Submit your application before the deadline</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                            <span>Complete all required documents for faster processing</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                            <span>Check your email for application status updates</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- CTA Button -->
+                <div class="text-center">
+                    <a href="{% url 'Program' %}" class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-rocket mr-2"></i>Apply Now!
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        // Initialize hero image cycling
+        let currentImageIndex = 0;
+        const heroImages = document.querySelectorAll('.hero-image');
+        
+        function showNextImage() {
+            heroImages[currentImageIndex].classList.remove('active');
+            currentImageIndex = (currentImageIndex + 1) % heroImages.length;
+            heroImages[currentImageIndex].classList.add('active');
+        }
+        
+        // Show first image immediately
+        heroImages[0].classList.add('active');
+        
+        // Change image every 5 seconds
+        setInterval(showNextImage, 5000);
+
+        // Enhanced Carousel Functionality
+        function scrollCarousel(direction) {
+            const carousel = document.getElementById('programs-carousel');
+            const scrollAmount = 320; // Width of one card plus gap
+                        
+            if (direction === 'left') {
+                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            } else {
+                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            }
+        }
+
+        // Touch/Swipe Support for Mobile Devices
+        const carousel = document.getElementById('programs-carousel');
+        let startX = 0;
+        let isDragging = false;
+
+        carousel.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+        });
+
+        carousel.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+        }, { passive: false });
+
+        carousel.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+            
+            if (Math.abs(diff) > 50) { // Minimum swipe distance
+                if (diff > 0) {
+                    scrollCarousel('right');
+                } else {
+                    scrollCarousel('left');
+                }
+            }
+            
+            isDragging = false;
+        });
+
+        // Enhanced Chatbot Functionality
+        const chatToggle = document.getElementById('chatbot-toggle');
+        const chatWindow = document.getElementById('chatbot-window');
+        const chatClose = document.getElementById('chatbot-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+
+        chatToggle.addEventListener('click', () => {
+            chatWindow.classList.toggle('hidden');
+            if (!chatWindow.classList.contains('hidden')) {
+                chatInput.focus();
+            }
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWindow.classList.add('hidden');
+        });
+
+        const responses = {
+            documentation: "Our documentator is Irish Valerie Martinez.",
+            frontend: "Our frontend developer is Jiro Miko Viñas.",
+            backend: "Our backend developer is Brian Perez.",
+            coordinator: "Glenda J. Maglonso is our DLL-LMSTC Coordinator.",
+            available_programs: "Currently, DLL-LMSTC has 10 available programs.",
+            glenda: "Ma'am Glenda or Glenda J. Maglonso, is the DLL-LMSTC Coordinator",
+            hi: "Hello there! How can I help you today?",
+            hello: "Hello there! How can I help you today?",
+            thank_you: "You're welcome! Is there anything else you'd like to know? Don't hesitate to ask!",
+            programs: "We offer various training programs including technical skills, vocational training, and professional development courses.",
+            location: "We're located at Isabang Verse, Lucena City. You can find us easily using the map on our website.",
+            contact: "You can reach us through Facebook, email at email@gmail.com, or call us at (+1) 234-4567-789."
+        };
+
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+                        
+            const bubble = document.createElement('div');
+            bubble.className = `inline-block max-w-xs px-4 py-3 rounded-2xl ${
+                sender === 'user' 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-sm' 
+                    : 'bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm'
+            }`;
+            bubble.textContent = message;
+                        
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = chatInput.value.trim().toLowerCase();
+            if (!message) return;
+
+            addMessage(chatInput.value, 'user');
+                        
+            let reply = "Sorry, I didn't understand that. Please try asking about our coordinator, programs, location, or team members.";
+                        
+            for (const [key, response] of Object.entries(responses)) {
+                if (message.includes(key.replace('_', ' '))) {
+                    reply = response;
+                    break;
+                }
+            }
+
+            setTimeout(() => addMessage(reply, 'bot'), 800);
+            chatInput.value = '';
+        }
+
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Enhanced navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('nav');
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-white/95', 'shadow-xl');
+            } else {
+                navbar.classList.remove('bg-white/95', 'shadow-xl');
+            }
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-up');
+                }
+            });
+        }, observerOptions);
+
+        // Observe sections for animations
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Auto-hide chatbot on scroll
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (scrollTop > lastScrollTop && scrollTop > 200) {
+                // Scrolling down
+                chatWindow.classList.add('hidden');
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+
+
+        // Enrollment Countdown Modal Functions
+        function openEnrollmentCountdown() {
+            const modal = document.getElementById('enrollmentCountdownModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                startCountdown();
+            }
+        }
+
+        function closeEnrollmentCountdown() {
+            const modal = document.getElementById('enrollmentCountdownModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+            }
+        }
+
+        // Close modal when clicking outside
+        const enrollmentModal = document.getElementById('enrollmentCountdownModal');
+        if (enrollmentModal) {
+            enrollmentModal.addEventListener('click', (e) => {
+                if (e.target === enrollmentModal) {
+                    closeEnrollmentCountdown();
+                }
+            });
+        }
+
+        // Countdown Timer Logic
+        let countdownInterval;
+
+        function startCountdown() {
+            {% if enrollment_info.is_active and enrollment_info.event %}
+            // Parse the end date from Django template
+            const endDateStr = '{{ enrollment_info.event.end_date }}';
+            const endTimeStr = '{{ enrollment_info.event.end_time }}';
+            
+            // Create end date object
+            let endDate;
+            if (endTimeStr && endTimeStr !== 'None') {
+                endDate = new Date(endDateStr + 'T' + endTimeStr);
+            } else {
+                // If no time specified, set to end of day
+                endDate = new Date(endDateStr + 'T23:59:59');
+            }
+
+            function updateCountdown() {
+                const now = new Date();
+                const timeRemaining = endDate - now;
+
+                if (timeRemaining <= 0) {
+                    // Enrollment ended
+                    document.getElementById('countdown-days').textContent = '00';
+                    document.getElementById('countdown-hours').textContent = '00';
+                    document.getElementById('countdown-minutes').textContent = '00';
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                    }
+                    return;
+                }
+
+                // Calculate days, hours, minutes
+                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+
+                // Update display with leading zeros
+                document.getElementById('countdown-days').textContent = String(days).padStart(2, '0');
+                document.getElementById('countdown-hours').textContent = String(hours).padStart(2, '0');
+                document.getElementById('countdown-minutes').textContent = String(minutes).padStart(2, '0');
+            }
+
+            // Update immediately
+            updateCountdown();
+
+            // Clear any existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            // Update every minute (60000 ms)
+            countdownInterval = setInterval(updateCountdown, 60000);
+            {% endif %}
+        }
+    </script>
+</body>
+</html>

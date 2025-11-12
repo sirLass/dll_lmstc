@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-Step UI (4 Pages)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f0f2f5;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button[disabled] {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="step active" id="step1">
+      <h2>Step 1</h2>
+      <p>This is the content of step 1.</p>
+    </div>
+    <div class="step" id="step2">
+      <h2>Step 2</h2>
+      <p>This is the content of step 2.</p>
+    </div>
+    <div class="step" id="step3">
+      <h2>Step 3</h2>
+      <p>This is the content of step 3.</p>
+    </div>
+    <div class="step" id="step4">
+      <h2>Step 4</h2>
+      <p>This is the content of step 4. Final step!</p>
+    </div>
+
+    <div class="buttons">
+      <button id="prevBtn" onclick="changeStep(-1)" disabled>Previous</button>
+      <button id="nextBtn" onclick="changeStep(1)">Next</button>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    function showStep(step) {
+      for (let i = 1; i <= totalSteps; i++) {
+        document.getElementById('step' + i).classList.remove('active');
+      }
+      document.getElementById('step' + step).classList.add('active');
+
+      // Handle button states
+      document.getElementById('prevBtn').disabled = step === 1;
+      document.getElementById('nextBtn').textContent = step === totalSteps ? 'Finish' : 'Next';
+    }
+
+    function changeStep(direction) {
+      if (currentStep + direction < 1 || currentStep + direction > totalSteps) return;
+      currentStep += direction;
+      showStep(currentStep);
+    }
+
+    // Initial call
+    showStep(currentStep);
+  </script>
+
+</body>
+</html>

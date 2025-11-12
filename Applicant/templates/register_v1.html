@@ -1,0 +1,391 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register as</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+</head>
+<body class="bg-cover bg-center bg-fixed flex justify-center items-center min-h-screen px-4" style="background-image: url({% static 'Images/backgrounds.png' %});">
+
+  <div class="flex justify-center">
+    <a class="w-full bg-blue-400 py-2 rounded text-white text-center font-semibold hover:bg-blue-500 transition" href="{% url 'Home' %}">Return to the Homepage</a>
+  </div>
+
+    <div x-data="{ showApplicantModal: false, showEmployerModal: false }">
+
+        <!-- ✅ Buttons -->
+        <div class="min-h-screen flex flex-col items-center justify-center px-4">
+
+            <!-- Heading -->
+            <div class="text-center mb-10">
+              <h1 class="text-4xl md:text-6xl font-bold text-blue-500">I want to register as</h1>
+            </div>
+          
+            <!-- Buttons -->
+            <div class="flex flex-col md:flex-row md:space-x-12 space-y-4 md:space-y-0">
+              <!-- Applicant Button -->
+              <button @click="showApplicantModal = true"
+                      class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-300 transform hover:scale-105">
+                Applicant
+              </button>
+          
+              <!-- Employer Button -->
+              <button @click="showEmployerModal = true"
+                      class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 transition duration-300 transform hover:scale-105">
+                Employer
+              </button>
+            </div>
+          
+        </div>
+          
+          
+      
+        <!-- ✅ Applicant Modal -->
+        <div x-show="showApplicantModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+             @click.self="showApplicantModal = false">
+          
+          <div x-show="showApplicantModal"
+               x-transition:enter="transition transform ease-out duration-300"
+               x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+               x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+               x-transition:leave="transition transform ease-in duration-200"
+               x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+               x-transition:leave-end="opacity-0 translate-y-10 scale-95"
+               class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative z-50">
+      
+            <button @click="showApplicantModal = false" class="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl">&times;</button>
+      
+            <h2 class="text-xl font-bold mb-4">Applicant Registration</h2>
+      
+            <form method="POST" action="{% url 'Register' %}" class="space-y-6">
+              {% csrf_token %}
+                
+                <div class="relative" x-data="{ focused: false, hasValue: false }">
+                    <label class="absolute left-2 top-3 text-black transition-all duration-300 px-1"
+                           :class="(focused || hasValue) ? 'top-0 left-2 text-sm text-black' : 'text-base'">
+                        Username
+                    </label>
+                    <input type="text" name="username" required 
+                           class="w-full p-2 pt-4 border-b-2 border-black focus:border-blue-500 transition-all bg-transparent text-black outline-none"
+                           @focus="focused = true" 
+                           @blur="focused = false; hasValue = $event.target.value !== ''" 
+                           :class="hasValue ? 'bg-transparent' : ''">
+                </div>
+                
+                <div class="relative" x-data="{ focused: false, hasValue: false }">
+                    <label class="absolute left-2 top-3 text-black transition-all duration-300 bg-white px-1"
+                           :class="(focused || hasValue) ? 'top-0 left-2 text-sm text-black' : 'text-base'">
+                        Email
+                    </label>
+                    <input type="email" name="email" required 
+                           class="w-full p-2 pt-4 border-b-2 border-black focus:border-blue-500 transition-all bg-transparent text-black outline-none"
+                           @focus="focused = true" 
+                           @blur="focused = false; hasValue = $event.target.value !== ''" 
+                           :class="hasValue ? 'bg-transparent' : ''">
+                </div>
+                
+                <div x-data="passwordStrength()" class="relative w-full max-w-md mx-auto" x-data="{ focused: false, hasValue: false }">
+                    <label 
+                      class="absolute left-2 top-3 text-black transition-all duration-300 bg-white px-1 cursor-text"
+                      :class="(focused || password) ? 'top-0 left-2 text-sm text-black' : 'text-base'"
+                      @click="focusInput()"
+                    >
+                      Password
+                    </label>
+                    <input 
+                      :type="showPassword ? 'text' : 'password'"
+                      x-model="password"
+                      @focus="focused = true" 
+                      @blur="focused = false"
+                      name="password" 
+                      required 
+                      class="w-full p-2 pt-4 border-b-2 transition-all bg-transparent text-black outline-none pr-10"
+                      :class="{
+                        'border-red-500': strengthScore < 2 && password.length > 0,
+                        'border-yellow-400': strengthScore === 2,
+                        'border-green-500': strengthScore > 2
+                      }"
+                      ref="input"
+                    >
+                  
+                    <!-- Show/hide toggle button -->
+                    <button 
+                      type="button" 
+                      @click="showPassword = !showPassword" 
+                      class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900 focus:outline-none"
+                      tabindex="-1"
+                    >
+                      <template x-if="!showPassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </template>
+                      <template x-if="showPassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.985 9.985 0 012.024-3.401M6.06 6.06A9.985 9.985 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.973 9.973 0 01-4.132 5.464M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M3 3l18 18" />
+                        </svg>
+                      </template>
+                    </button>
+                  
+                    <!-- Strength bar -->
+                    <div class="h-1 mt-1 rounded bg-gray-300">
+                      <div 
+                        class="h-1 rounded transition-all duration-500"
+                        :class="{
+                          'bg-red-500': strengthScore < 2,
+                          'bg-yellow-400': strengthScore === 2,
+                          'bg-green-500': strengthScore > 2
+                        }"
+                        :style="`width: ${strengthPercent}%`"
+                      ></div>
+                    </div>
+                  
+                    <!-- Strength text -->
+                    <p class="mt-1 text-sm font-semibold"
+                       :class="{
+                         'text-red-600': strengthScore < 2,
+                         'text-yellow-600': strengthScore === 2,
+                         'text-green-600': strengthScore > 2
+                       }"
+                    >
+                      <template x-if="password.length === 0">Enter a password</template>
+                      <template x-if="password.length > 0 && strengthScore < 2">Weak password</template>
+                      <template x-if="strengthScore === 2">Moderate password</template>
+                      <template x-if="strengthScore > 2">Strong password</template>
+                    </p>
+                  </div>
+                  
+                  <script>
+                    function passwordStrength() {
+                      return {
+                        focused: false,
+                        password: '',
+                        showPassword: false,
+                        get strengthScore() {
+                          let score = 0;
+                          if (this.password.length >= 8) score++;
+                          if (/[A-Z]/.test(this.password)) score++;
+                          if (/[0-9]/.test(this.password)) score++;
+                          if (/[\W_]/.test(this.password)) score++;
+                          return score;
+                        },
+                        get strengthPercent() {
+                          return (this.strengthScore / 4) * 100;
+                        },
+                        focusInput() {
+                          this.$refs.input.focus();
+                        }
+                      }
+                    }
+                </script>
+                  
+                  
+                
+                <div class="relative" x-data="{ focused: false, hasValue: false }">
+                    <label class="absolute left-2 top-3 text-black transition-all duration-300 bg-white px-1"
+                           :class="(focused || hasValue) ? 'top-0 left-2 text-sm text-black' : 'text-base'">
+                        Confirm Password
+                    </label>
+                    <input type="password" name="confirm_password" required 
+                           class="w-full p-2 pt-4 border-b-2 border-black focus:border-blue-500 transition-all bg-transparent text-black outline-none"
+                           @focus="focused = true" 
+                           @blur="focused = false; hasValue = $event.target.value !== ''" 
+                           :class="hasValue ? 'bg-transparent' : ''">
+                </div>
+                
+                <button class="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition">
+                    <a href="{% url 'Login' %}">
+                        Register
+                    </a>
+                    
+                </button>
+                <div class="flex justify-center">
+                    <h1 class="mr-2">Already have an account, try to</h1>
+                    <a class="text-blue-700 font-bold" href="{% url 'Login' %}">Login</a>
+                </div>                
+            </form>
+          </div>
+        </div>
+      
+        <!-- ✅ Employer Modal -->
+        <div x-show="showEmployerModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+             @click.self="showEmployerModal = false">
+      
+          <div x-show="showEmployerModal"
+               x-transition:enter="transition transform ease-out duration-300"
+               x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+               x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+               x-transition:leave="transition transform ease-in duration-200"
+               x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+               x-transition:leave-end="opacity-0 translate-y-10 scale-95"
+               class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative z-50">
+      
+            <button @click="showEmployerModal = false" class="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl">&times;</button>
+      
+            <h2 class="text-xl font-bold mb-4">Employer Registration</h2>
+      
+            <!-- Include Alpine.js in your page if you haven't yet -->
+            <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+            <form method="POST" action="/register" 
+                class="max-w-md mx-auto p-6 bg-white rounded-lg shadow space-y-6" 
+                x-data="passwordStrength()">
+
+            <!-- CSRF Token -->
+            {% csrf_token %}
+
+            <h2 class="text-2xl font-bold text-center text-gray-800">Register</h2>
+
+            <!-- Username -->
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input 
+                type="text" id="username" name="username" required
+                class="mt-1 w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none px-1 py-2"
+                >
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input 
+                type="email" id="email" name="email" required
+                class="mt-1 w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none px-1 py-2"
+                >
+            </div>
+
+            <!-- Password -->
+            <div class="relative">
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input 
+                :type="showPassword ? 'text' : 'password'"
+                id="password" name="password" required
+                x-model="password"
+                @input="calculateStrength()"
+                class="mt-1 w-full border-b-2 transition-colors duration-300
+                        px-1 py-2 pr-10 outline-none"
+                :class="{
+                    'border-red-500': strengthScore < 2 && password.length > 0,
+                    'border-yellow-400': strengthScore === 2,
+                    'border-green-500': strengthScore > 2
+                }"
+                >
+                
+                <!-- Show/Hide password toggle -->
+                <button type="button" @click="showPassword = !showPassword"
+                class="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900 focus:outline-none"
+                tabindex="-1"
+                aria-label="Toggle password visibility"
+                >
+                <template x-if="!showPassword">
+                    <!-- Eye icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </template>
+                <template x-if="showPassword">
+                    <!-- Eye Off icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.985 9.985 0 012.024-3.401M6.06 6.06A9.985 9.985 0 0112 5c4.477 0 8.268 2.943 9.542 7a9.973 9.973 0 01-4.132 5.464M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M3 3l18 18" />
+                    </svg>
+                </template>
+                </button>
+
+                <!-- Password strength bar -->
+                <div class="h-1 mt-2 rounded bg-gray-200">
+                <div 
+                    class="h-1 rounded transition-all duration-500"
+                    :class="{
+                    'bg-red-500': strengthScore < 2,
+                    'bg-yellow-400': strengthScore === 2,
+                    'bg-green-500': strengthScore > 2
+                    }"
+                    :style="`width: ${strengthPercent}%`"
+                ></div>
+                </div>
+
+                <!-- Strength text -->
+                <p class="mt-1 text-sm font-semibold"
+                :class="{
+                    'text-red-600': strengthScore < 2,
+                    'text-yellow-600': strengthScore === 2,
+                    'text-green-600': strengthScore > 2
+                }"
+                >
+                <template x-if="password.length === 0">Enter a password</template>
+                <template x-if="password.length > 0 && strengthScore < 2">Weak password</template>
+                <template x-if="strengthScore === 2">Moderate password</template>
+                <template x-if="strengthScore > 2">Strong password</template>
+                </p>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition">
+                Register
+                </button>
+            </div>
+            </form>
+
+            <script>
+            function passwordStrength() {
+                return {
+                password: '',
+                showPassword: false,
+                strengthScore: 0,
+                strengthPercent: 0,
+                calculateStrength() {
+                    let score = 0;
+                    if (this.password.length >= 8) score++;
+                    if (/[A-Z]/.test(this.password)) score++;
+                    if (/[0-9]/.test(this.password)) score++;
+                    if (/[\W_]/.test(this.password)) score++;
+                    this.strengthScore = score;
+                    this.strengthPercent = (score / 4) * 100;
+                }
+                }
+            }
+            </script>
+
+          </div>
+        </div>
+      
+    </div>
+
+
+  
+      
+    
+
+</body>
+</html>

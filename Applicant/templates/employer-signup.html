@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Employer Sign Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+  <div class="bg-white p-8 w-96 shadow-lg rounded-lg">
+    <h2 class="text-2xl font-semibold text-center mb-6 text-gray-800">Employer Sign Up</h2>
+
+    <!-- Example placeholder for messages -->
+    <div id="messages" class="mb-4 hidden rounded-md p-3"></div>
+
+    <form method="POST" action="{% url 'employer_signup' %}" class="space-y-4" id="signup-form">
+      {% csrf_token %}
+
+      <div>
+        <label for="company_name" class="block text-gray-700 text-sm mb-1">Company Name</label>
+        <input type="text" id="company_name" name="company_name" required
+               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+        <p class="text-red-500 text-xs mt-1 hidden" id="error-company_name"></p>
+      </div>
+
+      <div>
+        <label for="contact_person" class="block text-gray-700 text-sm mb-1">Contact Person</label>
+        <input type="text" id="contact_person" name="contact_person" required
+               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+        <p class="text-red-500 text-xs mt-1 hidden" id="error-contact_person"></p>
+      </div>
+
+      <div>
+        <label for="email" class="block text-gray-700 text-sm mb-1">Email Address</label>
+        <input type="email" id="email" name="email" required
+               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+        <p class="text-red-500 text-xs mt-1 hidden" id="error-email"></p>
+      </div>
+
+      <div>
+        <label for="password" class="block text-gray-700 text-sm mb-1">Password</label>
+        <div class="relative">
+          <input type="password" id="password" name="password" required
+                 class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+          <span class="absolute right-3 top-2.5 cursor-pointer toggle-password select-none">👁️</span>
+        </div>
+        <small class="text-gray-500 text-xs block mt-1">At least 6 characters with letters and numbers.</small>
+        <p class="text-red-500 text-xs mt-1 hidden" id="error-password"></p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="terms" name="terms" required class="w-4 h-4" />
+        <label for="terms" class="text-gray-700 text-sm">
+          I agree to the 
+          <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and 
+          <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+        </label>
+        <p class="text-red-500 text-xs mt-1 hidden" id="error-terms"></p>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-900 text-white py-3 rounded-md font-bold hover:bg-blue-700 transition duration-200">
+        REGISTER
+      </button>
+    </form>
+
+    <p class="mt-4 text-center text-gray-600 text-sm">
+      Already have an account? 
+      <a href="{% url 'Employer_login' %}" class="text-blue-600 hover:underline">Sign in here</a>
+    </p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const togglePassword = document.querySelector('.toggle-password');
+      const passwordInput = document.querySelector('#password');
+      if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', () => {
+          const type = passwordInput.type === 'password' ? 'text' : 'password';
+          passwordInput.type = type;
+          togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+      }
+
+      // Example simple client-side validation placeholder
+      const form = document.getElementById('signup-form');
+      form.addEventListener('submit', (e) => {
+        // Clear previous errors
+        document.querySelectorAll('p[id^="error-"]').forEach(el => el.classList.add('hidden'));
+        let valid = true;
+
+        // Example validation: company name not empty
+        if (!form.company_name.value.trim()) {
+          document.getElementById('error-company_name').textContent = "Company name is required.";
+          document.getElementById('error-company_name').classList.remove('hidden');
+          valid = false;
+        }
+
+        // Add more validation as needed...
+
+        if (!valid) e.preventDefault();
+      });
+    });
+  </script>
+</body>
+</html>

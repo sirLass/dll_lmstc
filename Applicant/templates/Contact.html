@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Contact</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-cover bg-center bg-fixed" style="background-image: url({% static 'Images/blue.png' %});">
+    
+    <!-- Navbar -->
+    <div class="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-700 to-blue-500 flex items-center px-8 h-20 z-50">
+        <div class="flex justify-between items-center w-full max-w-6xl mx-auto">
+            <div class="flex items-center gap-4 ml-[-70px]">
+                <img id="logo" src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-12">
+                <h3 class="text-white font-bold text-lg">Lucena Manpower Skills Training Center</h3>
+            </div>
+            <nav class="flex items-center gap-6">
+                <a href="{% url 'Home' %}" class="text-white font-semibold hover:text-blue-200">Home</a>
+                <a href="{% url 'About' %}" class="text-white font-semibold hover:text-blue-200">About</a>
+                <a href="{% url 'Program' %}" class="text-white font-semibold hover:text-blue-200">Programs</a>
+                <a href="{% url 'Contact' %}" class="text-white font-semibold hover:text-blue-200">Contact</a>
+                <a href="{% url 'Login' %}" id="signup_button" class="bg-blue-400 px-4 py-2 rounded-full text-white font-bold hover:bg-blue-600">Log In</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="pt-40 pb-20 px-6 flex justify-center">
+        <div class="bg-white/80 rounded-3xl shadow-2xl p-10 max-w-6xl w-full grid md:grid-cols-2 gap-10 backdrop-blur-lg">
+            
+            <!-- Left Side -->
+            <div>
+                <p class="mb-2 text-sm font-medium text-gray-700">Reach Out To Us</p>
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">Send Us A Message.</h1>
+                <p class="text-gray-700 mb-6">Or just reach out manually to <a href="mailto:hello@slothui.com" class="text-blue-600 hover:underline">hello@slothui.com</a>.</p>
+            </div>
+
+            <!-- Right Side: Contact Options -->
+            <div class="grid grid-cols-2 gap-6 text-sm text-gray-800">
+                
+                <!-- Live Chat -->
+                <div class="bg-white shadow-lg rounded-xl p-5 hover:shadow-xl transition">
+                    <p class="font-semibold">Live Chat</p>
+                    <p class="text-xs text-gray-500 mb-2">Speak to our team quickly.</p>
+                    <a href="mailto:hello@slothui.com" class="text-blue-600 text-xs hover:underline">hello@slothui.com</a>
+                </div>
+
+                <!-- Help Ticket -->
+                <div class="bg-white shadow-lg rounded-xl p-5 hover:shadow-xl transition">
+                    <p class="font-semibold">Submit Help Ticket</p>
+                    <p class="text-xs text-gray-500 mb-2">We're available to help via email.</p>
+                    <a href="mailto:support@slothui.com" class="text-blue-600 text-xs hover:underline">support@slothui.com</a>
+                </div>
+
+                <!-- Office Visit -->
+                <div class="bg-white shadow-lg rounded-xl p-5 hover:shadow-xl transition">
+                    <p class="font-semibold">Visit Our Office</p>
+                    <p class="text-xs text-gray-500 mb-2">Visit our location in real life.</p>
+                    <p class="text-blue-600 text-xs">221b Elementary Avenue, NY</p>
+                </div>
+
+                <!-- Call Us -->
+                <div class="bg-white shadow-lg rounded-xl p-5 hover:shadow-xl transition">
+                    <p class="font-semibold">Call Us Directly</p>
+                    <p class="text-xs text-gray-500 mb-2">Available during working hours.</p>
+                    <p class="text-blue-600 text-xs">(+1) 234-4567-789</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Section -->
+    <div class="flex justify-center pb-20">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d1675.7683600865482!2d121.59004937991764!3d13.946276052286747!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bd4b64769fffc1%3A0x2e9552cc614c2e98!2sDalubhasaan%20ng%20Lungsod%20ng%20Lucena!5e0!3m2!1sen!2sph!4v1742537781894!5m2!1sen!2sph" 
+            width="1000" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            class="rounded-2xl shadow-xl">
+        </iframe>
+    </div>
+
+</body>
+<!-- Footer -->
+<footer class="bg-white/80 text-gray-700 backdrop-blur-lg shadow-inner py-8 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        <!-- Logo or Name -->
+        <div class="text-center md:text-left">
+            <h2 class="text-xl font-semibold text-blue-800">Lucena Manpower Skills Training Center</h2>
+            <p class="text-sm">Empowering skills. Enriching lives.</p>
+        </div>
+
+        <!-- Navigation Links -->
+        <div class="flex gap-6 text-sm">
+            <a href="{% url 'Home' %}" class="hover:text-blue-600 transition">Home</a>
+            <a href="{% url 'About' %}" class="hover:text-blue-600 transition">About</a>
+            <a href="{% url 'Program' %}" class="hover:text-blue-600 transition">Programs</a>
+            <a href="{% url 'Contact' %}" class="hover:text-blue-600 transition">Contact</a>
+        </div>
+
+        <!-- Social Icons (you can replace with actual icons/images later) -->
+        <div class="flex gap-4">
+            <a href="#" class="hover:text-blue-600">Facebook</a>
+            <a href="#" class="hover:text-blue-600">Twitter</a>
+            <a href="#" class="hover:text-blue-600">Instagram</a>
+        </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-gray-300 mt-6 pt-4 text-center text-xs text-gray-500">
+        © 2025 Lucena Manpower Skills Training Center. All rights reserved.
+    </div>
+</footer>
+
+</html>

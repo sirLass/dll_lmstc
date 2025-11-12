@@ -1,0 +1,347 @@
+<!-- Ticket Section for Document Management -->
+<div id="ticket-section" class="content-section">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-5">Support Tickets</h2>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Create New Ticket -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Submit a Support Ticket</h3>
+                    <form id="ticketForm">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ticket Category</label>
+                            <select id="ticketCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select a category...</option>
+                                <option value="academic">Academic/Training Issues</option>
+                                <option value="technical">Technical Issues</option>
+                                <option value="administrative">Administrative Issues</option>
+                                <option value="complaint">Complaint</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
+                            <select id="ticketPriority" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="low">Low - General inquiry</option>
+                                <option value="medium" selected>Medium - Standard issue</option>
+                                <option value="high">High - Urgent matter</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Send to</label>
+                            <select id="ticketRecipient" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="admin">Admin Support</option>
+                                <option value="trainer">My Trainer</option>
+                                <option value="both">Both Admin & Trainer</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                            <input type="text" id="ticketSubject" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Brief description of your issue">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="ticketDescription" rows="5" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Please provide detailed information about your issue or complaint..."></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Attachment (Optional)</label>
+                            <input type="file" id="ticketAttachment" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                            <p class="text-xs text-gray-500 mt-1">Supported formats: JPG, PNG, PDF, DOC, DOCX (Max 5MB)</p>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit Ticket
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Tickets -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">My Tickets</h3>
+                    <p class="text-sm text-gray-600 mt-1">Track your submitted tickets</p>
+                </div>
+                <div class="max-h-96 overflow-y-auto" id="ticketsList">
+                    <!-- Tickets will be loaded here dynamically -->
+                    <div class="p-4 text-center text-gray-500">
+                        <i class="fas fa-ticket-alt text-3xl mb-2"></i>
+                        <p>No tickets submitted yet</p>
+                        <p class="text-xs">Submit your first support ticket above</p>
+                    </div>
+                </div>
+                
+                <!-- Ticket Categories Help -->
+                <div class="p-4 bg-gray-50">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-2">Common Issues:</h4>
+                    <ul class="text-xs text-gray-600 space-y-1">
+                        <li>• Login/Access Problems</li>
+                        <li>• Document Upload Issues</li>
+                        <li>• Training Schedule Questions</li>
+                        <li>• Certificate Requests</li>
+                        <li>• Profile Update Problems</li>
+                        <li>• General Inquiries</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ticket Details Modal -->
+    <div id="ticketModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800" id="modalTicketTitle">Ticket Details</h3>
+                        <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6" id="modalTicketContent">
+                    <!-- Ticket details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Ticket Management JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const ticketForm = document.getElementById('ticketForm');
+    const ticketModal = document.getElementById('ticketModal');
+    const closeModal = document.getElementById('closeModal');
+    
+    // Load user tickets on page load
+    loadUserTickets();
+    
+    // Submit ticket form
+    if (ticketForm) {
+        ticketForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitTicket();
+        });
+    }
+    
+    // Close modal
+    if (closeModal) {
+        closeModal.addEventListener('click', function() {
+            ticketModal.classList.add('hidden');
+        });
+    }
+    
+    // Close modal when clicking outside
+    ticketModal.addEventListener('click', function(e) {
+        if (e.target === ticketModal) {
+            ticketModal.classList.add('hidden');
+        }
+    });
+    
+    function submitTicket() {
+        const formData = {
+            category: document.getElementById('ticketCategory').value,
+            priority: document.getElementById('ticketPriority').value,
+            recipient: document.getElementById('ticketRecipient').value,
+            subject: document.getElementById('ticketSubject').value,
+            description: document.getElementById('ticketDescription').value
+        };
+        
+        // Validate form
+        if (!formData.category || !formData.subject || !formData.description) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+        
+        // Submit ticket
+        fetch('/create-ticket/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ticket submitted successfully! Ticket ID: ' + data.ticket_id);
+                ticketForm.reset();
+                loadUserTickets(); // Reload tickets list
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while submitting the ticket.');
+        });
+    }
+    
+    function loadUserTickets() {
+        fetch('/get-user-tickets/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTickets(data.tickets);
+            } else {
+                console.error('Error loading tickets:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    
+    function displayTickets(tickets) {
+        const ticketsList = document.getElementById('ticketsList');
+        
+        if (tickets.length === 0) {
+            ticketsList.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-ticket-alt text-3xl mb-2"></i>
+                    <p>No tickets submitted yet</p>
+                    <p class="text-xs">Submit your first support ticket above</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let ticketsHtml = '';
+        tickets.forEach(ticket => {
+            ticketsHtml += `
+                <div class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer" onclick="viewTicketDetails('${ticket.ticket_id}')">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-gray-800 mb-1">${ticket.subject}</h4>
+                            <p class="text-xs text-gray-600 mb-2">#${ticket.ticket_id}</p>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 text-xs rounded-full ${ticket.priority_class}">${ticket.priority}</span>
+                                <span class="px-2 py-1 text-xs rounded-full ${ticket.status_class}">${ticket.status}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">${ticket.created_at}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        ticketsList.innerHTML = ticketsHtml;
+    }
+    
+    function viewTicketDetails(ticketId) {
+        fetch(`/get-ticket-details/${ticketId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTicketModal(data.ticket);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading ticket details.');
+        });
+    }
+    
+    function displayTicketModal(ticket) {
+        const modalTitle = document.getElementById('modalTicketTitle');
+        const modalContent = document.getElementById('modalTicketContent');
+        
+        modalTitle.textContent = `Ticket #${ticket.ticket_id}`;
+        
+        let responsesHtml = '';
+        if (ticket.responses && ticket.responses.length > 0) {
+            responsesHtml = `
+                <div class="mt-6">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-3">Responses:</h4>
+                    <div class="space-y-3">
+            `;
+            
+            ticket.responses.forEach(response => {
+                responsesHtml += `
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-800">${response.responder} (${response.responder_type})</span>
+                            <span class="text-xs text-gray-500">${response.created_at}</span>
+                        </div>
+                        <p class="text-sm text-gray-700">${response.message}</p>
+                    </div>
+                `;
+            });
+            
+            responsesHtml += '</div></div>';
+        }
+        
+        modalContent.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-800">Subject:</h4>
+                    <p class="text-sm text-gray-700">${ticket.subject}</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-800">Category:</h4>
+                        <p class="text-sm text-gray-700">${ticket.category}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-800">Priority:</h4>
+                        <p class="text-sm text-gray-700">${ticket.priority}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-800">Status:</h4>
+                        <p class="text-sm text-gray-700">${ticket.status}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-800">Recipient:</h4>
+                        <p class="text-sm text-gray-700">${ticket.recipient}</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-800">Description:</h4>
+                    <p class="text-sm text-gray-700 whitespace-pre-wrap">${ticket.description}</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-800">Created:</h4>
+                    <p class="text-sm text-gray-700">${ticket.created_at}</p>
+                </div>
+                
+                ${responsesHtml}
+            </div>
+        `;
+        
+        ticketModal.classList.remove('hidden');
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <table class="table-auto w-full">
+            <thead>
+              <tr>
+                <th>Applicant</th>
+                <th>Program</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for application in applications %}
+                {% with profile=application.applicant.learner_profile %}
+                  <tr>
+                    <td>{{ application.applicant.username }}</td>
+                    <td>{{ application.program.program_name }}</td>
+                    <td>{{ application.status }}</td>
+                    <td>
+                      <!-- View Button with Profile ID -->
+                      <a href="{% url 'view_profile' profile.id %}" 
+                         class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                {% endwith %}
+              {% endfor %}
+            </tbody>
+        </table>          
+    </div>
+</body>
+</html>

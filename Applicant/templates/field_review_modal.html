@@ -1,0 +1,188 @@
+<!-- Field Review Modal - To be included in Dashboard_admin.html -->
+<div id="fieldReviewModal" class="modal">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <button class="modal-close-btn" onclick="closeFieldReviewModal()">&times;</button>
+        <h2 class="text-xl font-semibold mb-4 text-orange-600">Mark Incomplete/Incorrect Information</h2>
+        <p class="mb-4 text-gray-700">Select the fields that contain misspelled or incorrect information for <span id="reviewApplicantName" class="font-bold"></span>:</p>
+        
+        <form id="fieldReviewForm" method="POST" action="{% url 'mark_incomplete_fields' %}">
+            {% csrf_token %}
+            <input type="hidden" name="application_id" id="reviewApplicationId">
+            
+            <div class="space-y-4">
+                <!-- Personal Information Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Personal Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="first_name" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">First Name</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="last_name" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Last Name</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="middle_name" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Middle Name</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="extension_name" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Extension Name</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="sex" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Sex</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="civil_status" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Civil Status</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="birthdate" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Birthdate</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="extension_name" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Extension Name (Jr., Sr.)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="nationality" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Nationality</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="skills" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Skills</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Contact Information Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Contact Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="contact_number" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Contact Number</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="email" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Email Address</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Address Information Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Address Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="region" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Region</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="province" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Province</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="city" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">City/Municipality</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="barangay" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Barangay</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="district" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">District</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="street" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">House No./Street/Subdivision</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Birthplace Information Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Birthplace Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="birthplace_region" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Birthplace Region</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="birthplace_province" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Birthplace Province</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="birthplace_city" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Birthplace City/Municipality</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Employment Information Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Employment Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="employment_status" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Employment Status</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="monthly_income" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Monthly Income</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="company_name" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Company Name</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="date_hired" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Date Hired</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Other Information Section -->
+                <div class="border-b pb-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Other Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="educational_attainment" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Educational Attainment</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="parent_guardian" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Parent/Guardian Name</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="permanent_address" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">Parent/Guardian Address</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="marked_fields" value="id_picture" class="form-checkbox h-4 w-4 text-blue-600">
+                            <span class="text-sm">ID Picture</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Review Notes -->
+                <div class="mt-4">
+                    <label for="reviewNotes" class="block text-sm font-medium text-gray-700 mb-2">Review Notes (Optional)</label>
+                    <textarea id="reviewNotes" name="review_notes" rows="3" class="w-full p-2 border border-gray-300 rounded-lg text-black" placeholder="Add notes about what needs to be corrected..."></textarea>
+                </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 mt-6">
+                <button type="button" onclick="closeFieldReviewModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg">
+                    Mark for Review
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

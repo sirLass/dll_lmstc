@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tailwind Modal & Alerts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="m-0 bg-[#2f323e] font-sans">
+
+    <!-- Overlay -->
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <!-- Modal -->
+      <div class="bg-white rounded-xl shadow-2xl p-8 w-11/12 max-w-xl animate-slideIn relative">
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl font-bold">×</button>
+        
+        <h2 class="text-2xl font-semibold text-gray-800">This is a modal</h2>
+        <p class="text-[15px] text-gray-700 leading-relaxed mt-4">
+          Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante.
+        </p>
+        
+        <!-- Alert Examples -->
+        <div class="mt-6 space-y-4">
+          <!-- Success -->
+          <div class="flex items-start gap-3 p-4 bg-green-50 border-l-4 border-green-600 text-green-800 rounded-lg shadow">
+            <span class="text-xl">✔️</span>
+            <div><strong>Success:</strong> You have been accepted to the program.</div>
+          </div>
+          
+          <!-- Error -->
+          <div class="flex items-start gap-3 p-4 bg-red-50 border-l-4 border-red-600 text-red-800 rounded-lg shadow">
+            <span class="text-xl">❌</span>
+            <div><strong>Error:</strong> You have been rejected from the program.</div>
+          </div>
+          
+          <!-- Info -->
+          <div class="flex items-start gap-3 p-4 bg-blue-50 border-l-4 border-blue-600 text-blue-800 rounded-lg shadow">
+            <span class="text-xl">ℹ️</span>
+            <div><strong>Info:</strong> Please wait while we review your application.</div>
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="mt-6 text-center">
+          <button class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md mr-2">Accept</button>
+          <button class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-md">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function closeModal() {
+        document.querySelector('.fixed.inset-0').style.display = 'none';
+      }
+    </script>
+
+    <style>
+      @keyframes slideIn {
+        from {
+          transform: translateY(-20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      .animate-slideIn {
+        animation: slideIn 0.3s ease-out;
+      }
+    </style>
+  </body>
+</html>

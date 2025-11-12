@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainor Process Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define color variables for easier management */
+        :root {
+            --text-dark: #333333;
+            --text-medium: #666666;
+            --background-light: #F0F2F5; /* Main content background */
+            --card-background: #FFFFFF;
+            --green-icon: #28A745; /* Standard green for approved */
+            --red-icon: #DC3545;   /* Standard red for drop out */
+            --purple-icon: #6F42C1; /* Muted purple for programs */
+            --sidebar-logo-color: #2a6dbd; /* Adjusted to match the darker end of the gradient */
+            --sidebar-active-hover-color: rgba(255, 255, 255, 0.2); /* A subtle white overlay for hover/active */
+            --dark-blue-card-bg: #2C5EBD; /* Dark blue background for new cards */
+            --dark-blue-card-text: #FFFFFF; /* White text for dark blue cards */
+            --light-blue-pie: #5C88E5; /* Light blue for pie chart segment */
+            --red-pie: #FF6B6B; /* Red for pie chart segment */
+            --table-header-blue: #4A89DC; /* Blue for job table header */
+            --status-active-bg: #E6F7D9;
+            --status-active-text: #52C41A;
+            --progress-chart-header-bg: #2A6DBB;
+            --progress-chart-header-text: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: var(--background-light);
+        }
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(180deg, #4a90e2 0%, #2a6dbd 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-top-right-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .sidebar-header .logo {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+            color: var(--sidebar-logo-color);
+            font-size: 1.5rem;
+        }
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-nav li {
+            margin-bottom: 10px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: var(--sidebar-active-hover-color);
+        }
+        .sidebar-nav a i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--card-background);
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-info .icon {
+            margin-right: 10px;
+            color: var(--text-medium);
+        }
+        .user-info .avatar {
+            width: 35px;
+            height: 35px;
+            background-color: var(--sidebar-logo-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        /* Common styles for content sections */
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+
+        /* Common Table Styles */
+        .list-container {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .list-header .left-controls,
+        .list-header .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .list-header select,
+        .list-header input[type="search"] {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        .list-header input[type="search"] {
+            width: 200px;
+        }
+        .list-header .add-button {
+            background-color: var(--table-header-blue);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .list-header .add-button:hover {
+            background-color: #3a7bd5;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: var(--table-header-blue);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+        .data-table td {
+            color: var(--text-dark);
+        }
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .data-table .actions a {
+            color: white;
+            text-decoration: none;
+            margin-right: 10px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .data-table .actions a.view {
+            background-color: #2a6dbd;
+        }
+        .data-table .actions a.view:hover {
+            background-color: #1a5ca0;
+        }
+        .data-table .actions a.archive {
+            background-color: #dc3545;
+        }
+        .data-table .actions a.archive:hover {
+            background-color: #c82333;
+        }
+        .data-table .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .data-table .status-badge.pending {
+            background-color: #FFF3CD;
+            color: #FFC107;
+        }
+        .data-table .status-badge.approved {
+            background-color: #D4EDDA;
+            color: #28A745;
+        }
+
+        /* Pagination styles */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        .pagination span {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            margin-right: 10px;
+        }
+        .pagination button {
+            background-color: var(--card-background);
+            border: 1px solid #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        .pagination button:hover:not(.active-page):not(:disabled) {
+            background-color: #f0f0f0;
+        }
+        .pagination button.active-page {
+            background-color: var(--table-header-blue);
+            color: white;
+            border-color: var(--table-header-blue);
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Progress chart specific styles */
+        .progress-chart-table-container {
+            display: block;
+            overflow-x: auto;
+        }
+        .progress-chart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .progress-chart-table th,
+        .progress-chart-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            text-align: center;
+        }
+        .progress-chart-table th {
+            background-color: var(--progress-chart-header-bg);
+            color: var(--progress-chart-header-text);
+            font-weight: 600;
+        }
+        .progress-chart-table td {
+            font-size: 0.9rem;
+        }
+        .progress-chart-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .progress-chart-table tr:hover {
+            background-color: #f0f0f0;
+        }
+        .progress-chart-table .trainee-name-cell {
+            text-align: left;
+            font-weight: bold;
+        }
+        .progress-chart-table .competency-title-col {
+            text-align: left;
+            vertical-align: top;
+            padding: 15px;
+        }
+        .progress-chart-table .legend-item {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        .progress-chart-table .legend-item svg {
+            width: 18px;
+            height: 18px;
+            margin-right: 5px;
+        }
+        .competency-list {
+            list-style: none;
+            padding: 0;
+            font-size: 1rem;
+        }
+        .competency-list h4 {
+            font-weight: 600;
+            margin-top: 15px;
+            color: var(--text-dark);
+        }
+        .competency-list li {
+            padding: 4px 0;
+            color: var(--text-medium);
+        }
+        .competency-list li span {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-right: 8px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                padding: 15px 10px;
+            }
+            .sidebar-header h2, .sidebar-nav span, .user-info span {
+                display: none;
+            }
+            .sidebar-nav a {
+                justify-content: center;
+                padding: 10px 0;
+            }
+            .sidebar-nav a i {
+                margin-right: 0;
+            }
+            .main-content {
+                margin-left: 80px;
+                padding: 15px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .list-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .list-header input[type="search"] {
+                width: 100%;
+            }
+            .list-header .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .task-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="logo">L</div>
+                <h2>DLL - LMSTC</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-section="smaw" class="active"><i class="fas fa-tasks"></i> <span>SMAW</span></a></li>
+                    <li><a href="#" data-section="dressmaking"><i class="fas fa-cut"></i> <span>Dressmaking</span></a></li>
+                    <li><a href="#" data-section="epas"><i class="fas fa-microchip"></i> <span>EPAS</span></a></li>
+                    <li><a href="#" data-section="eim"><i class="fas fa-bolt"></i> <span>EIM</span></a></li>
+                    <li><a href="#" data-section="hairdressing"><i class="fas fa-cut"></i> <span>Hairdressing</span></a></li>
+                </ul>
+            </nav>
+        </div>
+        <div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#"><i class="fas fa-sign-out-alt"></i> <span>Sign Out</span></a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Trainor Process Dashboard</h1>
+            <div class="user-info">
+                <i class="fas fa-bell icon"></i>
+                <span>Welcome Back</span>
+                <div class="avatar">U</div>
+                <span>User</span>
+            </div>
+        </div>
+        <div id="smaw-section" class="content-section active">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">SMAW NC II Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Shielded Metal Arc Welding (SMAW) NC II Progress Chart</h3>
+                
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Receive and respond to workplace communication</li>
+                                <li><span>B.</span> Work in a team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Apply safety practices</li>
+                                <li><span>B.</span> Interpret drawings and sketches</li>
+                                <li><span>C.</span> Perform industry calculations</li>
+                                <li><span>D.</span> Contribute to quality system</li>
+                                <li><span>E.</span> Use hand tools</li>
+                                <li><span>F.</span> Prepare weld materials</li>
+                                <li><span>G.</span> Set up welding equipment</li>
+                                <li><span>H.</span> Fit-up weld materials</li>
+                                <li><span>I.</span> Repair welds</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Weld carbon steel plates and pipes using SMAW</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Shielded Metal Arc Welder</li>
+                    </ul>
+                </div>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="show-entries-select-smaw">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="search-input-smaw" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="progress-chart-table-smaw">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="9">COMMON COMPETENCIES</th>
+                                <th colspan="1">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="smaw-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-f"></th>
+                                <th>G <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-g"></th>
+                                <th>H <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-h"></th>
+                                <th>I <input type="checkbox" class="competency-check-all" data-competency-group="smaw-common-i"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="smaw-core-a"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainee-table-body-smaw">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="dressmaking-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Dressmaking NC II Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Dressmaking NC II Progress Chart</h3>
+
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in workplace communication</li>
+                                <li><span>B.</span> Work in a team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Carry out measurements and calculation</li>
+                                <li><span>B.</span> Set up and operate machine/s</li>
+                                <li><span>C.</span> Perform basic maintenance</li>
+                                <li><span>D.</span> Apply quality standards</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Draft and cut pattern of casual apparel</li>
+                                <li><span>B.</span> Prepare and cut materials of casual apparel</li>
+                                <li><span>C.</span> Sew casual apparel</li>
+                                <li><span>D.</span> Apply finishing touches on casual apparel</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Dressmaker</li>
+                        <li>Garment Sewer</li>
+                    </ul>
+                </div>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="show-entries-select-dressmaking">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="search-input-dressmaking" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="progress-chart-table-dressmaking">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="4">COMMON COMPETENCIES</th>
+                                <th colspan="4">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-common-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-core-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="dressmaking-core-d"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainee-table-body-dressmaking">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="epas-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Electronic Products Assembly and Servicing (EPAS) NC II Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Electronic Products Assembly and Servicing (EPAS) NC II Progress Chart</h3>
+                
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in workplace communication</li>
+                                <li><span>B.</span> Work in team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Apply quality standards</li>
+                                <li><span>B.</span> Perform computer operations</li>
+                                <li><span>C.</span> Perform mensuration and calculation</li>
+                                <li><span>D.</span> Prepare and interpret technical drawing</li>
+                                <li><span>E.</span> Use hand tools</li>
+                                <li><span>F.</span> Terminate and connect electrical wiring and electronic circuits</li>
+                                <li><span>G.</span> Test electronic components</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Assemble electronic products</li>
+                                <li><span>B.</span> Service consumer electronic products and systems</li>
+                                <li><span>C.</span> Service industrial electronic modules, products, and systems</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Electronic Products Assembler</li>
+                        <li>Domestic Appliance Service Technician</li>
+                        <li>Audio-Video Service Technician</li>
+                        <li>Industrial Electronic Technician</li>
+                        <li>Electronic Production Line Assembler</li>
+                        <li>Factory Production Worker</li>
+                    </ul>
+                </div>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="show-entries-select-epas">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="search-input-epas" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="progress-chart-table-epas">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="7">COMMON COMPETENCIES</th>
+                                <th colspan="3">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="epas-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="epas-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="epas-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="epas-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-f"></th>
+                                <th>G <input type="checkbox" class="competency-check-all" data-competency-group="epas-common-g"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="epas-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="epas-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="epas-core-c"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainee-table-body-epas">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="eim-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Electrical Installation and Maintenance (EIM) NC II Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Electrical Installation and Maintenance (EIM) NC II Progress Chart</h3>
+                
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in workplace communication</li>
+                                <li><span>B.</span> Work in a team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Use hand tools</li>
+                                <li><span>B.</span> Perform mensuration and calculation</li>
+                                <li><span>C.</span> Prepare and interpret technical drawing</li>
+                                <li><span>D.</span> Apply quality standards</li>
+                                <li><span>E.</span> Terminate and connect electrical wiring and electronic circuits</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Perform roughing-in activities, wiring and cabling works for single-phase distribution, power, lighting, and auxiliary systems</li>
+                                <li><span>B.</span> Install electrical protective devices for distribution, power, lighting, auxiliary, lightning protection, and grounding systems</li>
+                                <li><span>C.</span> Install wiring devices of floor and wall-mounted outlets, lighting fixtures/switches, and auxiliary outlets</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Building-Wiring Electrician</li>
+                        <li>Residential/Commercial-Wiring Electrician</li>
+                        <li>Maintenance Electrician</li>
+                    </ul>
+                </div>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="show-entries-select-eim">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="search-input-eim" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="progress-chart-table-eim">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="5">COMMON COMPETENCIES</th>
+                                <th colspan="3">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="eim-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="eim-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="eim-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="eim-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="eim-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="eim-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="eim-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="eim-common-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="eim-common-e"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="eim-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="eim-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="eim-core-c"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainee-table-body-eim">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="hairdressing-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Hairdressing NC II Progress Chart</h2>
+            <div class="list-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Hairdressing NC II Progress Chart</h3>
+
+                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">COMPETENCIES</h4>
+                    <ul class="competency-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-6">
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">BASIC COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Participate in workplace communication</li>
+                                <li><span>B.</span> Work in team environment</li>
+                                <li><span>C.</span> Practice career professionalism</li>
+                                <li><span>D.</span> Practice occupational health and safety procedures</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">COMMON COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Maintain an effective relationship with clients/customers</li>
+                                <li><span>B.</span> Manage own performance</li>
+                                <li><span>C.</span> Apply quality standards</li>
+                                <li><span>D.</span> Maintain a safe, clean, and efficient environment</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <h5 class="text-sm font-semibold text-blue-700 mb-1">CORE COMPETENCIES</h5>
+                            <ul class="list-disc pl-5 text-sm space-y-1">
+                                <li><span>A.</span> Perform pre- and post- hair care activities</li>
+                                <li><span>B.</span> Perform hair and scalp treatment</li>
+                                <li><span>C.</span> Perform basic hair perming</li>
+                                <li><span>D.</span> Perform basic hair coloring</li>
+                                <li><span>E.</span> Perform basic haircutting</li>
+                                <li><span>F.</span> Perform hair bleaching</li>
+                                <li><span>G.</span> Perform hair straightening</li>
+                                <li><span>H.</span> Apply basic make-up</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h4 class="text-lg font-semibold text-gray-700 mt-4 mb-2">A person who has achieved this Qualification is competent to be:</h4>
+                    <ul class="list-disc pl-5 text-sm space-y-1">
+                        <li>Junior Assistant</li>
+                        <li>Colorist</li>
+                        <li>Permist</li>
+                        <li>Make-up Artist</li>
+                        <li>Haircutter</li>
+                        <li>Hairstylist</li>
+                    </ul>
+                </div>
+                <div class="list-header">
+                    <div class="left-controls">
+                        <span>Show</span>
+                        <select id="show-entries-select-hairdressing">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                    <div class="right-controls">
+                        <span>Search:</span>
+                        <input type="search" id="search-input-hairdressing" placeholder="Input trainee name">
+                    </div>
+                </div>
+
+                <div class="progress-chart-table-container">
+                    <table class="progress-chart-table" id="progress-chart-table-hairdressing">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">Trainee Name</th>
+                                <th colspan="4">BASIC COMPETENCIES</th>
+                                <th colspan="4">COMMON COMPETENCIES</th>
+                                <th colspan="8">CORE COMPETENCIES</th>
+                                <th rowspan="2">Progress %</th>
+                                <th rowspan="2">REMARKS</th>
+                            </tr>
+                            <tr>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-basic-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-basic-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-basic-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-basic-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-common-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-common-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-common-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-common-d"></th>
+                                <th>A <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-a"></th>
+                                <th>B <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-b"></th>
+                                <th>C <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-c"></th>
+                                <th>D <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-d"></th>
+                                <th>E <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-e"></th>
+                                <th>F <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-f"></th>
+                                <th>G <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-g"></th>
+                                <th>H <input type="checkbox" class="competency-check-all" data-competency-group="hairdressing-core-h"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainee-table-body-hairdressing">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            // SMAW elements
+            const showEntriesSelectSmaw = document.getElementById('show-entries-select-smaw');
+            const searchInputSmaw = document.getElementById('search-input-smaw');
+            const traineeTableBodySmaw = document.getElementById('trainee-table-body-smaw');
+
+            // Dressmaking elements
+            const showEntriesSelectDressmaking = document.getElementById('show-entries-select-dressmaking');
+            const searchInputDressmaking = document.getElementById('search-input-dressmaking');
+            const traineeTableBodyDressmaking = document.getElementById('trainee-table-body-dressmaking');
+            
+            // EPAS elements
+            const showEntriesSelectEPAS = document.getElementById('show-entries-select-epas');
+            const searchInputEPAS = document.getElementById('search-input-epas');
+            const traineeTableBodyEPAS = document.getElementById('trainee-table-body-epas');
+
+            // EIM elements
+            const showEntriesSelectEIM = document.getElementById('show-entries-select-eim');
+            const searchInputEIM = document.getElementById('search-input-eim');
+            const traineeTableBodyEIM = document.getElementById('trainee-table-body-eim');
+
+            // Hairdressing elements
+            const showEntriesSelectHairdressing = document.getElementById('show-entries-select-hairdressing');
+            const searchInputHairdressing = document.getElementById('search-input-hairdressing');
+            const traineeTableBodyHairdressing = document.getElementById('trainee-table-body-hairdressing');
+
+            // Sample data for SMAW NC II.
+            const smawTrainees = [
+                { name: 'John Doe', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+                { name: 'Jane Smith', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+                { name: 'Peter Jones', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+                { name: 'Sarah Brown', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+                { name: 'Michael Davis', competencies: { 'smaw-basic-a': false, 'smaw-basic-b': false, 'smaw-basic-c': false, 'smaw-basic-d': false, 'smaw-common-a': false, 'smaw-common-b': false, 'smaw-common-c': false, 'smaw-common-d': false, 'smaw-common-e': false, 'smaw-common-f': false, 'smaw-common-g': false, 'smaw-common-h': false, 'smaw-common-i': false, 'smaw-core-a': false } },
+            ];
+
+            // Sample data for Dressmaking NC II.
+            const dressmakingTrainees = [
+                { name: 'Alice Williams', competencies: { 'dressmaking-basic-a': false, 'dressmaking-basic-b': false, 'dressmaking-basic-c': false, 'dressmaking-basic-d': false, 'dressmaking-common-a': false, 'dressmaking-common-b': false, 'dressmaking-common-c': false, 'dressmaking-common-d': false, 'dressmaking-core-a': false, 'dressmaking-core-b': false, 'dressmaking-core-c': false, 'dressmaking-core-d': false } },
+                { name: 'Bob Johnson', competencies: { 'dressmaking-basic-a': false, 'dressmaking-basic-b': false, 'dressmaking-basic-c': false, 'dressmaking-basic-d': false, 'dressmaking-common-a': false, 'dressmaking-common-b': false, 'dressmaking-common-c': false, 'dressmaking-common-d': false, 'dressmaking-core-a': false, 'dressmaking-core-b': false, 'dressmaking-core-c': false, 'dressmaking-core-d': false } },
+                { name: 'Charlie Green', competencies: { 'dressmaking-basic-a': false, 'dressmaking-basic-b': false, 'dressmaking-basic-c': false, 'dressmaking-basic-d': false, 'dressmaking-common-a': false, 'dressmaking-common-b': false, 'dressmaking-common-c': false, 'dressmaking-common-d': false, 'dressmaking-core-a': false, 'dressmaking-core-b': false, 'dressmaking-core-c': false, 'dressmaking-core-d': false } },
+                { name: 'Diana Prince', competencies: { 'dressmaking-basic-a': false, 'dressmaking-basic-b': false, 'dressmaking-basic-c': false, 'dressmaking-basic-d': false, 'dressmaking-common-a': false, 'dressmaking-common-b': false, 'dressmaking-common-c': false, 'dressmaking-common-d': false, 'dressmaking-core-a': false, 'dressmaking-core-b': false, 'dressmaking-core-c': false, 'dressmaking-core-d': false } },
+                { name: 'Ethan Hunt', competencies: { 'dressmaking-basic-a': false, 'dressmaking-basic-b': false, 'dressmaking-basic-c': false, 'dressmaking-basic-d': false, 'dressmaking-common-a': false, 'dressmaking-common-b': false, 'dressmaking-common-c': false, 'dressmaking-common-d': false, 'dressmaking-core-a': false, 'dressmaking-core-b': false, 'dressmaking-core-c': false, 'dressmaking-core-d': false } },
+            ];
+
+            // Sample data for EPAS NC II.
+            const epasTrainees = [
+                { name: 'Alice Williams', competencies: { 'epas-basic-a': false, 'epas-basic-b': false, 'epas-basic-c': false, 'epas-basic-d': false, 'epas-common-a': false, 'epas-common-b': false, 'epas-common-c': false, 'epas-common-d': false, 'epas-common-e': false, 'epas-common-f': false, 'epas-common-g': false, 'epas-core-a': false, 'epas-core-b': false, 'epas-core-c': false } },
+                { name: 'Bob Johnson', competencies: { 'epas-basic-a': false, 'epas-basic-b': false, 'epas-basic-c': false, 'epas-basic-d': false, 'epas-common-a': false, 'epas-common-b': false, 'epas-common-c': false, 'epas-common-d': false, 'epas-common-e': false, 'epas-common-f': false, 'epas-common-g': false, 'epas-core-a': false, 'epas-core-b': false, 'epas-core-c': false } },
+                { name: 'Charlie Green', competencies: { 'epas-basic-a': false, 'epas-basic-b': false, 'epas-basic-c': false, 'epas-basic-d': false, 'epas-common-a': false, 'epas-common-b': false, 'epas-common-c': false, 'epas-common-d': false, 'epas-common-e': false, 'epas-common-f': false, 'epas-common-g': false, 'epas-core-a': false, 'epas-core-b': false, 'epas-core-c': false } },
+                { name: 'Diana Prince', competencies: { 'epas-basic-a': false, 'epas-basic-b': false, 'epas-basic-c': false, 'epas-basic-d': false, 'epas-common-a': false, 'epas-common-b': false, 'epas-common-c': false, 'epas-common-d': false, 'epas-common-e': false, 'epas-common-f': false, 'epas-common-g': false, 'epas-core-a': false, 'epas-core-b': false, 'epas-core-c': false } },
+                { name: 'Ethan Hunt', competencies: { 'epas-basic-a': false, 'epas-basic-b': false, 'epas-basic-c': false, 'epas-basic-d': false, 'epas-common-a': false, 'epas-common-b': false, 'epas-common-c': false, 'epas-common-d': false, 'epas-common-e': false, 'epas-common-f': false, 'epas-common-g': false, 'epas-core-a': false, 'epas-core-b': false, 'epas-core-c': false } },
+            ];
+
+            // Sample data for EIM NC II.
+            const eimTrainees = [
+                { name: 'Liam Wilson', competencies: { 'eim-basic-a': false, 'eim-basic-b': false, 'eim-basic-c': false, 'eim-basic-d': false, 'eim-common-a': false, 'eim-common-b': false, 'eim-common-c': false, 'eim-common-d': false, 'eim-common-e': false, 'eim-core-a': false, 'eim-core-b': false, 'eim-core-c': false } },
+                { name: 'Olivia Moore', competencies: { 'eim-basic-a': false, 'eim-basic-b': false, 'eim-basic-c': false, 'eim-basic-d': false, 'eim-common-a': false, 'eim-common-b': false, 'eim-common-c': false, 'eim-common-d': false, 'eim-common-e': false, 'eim-core-a': false, 'eim-core-b': false, 'eim-core-c': false } },
+                { name: 'Noah Taylor', competencies: { 'eim-basic-a': false, 'eim-basic-b': false, 'eim-basic-c': false, 'eim-basic-d': false, 'eim-common-a': false, 'eim-common-b': false, 'eim-common-c': false, 'eim-common-d': false, 'eim-common-e': false, 'eim-core-a': false, 'eim-core-b': false, 'eim-core-c': false } },
+                { name: 'Emma Brown', competencies: { 'eim-basic-a': false, 'eim-basic-b': false, 'eim-basic-c': false, 'eim-basic-d': false, 'eim-common-a': false, 'eim-common-b': false, 'eim-common-c': false, 'eim-common-d': false, 'eim-common-e': false, 'eim-core-a': false, 'eim-core-b': false, 'eim-core-c': false } },
+                { name: 'James White', competencies: { 'eim-basic-a': false, 'eim-basic-b': false, 'eim-basic-c': false, 'eim-basic-d': false, 'eim-common-a': false, 'eim-common-b': false, 'eim-common-c': false, 'eim-common-d': false, 'eim-common-e': false, 'eim-core-a': false, 'eim-core-b': false, 'eim-core-c': false } },
+            ];
+
+            // Sample data for Hairdressing NC II.
+            const hairdressingTrainees = [
+                { name: 'Chloe Davis', competencies: { 'hairdressing-basic-a': false, 'hairdressing-basic-b': false, 'hairdressing-basic-c': false, 'hairdressing-basic-d': false, 'hairdressing-common-a': false, 'hairdressing-common-b': false, 'hairdressing-common-c': false, 'hairdressing-common-d': false, 'hairdressing-core-a': false, 'hairdressing-core-b': false, 'hairdressing-core-c': false, 'hairdressing-core-d': false, 'hairdressing-core-e': false, 'hairdressing-core-f': false, 'hairdressing-core-g': false, 'hairdressing-core-h': false } },
+                { name: 'Luke Evans', competencies: { 'hairdressing-basic-a': false, 'hairdressing-basic-b': false, 'hairdressing-basic-c': false, 'hairdressing-basic-d': false, 'hairdressing-common-a': false, 'hairdressing-common-b': false, 'hairdressing-common-c': false, 'hairdressing-common-d': false, 'hairdressing-core-a': false, 'hairdressing-core-b': false, 'hairdressing-core-c': false, 'hairdressing-core-d': false, 'hairdressing-core-e': false, 'hairdressing-core-f': false, 'hairdressing-core-g': false, 'hairdressing-core-h': false } },
+                { name: 'Mia Harris', competencies: { 'hairdressing-basic-a': false, 'hairdressing-basic-b': false, 'hairdressing-basic-c': false, 'hairdressing-basic-d': false, 'hairdressing-common-a': false, 'hairdressing-common-b': false, 'hairdressing-common-c': false, 'hairdressing-common-d': false, 'hairdressing-core-a': false, 'hairdressing-core-b': false, 'hairdressing-core-c': false, 'hairdressing-core-d': false, 'hairdressing-core-e': false, 'hairdressing-core-f': false, 'hairdressing-core-g': false, 'hairdressing-core-h': false } },
+                { name: 'Jacob Clark', competencies: { 'hairdressing-basic-a': false, 'hairdressing-basic-b': false, 'hairdressing-basic-c': false, 'hairdressing-basic-d': false, 'hairdressing-common-a': false, 'hairdressing-common-b': false, 'hairdressing-common-c': false, 'hairdressing-common-d': false, 'hairdressing-core-a': false, 'hairdressing-core-b': false, 'hairdressing-core-c': false, 'hairdressing-core-d': false, 'hairdressing-core-e': false, 'hairdressing-core-f': false, 'hairdressing-core-g': false, 'hairdressing-core-h': false } },
+                { name: 'Isabella Rodriguez', competencies: { 'hairdressing-basic-a': false, 'hairdressing-basic-b': false, 'hairdressing-basic-c': false, 'hairdressing-basic-d': false, 'hairdressing-common-a': false, 'hairdressing-common-b': false, 'hairdressing-common-c': false, 'hairdressing-common-d': false, 'hairdressing-core-a': false, 'hairdressing-core-b': false, 'hairdressing-core-c': false, 'hairdressing-core-d': false, 'hairdressing-core-e': false, 'hairdressing-core-f': false, 'hairdressing-core-g': false, 'hairdressing-core-h': false } },
+            ];
+
+            // Combine all trainee data into a single object for easier access
+            const allTraineeData = {
+                'smaw': smawTrainees,
+                'dressmaking': dressmakingTrainees,
+                'epas': epasTrainees,
+                'eim': eimTrainees,
+                'hairdressing': hairdressingTrainees
+            };
+            
+            let activeProgram = 'smaw'; // Set initial active program
+
+            function showSection(sectionId) {
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                const link = document.querySelector(`.sidebar-nav a[data-section="${sectionId.replace('-section', '')}"]`);
+                if (link) {
+                    link.classList.add('active');
+                }
+                activeProgram = sectionId.replace('-section', ''); // Update active program
+                renderTraineeTable();
+            }
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.dataset.section + '-section';
+                    showSection(sectionId);
+                });
+            });
+
+            // Set the initial active section
+            showSection('smaw-section');
+
+            // --- Progress Chart Logic ---
+
+            /**
+             * Calculates the progress percentage for a single trainee.
+             * @param {Object} trainee - The trainee object.
+             * @returns {number} The calculated progress percentage.
+             */
+            function calculateProgress(trainee) {
+                const total = Object.keys(trainee.competencies).length;
+                const completed = Object.values(trainee.competencies).filter(c => c).length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            }
+
+            /**
+             * Renders the trainee table based on current filters.
+             */
+            function renderTraineeTable() {
+                let trainees, searchInput, showEntriesSelect, traineeTableBody;
+
+                if (activeProgram === 'smaw') {
+                    trainees = allTraineeData.smaw;
+                    searchInput = searchInputSmaw;
+                    showEntriesSelect = showEntriesSelectSmaw;
+                    traineeTableBody = traineeTableBodySmaw;
+                } else if (activeProgram === 'dressmaking') {
+                    trainees = allTraineeData.dressmaking;
+                    searchInput = searchInputDressmaking;
+                    showEntriesSelect = showEntriesSelectDressmaking;
+                    traineeTableBody = traineeTableBodyDressmaking;
+                } else if (activeProgram === 'epas') {
+                    trainees = allTraineeData.epas;
+                    searchInput = searchInputEPAS;
+                    showEntriesSelect = showEntriesSelectEPAS;
+                    traineeTableBody = traineeTableBodyEPAS;
+                } else if (activeProgram === 'eim') {
+                    trainees = allTraineeData.eim;
+                    searchInput = searchInputEIM;
+                    showEntriesSelect = showEntriesSelectEIM;
+                    traineeTableBody = traineeTableBodyEIM;
+                } else if (activeProgram === 'hairdressing') {
+                    trainees = allTraineeData.hairdressing;
+                    searchInput = searchInputHairdressing;
+                    showEntriesSelect = showEntriesSelectHairdressing;
+                    traineeTableBody = traineeTableBodyHairdressing;
+                } else {
+                    return; // Do nothing for other sections
+                }
+                
+                const searchQuery = searchInput.value.toLowerCase();
+                const entriesToShow = parseInt(showEntriesSelect.value, 10);
+
+                // Filter trainees based on search query
+                const filteredTrainees = trainees.filter(trainee => 
+                    trainee.name.toLowerCase().includes(searchQuery)
+                );
+
+                // Clear existing trainee rows
+                traineeTableBody.innerHTML = '';
+                
+                // Add new trainee rows from the filtered list, respecting the entries limit
+                filteredTrainees.slice(0, entriesToShow).forEach((trainee, index) => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td class="trainee-name-cell">${index + 1}. ${trainee.name}</td>`;
+                    
+                    for (const competency in trainee.competencies) {
+                        const isChecked = trainee.competencies[competency] ? 'checked' : '';
+                        rowHtml += `<td><input type="checkbox" data-trainee-name="${trainee.name}" data-competency="${competency}" data-program="${activeProgram}" ${isChecked}></td>`;
+                    }
+                    
+                    const progress = calculateProgress(trainee);
+                    rowHtml += `<td>${progress}%</td>`;
+                    rowHtml += `<td></td>`; // Remarks column
+                    
+                    row.innerHTML = rowHtml;
+                    traineeTableBody.appendChild(row);
+                });
+            }
+
+            /**
+             * Handles change events on the tables.
+             */
+            document.addEventListener('change', (event) => {
+                const clickedElement = event.target;
+                if (clickedElement.type === 'checkbox') {
+                    const program = clickedElement.dataset.program;
+                    const trainees = allTraineeData[program];
+                    if (!trainees) {
+                        return;
+                    }
+
+                    if (clickedElement.classList.contains('competency-check-all')) {
+                        // Handle "Check All" functionality for a competency column
+                        const competencyGroup = clickedElement.dataset.competencyGroup;
+                        const isChecked = clickedElement.checked;
+
+                        // Update all trainee data for this competency
+                        trainees.forEach(trainee => {
+                            trainee.competencies[competencyGroup] = isChecked;
+                        });
+
+                    } else {
+                        // Handle single checkbox change
+                        const traineeName = clickedElement.dataset.traineeName;
+                        const competency = clickedElement.dataset.competency;
+                        const isChecked = clickedElement.checked;
+                        
+                        const trainee = trainees.find(t => t.name === traineeName);
+                        if (trainee) {
+                            trainee.competencies[competency] = isChecked;
+                        }
+                    }
+                    
+                    // Re-render the table to update all checkboxes and progress percentages
+                    renderTraineeTable();
+                }
+            });
+
+            // Event listeners for search and show entries
+            searchInputSmaw.addEventListener('input', renderTraineeTable);
+            showEntriesSelectSmaw.addEventListener('change', renderTraineeTable);
+            searchInputDressmaking.addEventListener('input', renderTraineeTable);
+            showEntriesSelectDressmaking.addEventListener('change', renderTraineeTable);
+            searchInputEPAS.addEventListener('input', renderTraineeTable);
+            showEntriesSelectEPAS.addEventListener('change', renderTraineeTable);
+            searchInputEIM.addEventListener('input', renderTraineeTable);
+            showEntriesSelectEIM.addEventListener('change', renderTraineeTable);
+            searchInputHairdressing.addEventListener('input', renderTraineeTable);
+            showEntriesSelectHairdressing.addEventListener('change', renderTraineeTable);
+
+            // Initial render of the tables
+            renderTraineeTable();
+        });
+    </script>
+</body>
+</html>

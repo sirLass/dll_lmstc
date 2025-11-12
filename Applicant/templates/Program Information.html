@@ -1,0 +1,805 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ program.program_name }} - DLL LMSTC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        .glass-effect {
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+        }
+        .section-divider {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            height: 2px;
+            width: 100px;
+            margin: 0 auto;
+        }
+        /* Enhanced Image Carousel */
+        .image-carousel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.2);
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .carousel-slide {
+            flex: 0 0 100%;
+            position: relative;
+        }
+        .carousel-slide img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+        }
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            z-index: 10;
+        }
+        .carousel-nav:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-nav.prev {
+            left: 1rem;
+        }
+        .carousel-nav.next {
+            right: 1rem;
+        }
+        .carousel-dots {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.75rem;
+            z-index: 10;
+        }
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .carousel-dot.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        .chatbot-bounce {
+            animation: float 2s ease-in-out infinite;
+        }
+        /* Modal enhancements */
+        .modal-backdrop {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+        /* Program features grid */
+        .feature-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+        }
+        /* Warning modal specific styles */
+        .warning-modal-content {
+            background: linear-gradient(135deg, #fef7f0, #fef3e2);
+            border: 2px solid rgba(251, 146, 60, 0.3);
+        }
+        /* Enhanced warning modal animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake-animation {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+        }
+        .pulse-warning {
+            animation: pulse-warning 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+    <!-- Enhanced Navbar -->
+    <nav class="fixed top-0 left-0 w-full glass-effect shadow-xl z-50 transition-all duration-300 border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-14 w-14 rounded-full shadow-lg border-2 border-white">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 blur"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-blue-800 font-bold text-xl leading-tight">Lucena Manpower Skills Training Center</h3>
+                        <p class="text-blue-600 text-sm font-medium">Dalubhasaan Ng Lungsod Ng Lucena</p>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'Home' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Home
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="{% url 'Program' %}" class="text-blue-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Programs
+                        <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></span>
+                    </a>
+                    <a href="{% url 'About' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        About
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'Program' %}" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </a>
+                    <a href="{% url 'Login' %}" class="border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Log In
+                    </a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button class="text-gray-700 hover:text-blue-600 p-2">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-12 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-yellow-400/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="fade-in-up text-center mb-12">
+                <div class="section-divider mb-8"></div>
+                <h1 class="text-4xl md:text-6xl font-bold gradient-text mb-4 leading-tight">
+                    {{ program.program_name }}
+                </h1>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-6">
+                    {{ program.program_detail }}
+                </p>
+                <div class="inline-flex items-center bg-blue-50 px-6 py-3 rounded-full">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-user-tie text-white"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-sm text-gray-500 font-medium">Trainor</p>
+                        <p class="text-blue-700 font-bold text-lg">{{ program.program_trainor }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Section -->
+    <section class="py-16 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+                <!-- Program Overview -->
+                <div class="space-y-8">
+                    <div class="glass-effect rounded-3xl p-8 shadow-xl border border-white/20">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-info-circle text-white text-xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold gradient-text">Program Overview</h2>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 p-6 rounded-lg mb-6">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3 mt-1"></i>
+                                <div>
+                                    <h3 class="font-bold text-yellow-800 mb-2">📢 Important Notice:</h3>
+                                    <p class="text-yellow-700 leading-relaxed">
+                                        Please be advised that upon enrolling in this program, you are expected to dedicate approximately a month of training to acquire the necessary skills and competencies. Stay committed and make the most of this opportunity to develop your expertise!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-calendar-alt text-blue-500 text-lg mt-1"></i>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Schedule</h4>
+                                    <p class="text-gray-600">{{ program.program_sched }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-clipboard-list text-purple-500 text-lg mt-1"></i>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Program Details</h4>
+                                    <p class="text-gray-600">{{ program.program_detail }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8">
+                            <button id="applyBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <i class="fas fa-rocket mr-3"></i>Apply Now!
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Program Features -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="feature-card glass-effect rounded-2xl p-6 text-center border border-white/20">
+                            <div class="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-certificate text-white"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Certification</h3>
+                            <p class="text-sm text-gray-600">Industry-recognized certificate upon completion</p>
+                        </div>
+                        <div class="feature-card glass-effect rounded-2xl p-6 text-center border border-white/20">
+                            <div class="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-users text-white"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Expert Trainors</h3>
+                            <p class="text-sm text-gray-600">Learn from industry professionals</p>
+                        </div>
+                        <div class="feature-card glass-effect rounded-2xl p-6 text-center border border-white/20">
+                            <div class="w-12 h-12 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-laptop text-white"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Hands-on Training</h3>
+                            <p class="text-sm text-gray-600">Practical experience with real projects</p>
+                        </div>
+                        <div class="feature-card glass-effect rounded-2xl p-6 text-center border border-white/20">
+                            <div class="w-12 h-12 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-clock text-white"></i>
+                            </div>
+                            <h3 class="font-bold text-gray-800 mb-2">Flexible Schedule</h3>
+                            <p class="text-sm text-gray-600">Designed to fit your lifestyle</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Image Carousel -->
+                <div class="space-y-6">
+                    <div class="image-carousel bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20">
+                        <div class="carousel-track" id="carouselTrack">
+                            <div class="carousel-slide">
+                                <img src="{% static 'Images/training_A.webp' %}" alt="Training Environment A" class="w-full h-400 object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
+                                    <div class="p-6 text-white">
+                                        <h3 class="text-xl font-bold mb-2">Modern Training Facilities</h3>
+                                        <p class="text-sm opacity-90">State-of-the-art equipment and learning environment</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <img src="{% static 'Images/training_B.jpg' %}" alt="Training Environment B" class="w-full h-400 object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
+                                    <div class="p-6 text-white">
+                                        <h3 class="text-xl font-bold mb-2">Interactive Learning</h3>
+                                        <p class="text-sm opacity-90">Collaborative sessions with expert guidance</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <img src="{% static 'Images/training_C.avif' %}" alt="Training Environment C" class="w-full h-400 object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
+                                    <div class="p-6 text-white">
+                                        <h3 class="text-xl font-bold mb-2">Practical Application</h3>
+                                        <p class="text-sm opacity-90">Real-world projects and hands-on experience</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation buttons -->
+                        <button class="carousel-nav prev" id="prevBtn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="carousel-nav next" id="nextBtn">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <!-- Dots indicator -->
+                        <div class="carousel-dots" id="carouselDots">
+                            <div class="carousel-dot active" data-slide="0"></div>
+                            <div class="carousel-dot" data-slide="1"></div>
+                            <div class="carousel-dot" data-slide="2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Info Card -->
+                    <div class="glass-effect rounded-3xl p-8 shadow-xl border border-white/20">
+                        <h3 class="text-2xl font-bold gradient-text mb-4">What You'll Learn</h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-center space-x-3">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                <span class="text-gray-700">Industry-standard practices and methodologies</span>
+                            </li>
+                            <li class="flex items-center space-x-3">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                <span class="text-gray-700">Hands-on experience with professional tools</span>
+                            </li>
+                            <li class="flex items-center space-x-3">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                <span class="text-gray-700">Problem-solving and critical thinking skills</span>
+                            </li>
+                            <li class="flex items-center space-x-3">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                <span class="text-gray-700">Portfolio development and career guidance</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Competencies and Job Opportunities Section -->
+    {% if program.program_competencies %}
+    <section class="py-16 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div class="section-divider mb-8"></div>
+                <h2 class="text-4xl md:text-5xl font-bold gradient-text mb-6">Program Competencies</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">Develop essential skills and competencies to excel in your career</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                <!-- Basic Competencies -->
+                {% if program.program_competencies.basic_competencies %}
+                <div class="glass-effect rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <div class="flex items-center mb-6">
+                        <div class="w-14 h-14 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-lightbulb text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800">Basic Competencies</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        {% for competency in program.program_competencies.basic_competencies %}
+                        <li class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                            <span class="text-gray-700">{{ competency }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Common Competencies -->
+                {% if program.program_competencies.common_competencies %}
+                <div class="glass-effect rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <div class="flex items-center mb-6">
+                        <div class="w-14 h-14 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-tools text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800">Common Competencies</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        {% for competency in program.program_competencies.common_competencies %}
+                        <li class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-blue-500 mt-1"></i>
+                            <span class="text-gray-700">{{ competency }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Core Competencies -->
+                {% if program.program_competencies.core_competencies %}
+                <div class="glass-effect rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300">
+                    <div class="flex items-center mb-6">
+                        <div class="w-14 h-14 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-star text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800">Core Competencies</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        {% for competency in program.program_competencies.core_competencies %}
+                        <li class="flex items-start space-x-3">
+                            <i class="fas fa-check-circle text-purple-500 mt-1"></i>
+                            <span class="text-gray-700">{{ competency }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Job Opportunities Section -->
+            {% if program.program_competencies.job_opportunities %}
+            <div class="glass-effect rounded-3xl p-10 shadow-xl border border-white/20">
+                <div class="flex items-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-briefcase text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold gradient-text">Career Opportunities</h3>
+                        <p class="text-gray-600">Potential career paths after completing this program</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for job in program.program_competencies.job_opportunities %}
+                    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-user-tie text-orange-500 text-xl"></i>
+                            <span class="text-gray-800 font-semibold">{{ job }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Warning Modal for Authentication (Now the primary modal) -->
+    <div id="warningModal" class="fixed inset-0 modal-backdrop flex justify-center items-center z-60 hidden">
+        <div class="warning-modal-content p-10 rounded-3xl shadow-2xl w-full max-w-2xl mx-4 text-center border pulse-warning">
+            <div class="w-24 h-24 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 pulse-warning">
+                <i class="fas fa-exclamation-triangle text-white text-3xl shake-animation"></i>
+            </div>
+            <h2 class="text-4xl font-bold text-red-600 mb-4">Authentication Required</h2>
+            <div class="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-400 p-6 rounded-lg mb-8">
+                <div class="flex items-start">
+                    <i class="fas fa-shield-alt text-red-500 text-xl mr-3 mt-1"></i>
+                    <div class="text-left">
+                        <h3 class="font-bold text-red-800 mb-2">🔒 Access Restricted</h3>
+                        <p class="text-red-700 leading-relaxed">
+                            I'm sorry, we detected that you don't have an account to apply for this program.<br>
+                            <strong class="text-red-600">Please login or register to continue with your application for "{{ program.program_name }}".</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+                <div class="flex items-center justify-center text-blue-700">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span class="text-sm font-medium">Creating an account is quick and free!</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'Login' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-10 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login to Continue
+                </a>
+                <a href="{% url 'Register' %}" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold px-10 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-user-plus mr-2"></i>Create Account
+                </a>
+                <button id="closeWarningModal" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold px-8 py-4 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-times mr-2"></i>Maybe Later
+                </button>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Need help? <a href="#" class="text-blue-600 hover:text-blue-800 font-medium">Contact Support</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Chatbot -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="chatbot-toggle" class="chatbot-bounce bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 border-4 border-white">
+            <img src="{% static 'Images/chatlogo.png' %}" alt="" class="h-12 w-auto">
+        </button>
+        
+        <div id="chatbot-window" class="hidden absolute bottom-20 right-0 w-80 h-96 bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">LMSTC Assistant</h3>
+                        <p class="text-sm opacity-90">Online now</p>
+                    </div>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-all duration-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                <div class="text-center text-gray-500 text-sm mb-6">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-robot text-blue-500 text-xl"></i>
+                    </div>
+                    <p class="font-medium">Welcome to LMSTC!</p>
+                    <p>Ask me about this program or anything else.</p>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t bg-white">
+                <div class="flex space-x-3">
+                    <input type="text" id="chat-input" placeholder="Type your message..." class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="chat-send" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-3 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Image Carousel
+        class ImageCarousel {
+            constructor() {
+                this.track = document.getElementById('carouselTrack');
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.dots = document.querySelectorAll('.carousel-dot');
+                this.currentIndex = 0;
+                this.totalSlides = 3;
+                this.autoPlayInterval = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.updateCarousel();
+                this.bindEvents();
+                this.startAutoPlay();
+            }
+            
+            updateCarousel() {
+                const translateX = -this.currentIndex * 100;
+                this.track.style.transform = `translateX(${translateX}%)`;
+                
+                // Update dots
+                this.dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === this.currentIndex);
+                });
+            }
+            
+            nextSlide() {
+                this.currentIndex = (this.currentIndex + 1) % this.totalSlides;
+                this.updateCarousel();
+            }
+            
+            prevSlide() {
+                this.currentIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
+                this.updateCarousel();
+            }
+            
+            goToSlide(index) {
+                this.currentIndex = index;
+                this.updateCarousel();
+            }
+            
+            startAutoPlay() {
+                this.autoPlayInterval = setInterval(() => {
+                    this.nextSlide();
+                }, 5000);
+            }
+            
+            stopAutoPlay() {
+                if (this.autoPlayInterval) {
+                    clearInterval(this.autoPlayInterval);
+                    this.autoPlayInterval = null;
+                }
+            }
+            
+            bindEvents() {
+                this.prevBtn.addEventListener('click', () => {
+                    this.prevSlide();
+                    this.stopAutoPlay();
+                });
+                
+                this.nextBtn.addEventListener('click', () => {
+                    this.nextSlide();
+                    this.stopAutoPlay();
+                });
+                
+                this.dots.forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        this.goToSlide(index);
+                        this.stopAutoPlay();
+                    });
+                });
+                
+                // Pause on hover
+                this.track.addEventListener('mouseenter', () => this.stopAutoPlay());
+                this.track.addEventListener('mouseleave', () => this.startAutoPlay());
+            }
+        }
+        
+        // Warning Modal functionality (now the primary modal)
+        const warningModal = document.getElementById("warningModal");
+        const applyButton = document.getElementById("applyBtn");
+        const closeWarningButton = document.getElementById("closeWarningModal");
+
+        // Show warning modal immediately when Apply Now is clicked
+        applyButton.addEventListener("click", () => {
+            warningModal.classList.remove("hidden");
+            
+            // Add shake animation to the warning icon
+            const warningIcon = warningModal.querySelector('.shake-animation');
+            warningIcon.classList.add('shake-animation');
+            
+            // Remove shake animation after it completes
+            setTimeout(() => {
+                warningIcon.classList.remove('shake-animation');
+            }, 500);
+        });
+
+        closeWarningButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            warningModal.classList.add("hidden");
+        });
+
+        // Close modal when clicking outside
+        warningModal.addEventListener("click", (e) => {
+            if (e.target === warningModal) {
+                warningModal.classList.add("hidden");
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !warningModal.classList.contains('hidden')) {
+                warningModal.classList.add("hidden");
+            }
+        });
+        
+        // Enhanced Chatbot Functionality
+        const chatToggle = document.getElementById('chatbot-toggle');
+        const chatWindow = document.getElementById('chatbot-window');
+        const chatClose = document.getElementById('chatbot-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+        
+        chatToggle.addEventListener('click', () => {
+            chatWindow.classList.toggle('hidden');
+            if (!chatWindow.classList.contains('hidden')) {
+                chatInput.focus();
+            }
+        });
+        
+        chatClose.addEventListener('click', () => {
+            chatWindow.classList.add('hidden');
+        });
+        
+        const responses = {
+            program: `This program ({{ program.program_name }}) is designed to provide comprehensive training with expert instruction from {{ program.program_trainor }}.`,
+            schedule: `The program schedule is: {{ program.program_sched }}`,
+            instructor: `Your instructor will be {{ program.program_trainor }}, an experienced professional in the field.`,
+            apply: "You can apply by clicking the 'Apply Now!' button on this page, but you'll need to login or register first.",
+            login: "You can login by clicking the 'Login to Continue' button in the warning modal, or use the login link in the navigation.",
+            register: "You can create a new account by clicking the 'Create Account' button in the warning modal.",
+            duration: "The program typically takes about a month to complete with dedicated training.",
+            certificate: "Yes, you'll receive an industry-recognized certificate upon successful completion.",
+            hi: "Hello! I'm here to help you with information about this training program.",
+            hello: "Hello! I'm here to help you with information about this training program.",
+            help: "I can help you with information about the program, schedule, instructor, application process, login, or registration!",
+            thank_you: "You're welcome! Feel free to ask if you have any other questions about the program."
+        };
+        
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `inline-block max-w-xs px-4 py-3 rounded-2xl ${
+                sender === 'user' 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-sm' 
+                    : 'bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm'
+            }`;
+            bubble.textContent = message;
+            
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function sendMessage() {
+            const message = chatInput.value.trim().toLowerCase();
+            if (!message) return;
+            
+            addMessage(chatInput.value, 'user');
+            
+            let reply = "I'd be happy to help! You can ask me about the program details, schedule, instructor, application process, login, or registration.";
+            
+            for (const [key, response] of Object.entries(responses)) {
+                if (message.includes(key.replace('_', ' '))) {
+                    reply = response;
+                    break;
+                }
+            }
+            
+            setTimeout(() => addMessage(reply, 'bot'), 800);
+            chatInput.value = '';
+        }
+        
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        // Enhanced navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('nav');
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-white/95', 'shadow-xl');
+            } else {
+                navbar.classList.remove('bg-white/95', 'shadow-xl');
+            }
+        });
+        
+        // Initialize carousel when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageCarousel();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!-- Archived Documents Tab -->
+<div id="docContent-archived" class="doc-content hidden">
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h4 class="text-lg font-semibold">Archived Documents</h4>
+                <p class="text-sm text-gray-500 mt-1">View and restore archived documents</p>
+            </div>
+            <div class="flex space-x-2">
+                <!-- Search Box -->
+                <input type="text" id="archivedSearchInput" placeholder="Search archived documents..." 
+                       class="border border-gray-300 rounded-lg px-4 py-2 text-sm" 
+                       onkeyup="searchArchivedDocuments()">
+                
+                <!-- Filter by Type -->
+                <select id="archivedDocTypeFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="loadArchivedDocuments()">
+                    <option value="">All Types</option>
+                    <option value="lmstc">LMSTC Documents</option>
+                    <option value="manual">Manuals</option>
+                    <option value="policy">Policies</option>
+                </select>
+                
+                <!-- Bulk Actions -->
+                <button onclick="bulkRestoreDocuments()" id="bulkRestoreBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm" disabled>
+                    <i class="fas fa-undo mr-2"></i>Restore Selected
+                </button>
+                <button onclick="bulkDeleteArchivedDocuments()" id="bulkDeleteArchivedBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm" disabled>
+                    <i class="fas fa-trash mr-2"></i>Delete Selected
+                </button>
+            </div>
+        </div>
+
+        <!-- Archived Documents Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left">
+                            <input type="checkbox" id="selectAllArchived" onchange="toggleSelectAllArchived()" class="rounded border-gray-300">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded By</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Archived At</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="archivedDocumentsTableBody" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            <i class="fas fa-archive text-4xl mb-4"></i>
+                            <p>Loading archived documents...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6">
+            <div class="text-sm text-gray-700" id="archivedDocumentsInfo">
+                No archived documents
+            </div>
+        </div>
+    </div>
+</div>

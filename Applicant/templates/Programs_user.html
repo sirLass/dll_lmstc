@@ -1,0 +1,1131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programs - DLL LMSTC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        @media (min-width: 768px) {
+            .glass-effect {
+                backdrop-filter: blur(10px);
+            }
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 4px;
+        }
+        
+        /* Mobile Menu Scrollbar - Enhanced for easier swiping */
+        .mobile-menu ::-webkit-scrollbar {
+            width: 12px;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            border-radius: 10px;
+            border: 2px solid #f1f5f9;
+            min-height: 80px;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #2563eb, #7c3aed);
+            border: 2px solid #e2e8f0;
+        }
+        
+        .mobile-menu ::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(180deg, #1d4ed8, #6d28d9);
+        }
+        .hero-overlay {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(139, 92, 246, 0.6));
+        }
+        .section-divider {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            height: 2px;
+            width: 100px;
+            margin: 0 auto;
+        }
+        /* Enhanced Carousel Styles */
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            padding: 2rem 0;
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 2rem;
+            padding: 0 2rem;
+        }
+        .carousel-item {
+            flex: 0 0 auto;
+            width: 380px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (min-width: 768px) {
+            .carousel-item:hover {
+                transform: translateY(-8px) scale(1.02);
+            }
+        }
+        .carousel-nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        @media (min-width: 768px) {
+            .carousel-nav-button {
+                width: 60px;
+                height: 60px;
+            }
+        }
+        .carousel-nav-button:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+        .carousel-nav-button.prev {
+            left: 1rem;
+        }
+        .carousel-nav-button.next {
+            right: 1rem;
+        }
+        .carousel-nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateY(-50%) scale(0.9);
+        }
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            padding: 0 1rem;
+        }
+        .carousel-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .carousel-indicator.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            transform: scale(1.2);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Mobile-specific indicator styles */
+        @media (max-width: 767px) {
+            .carousel-indicators {
+                margin-top: 1.5rem;
+                gap: 0.75rem;
+            }
+            
+            .carousel-indicator {
+                width: 10px;
+                height: 10px;
+                border: 2px solid rgba(59, 130, 246, 0.3);
+            }
+            
+            .carousel-indicator.active {
+                width: 12px;
+                height: 12px;
+                border: 2px solid #3b82f6;
+            }
+        }
+        .filter-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .filter-button.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        .search-container input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+        .chatbot-bounce {
+            animation: float 2s ease-in-out infinite;
+        }
+        /* Card hover effects */
+        .program-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .program-card:hover {
+            box-shadow: 0 25px 50px rgba(59, 130, 246, 0.2);
+        }
+        /* Disable heavy animations on mobile */
+        @media (max-width: 767px) {
+            .float-animation,
+            .chatbot-bounce,
+            .pulse-animation,
+            .fade-in-up {
+                animation: none;
+            }
+            
+            /* Disable card hover effects on mobile */
+            .carousel-item:hover,
+            .program-card:hover {
+                transform: none !important;
+                box-shadow: 0 10px 20px rgba(59, 130, 246, 0.15) !important;
+            }
+            
+            /* Simplify carousel for mobile */
+            .carousel-item {
+                width: 320px !important;
+            }
+            
+            /* Reduce card height on mobile */
+            .carousel-item > div {
+                height: 520px !important;
+            }
+            
+            /* Hide auto-scroll toggle button on mobile */
+            #autoScrollToggle {
+                display: none !important;
+            }
+        }
+
+        /* User Profile Dropdown */
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            min-width: 200px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            color: #374151;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background: #f3f4f6;
+            color: #3b82f6;
+        }
+        
+        .dropdown-item i {
+            margin-right: 0.5rem;
+            width: 16px;
+        }
+
+        /* Mobile Menu Styles */
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+        
+        .mobile-menu-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-indigo-50 min-h-screen">
+    <!-- Enhanced Navbar -->
+    <nav class="fixed top-0 left-0 w-full glass-effect shadow-xl z-50 transition-all duration-300 border-b border-white/20" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="Logo" class="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-full shadow-lg border-2 border-white">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-20 blur"></div>
+                    </div>
+                    <div class="hidden sm:block">
+                        <h3 class="text-blue-800 font-bold text-sm md:text-base lg:text-lg xl:text-xl leading-tight">Lucena Manpower</h3>
+                        <p class="text-blue-600 text-xs md:text-sm font-medium">Skills Training Center</p>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'Homepage_user' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Home
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="{% url 'Program_user' %}" class="text-blue-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        Programs
+                        <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></span>
+                    </a>
+                    <a href="{% url 'About_user' %}" class="text-gray-700 hover:text-blue-500 font-semibold transition-all duration-300 relative group">
+                        About
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-3">
+                    {% if has_learner_profile %}
+                        <a href="{% url 'Dashboard' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'Program_user' %}" class="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-rocket mr-2"></i>Apply Now
+                        </a>
+                    {% endif %}
+                     
+                    <!-- User Profile Dropdown -->
+                    <div class="user-dropdown">
+                        <button id="userDropdownBtn" class="flex items-center space-x-3 bg-white/80 backdrop-blur-sm border-2 border-blue-200 rounded-full px-4 py-2 hover:border-blue-400 transition-all duration-300 shadow-md hover:shadow-lg">
+                            {% if user_profile_picture %}
+                                <img src="{{ user_profile_picture }}" class="w-10 h-10 rounded-full border-2 border-blue-200 object-cover" alt="User" onerror="this.onerror=null; this.src='{% static 'Images/user.png' %}'" />
+                            {% else %}
+                                <img src="{% static 'Images/user.png' %}" class="w-10 h-10 rounded-full border-2 border-blue-200" alt="User" />
+                            {% endif %}
+                            <div class="text-left hidden sm:block">
+                                <p class="font-bold text-sm text-blue-800">Hi, {{ user.first_name|default:user.username }}</p>
+                                <p class="text-xs text-gray-600">Student</p>
+                            </div>
+                            <i class="fas fa-chevron-down text-blue-600 text-sm transition-transform duration-300" id="dropdownIcon"></i>
+                        </button>
+                        
+                        <div id="userDropdownMenu" class="dropdown-menu">
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-sm font-medium text-gray-900">{{ user.first_name|default:user.username }}</p>
+                                <p class="text-xs text-gray-500">Student Account</p>
+                            </div>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-book"></i>
+                                My Courses
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-certificate"></i>
+                                Certificates
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                Settings
+                            </a>
+                            <div class="border-t border-gray-100">
+                                <a href="{% url 'logout_view' %}" class="dropdown-item text-red-600 hover:text-red-700 hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Log Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="lg:hidden">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-700 hover:text-blue-600 p-2">
+                        <i class="fas text-xl" :class="mobileMenuOpen ? 'fa-times' : 'fa-bars'"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+            <!-- Mobile Menu -->
+            <div x-show="mobileMenuOpen" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95"
+                 class="lg:hidden bg-white border-t border-gray-200 shadow-lg">
+                <div class="px-4 py-6 space-y-4">
+                    <a href="{% url 'Homepage_user' %}" class="block text-gray-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-home mr-3"></i>Home
+                    </a>
+                    <a href="{% url 'Program_user' %}" class="block text-blue-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-graduation-cap mr-3"></i>Programs
+                    </a>
+                    <a href="{% url 'About_user' %}" class="block text-gray-700 hover:text-blue-500 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all duration-300">
+                        <i class="fas fa-info-circle mr-3"></i>About
+                    </a>
+                    <div class="border-t border-gray-200 pt-4 space-y-3">
+                        {% if not has_learner_profile %}
+                        <a href="{% url 'Program_user' %}" class="block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg text-center">
+                            <i class="fas fa-rocket mr-2"></i>Apply Now
+                        </a>
+                        {% else %}
+                        <a href="{% url 'Dashboard' %}" class="block bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg text-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'logout_view' %}" class="block border-2 border-red-500 text-red-500 px-6 py-3 rounded-full font-semibold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-md text-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Log Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-yellow-400/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="fade-in-up">
+                <div class="section-divider mb-6 sm:mb-8"></div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold gradient-text mb-4 sm:mb-6 leading-tight px-4">
+                    Our Training Programs
+                </h1>
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4">
+                    Discover comprehensive training programs designed to equip you with industry-relevant skills and certifications for career success
+                </p>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto px-4">
+                    <div class="text-center">
+                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-1 sm:mb-2">{{ Programss|length }}+</div>
+                        <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Programs</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-600 mb-1 sm:mb-2">100+</div>
+                        <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Graduates</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-500 mb-1 sm:mb-2">95%</div>
+                        <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Success Rate</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-1 sm:mb-2">5+</div>
+                        <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Years</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search and Filter Section -->
+    <section class="py-12 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row gap-6 items-center justify-between">
+                <!-- Search Bar -->
+                <div class="search-container flex-1 max-w-md">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search programs..." 
+                            class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none bg-white/80 backdrop-blur-sm text-gray-800 font-medium transition-all duration-300"
+                        >
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Carousel Section -->
+    <section class="py-24 bg-gradient-to-br from-white via-blue-50 to-indigo-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8 sm:mb-12 md:mb-16">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-4 sm:mb-6 px-4">Featured Programs</h2>
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto px-4">Explore our most popular training programs with interactive carousel</p>
+            </div>
+            
+            <div class="carousel-container" id="programCarousel">
+                <div class="carousel-track" id="carouselTrack">
+                    {% for prog in Programss %}
+                    <div class="carousel-item program-card" data-category="technical">
+                        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-xl hover:shadow-2xl overflow-hidden h-[580px] sm:h-[620px] md:h-[680px] flex flex-col border border-blue-100">
+                            <!-- Enhanced Image Section -->
+                            <div class="relative bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 p-4 sm:p-5 md:p-6 h-40 sm:h-44 md:h-48">
+                                {% if prog.images.all %}
+                                    {% for img in prog.images.all %}
+                                        {% if forloop.first %}
+                                            <div class="mx-auto w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-white shadow-xl">
+                                                <img src="{{ img.image.url }}" alt="{{ prog.program_name }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="mx-auto w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full bg-white/20 flex items-center justify-center text-white border-2 border-white shadow-xl">
+                                        <i class="fas fa-graduation-cap text-xl sm:text-2xl md:text-4xl"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 rounded-full shadow-lg">
+                                    <i class="fas fa-star mr-1"></i>Featured
+                                </div>
+                                
+                                <!-- Decorative elements -->
+                                <div class="absolute top-4 left-4 w-8 h-8 bg-white/20 rounded-full"></div>
+                                <div class="absolute bottom-4 left-4 w-6 h-6 bg-white/10 rounded-full"></div>
+                            </div>
+                            
+                            <!-- Enhanced Content -->
+                            <div class="flex-1 p-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3 text-center leading-tight">
+                                        {{ prog.program_name }}
+                                    </h3>
+                                    <p class="text-gray-600 text-sm leading-relaxed mb-4 text-center line-clamp-2">
+                                        {{ prog.program_detail }}
+                                    </p>
+                                    
+                                    <!-- Trainer Info -->
+                                    <div class="text-center mb-4">
+                                        <div class="inline-flex items-center bg-blue-50 px-4 py-2 rounded-full">
+                                            <div class="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                                                <i class="fas fa-user-tie text-white text-xs"></i>
+                                            </div>
+                                            <div class="text-left">
+                                                <p class="text-xs text-gray-500 font-medium">Trainor</p>
+                                                <p class="text-blue-700 font-semibold text-sm">{{ prog.program_trainor }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Program Features -->
+                                    <div class="grid grid-cols-2 gap-2 mb-4">
+                                        <div class="flex items-center text-xs text-gray-600">
+                                            <i class="fas fa-clock text-blue-500 mr-2"></i>
+                                            <span>Flexible Schedule</span>
+                                        </div>
+                                        <div class="flex items-center text-xs text-gray-600">
+                                            <i class="fas fa-certificate text-green-500 mr-2"></i>
+                                            <span>Certification</span>
+                                        </div>
+                                        <div class="flex items-center text-xs text-gray-600">
+                                            <i class="fas fa-users text-purple-500 mr-2"></i>
+                                            <span>Group Learning</span>
+                                        </div>
+                                        <div class="flex items-center text-xs text-gray-600">
+                                            <i class="fas fa-laptop text-orange-500 mr-2"></i>
+                                            <span>Hands-on Training</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-4">
+                                    <a href="{% url 'Prog_Info_user' prog.id %}" class="inline-block bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold px-8 py-3.5 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                        <i class="fas fa-arrow-right mr-2"></i>Learn More
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Navigation Buttons -->
+                <button class="carousel-nav-button prev" id="prevBtn">
+                    <i class="fas fa-chevron-left text-xl"></i>
+                </button>
+                <button class="carousel-nav-button next" id="nextBtn">
+                    <i class="fas fa-chevron-right text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Carousel Indicators -->
+            <div class="carousel-indicators" id="carouselIndicators">
+                <!-- Indicators will be generated by JavaScript -->
+            </div>
+            
+            <!-- Auto-scroll Toggle -->
+            <div class="text-center mt-8">
+                <button id="autoScrollToggle" class="bg-white/80 backdrop-blur-sm border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md">
+                    <i class="fas fa-pause mr-2"></i>Pause Auto-scroll
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="fade-in-up">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight px-4">
+                    Ready to Start Your
+                    <span class="text-yellow-300 block mt-2">Learning Journey?</span>
+                </h2>
+                <p class="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 max-w-3xl mx-auto mb-8 sm:mb-12 leading-relaxed px-4">
+                    Join thousands of successful graduates who have transformed their careers through our comprehensive training programs
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
+                    <a href="{% url 'Program_user' %}" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-8 sm:px-10 md:px-12 py-3 sm:py-4 md:py-5 rounded-full text-sm sm:text-base md:text-lg transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105">
+                        <i class="fas fa-rocket mr-2 sm:mr-3"></i>Explore Programs
+                    </a>
+                    <a href="{% url 'About_user' %}" class="inline-block border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold px-8 sm:px-10 md:px-12 py-3 sm:py-4 md:py-5 rounded-full text-sm sm:text-base md:text-lg transition-all duration-300">
+                        <i class="fas fa-info-circle mr-3"></i>Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Chatbot -->
+    <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+        <button id="chatbot-toggle" class="chatbot-bounce bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 border-2 sm:border-4 border-white">
+            <img src="{% static 'Images/chatlogo.png' %}" alt="" class="h-10 w-auto sm:h-12">
+        </button>
+        
+        <div id="chatbot-window" class="hidden fixed sm:absolute bottom-0 sm:bottom-20 right-0 left-0 sm:left-auto w-full sm:w-80 h-[500px] sm:h-96 bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 sm:p-6 flex justify-between items-center">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-sm sm:text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base sm:text-lg">LMSTC Assistant</h3>
+                        <p class="text-xs sm:text-sm opacity-90">Online now</p>
+                    </div>
+                </div>
+                <button id="chatbot-close" class="text-white hover:text-gray-200 p-1 sm:p-2 rounded-full hover:bg-white/10 transition-all duration-300">
+                    <i class="fas fa-times text-lg sm:text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
+                <div class="text-center text-gray-500 text-xs sm:text-sm mb-4 sm:mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                        <i class="fas fa-robot text-blue-500 text-base sm:text-xl"></i>
+                    </div>
+                    <p class="font-medium">Welcome to LMSTC!</p>
+                    <p class="text-xs sm:text-sm">Ask me about our programs, instructors, or anything else.</p>
+                </div>
+            </div>
+            
+            <div class="p-3 sm:p-4 border-t bg-white">
+                <div class="flex space-x-2 sm:space-x-3">
+                    <input type="text" id="chat-input" placeholder="Type your message..." class="flex-1 p-2 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="chat-send" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-2 sm:p-3 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-paper-plane text-sm sm:text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Carousel Functionality
+        class ProgramCarousel {
+            constructor() {
+                this.track = document.getElementById('carouselTrack');
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.indicators = document.getElementById('carouselIndicators');
+                this.autoScrollToggle = document.getElementById('autoScrollToggle');
+                
+                this.currentIndex = 0;
+                this.itemWidth = 400; // 380px + 20px gap
+                this.isMobile = window.innerWidth < 768;
+                this.visibleItems = this.getVisibleItems();
+                this.totalItems = this.track.children.length;
+                this.maxIndex = Math.max(0, this.totalItems - this.visibleItems);
+                
+                this.autoScrollInterval = null;
+                this.isAutoScrolling = true;
+                
+                this.init();
+            }
+            
+            getVisibleItems() {
+                // On mobile, always show 1 item at a time for smooth performance
+                if (window.innerWidth < 768) {
+                    return 1;
+                }
+                const containerWidth = document.getElementById('programCarousel').offsetWidth;
+                return Math.floor(containerWidth / this.itemWidth);
+            }
+            
+            init() {
+                this.createIndicators();
+                this.updateCarousel();
+                this.bindEvents();
+                this.startAutoScroll();
+                
+                // Handle window resize with debouncing
+                let resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        const wasMobile = this.isMobile;
+                        this.isMobile = window.innerWidth < 768;
+                        this.visibleItems = this.getVisibleItems();
+                        this.maxIndex = Math.max(0, this.totalItems - this.visibleItems);
+                        
+                        // Recreate indicators if switching between mobile and desktop
+                        if (wasMobile !== this.isMobile) {
+                            this.createIndicators();
+                            this.currentIndex = 0; // Reset to first slide
+                            
+                            // Stop auto-scroll if switching to mobile
+                            if (this.isMobile && this.isAutoScrolling) {
+                                this.stopAutoScroll();
+                                this.autoScrollToggle.style.display = 'none';
+                            } else if (!this.isMobile && !this.autoScrollInterval) {
+                                this.startAutoScroll();
+                            }
+                        }
+                        
+                        this.updateCarousel();
+                    }, 250); // Debounce resize events
+                });
+            }
+            
+            createIndicators() {
+                this.indicators.innerHTML = '';
+                // On mobile: create one indicator per card
+                // On desktop: create indicators based on visible items
+                const indicatorCount = this.isMobile ? this.totalItems : Math.ceil(this.totalItems / this.visibleItems);
+                
+                for (let i = 0; i < indicatorCount; i++) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'carousel-indicator';
+                    // On mobile, each dot navigates to that specific card
+                    // On desktop, each dot navigates to a group of cards
+                    const slideIndex = this.isMobile ? i : i * this.visibleItems;
+                    indicator.addEventListener('click', () => this.goToSlide(slideIndex));
+                    this.indicators.appendChild(indicator);
+                }
+            }
+            
+            updateCarousel() {
+                const translateX = -this.currentIndex * this.itemWidth;
+                this.track.style.transform = `translateX(${translateX}px)`;
+                
+                // Update navigation buttons
+                this.prevBtn.disabled = this.currentIndex === 0;
+                this.nextBtn.disabled = this.currentIndex >= this.maxIndex;
+                
+                // Update indicators
+                // On mobile: each dot represents one card (currentIndex = indicator index)
+                // On desktop: dots represent groups of cards
+                const activeIndicatorIndex = this.isMobile ? this.currentIndex : Math.floor(this.currentIndex / this.visibleItems);
+                document.querySelectorAll('.carousel-indicator').forEach((indicator, index) => {
+                    indicator.classList.toggle('active', index === activeIndicatorIndex);
+                });
+            }
+            
+            goToSlide(index) {
+                this.currentIndex = Math.max(0, Math.min(index, this.maxIndex));
+                this.updateCarousel();
+            }
+            
+            nextSlide() {
+                if (this.currentIndex < this.maxIndex) {
+                    this.currentIndex++;
+                } else {
+                    this.currentIndex = 0; // Loop back to start
+                }
+                this.updateCarousel();
+            }
+            
+            prevSlide() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                } else {
+                    this.currentIndex = this.maxIndex; // Loop to end
+                }
+                this.updateCarousel();
+            }
+            
+            startAutoScroll() {
+                // Completely disable auto-scroll on mobile devices (< 768px) for performance
+                if (window.innerWidth < 768) {
+                    this.isAutoScrolling = false;
+                    this.autoScrollToggle.style.display = 'none';
+                    return;
+                }
+                
+                // Show auto-scroll toggle on desktop
+                this.autoScrollToggle.style.display = 'block';
+                
+                if (this.autoScrollInterval) return;
+                
+                this.autoScrollInterval = setInterval(() => {
+                    this.nextSlide();
+                }, 5000); // Auto-scroll every 5 seconds on desktop
+                
+                this.isAutoScrolling = true;
+                this.autoScrollToggle.innerHTML = '<i class="fas fa-pause mr-2"></i>Pause Auto-scroll';
+            }
+            
+            stopAutoScroll() {
+                if (this.autoScrollInterval) {
+                    clearInterval(this.autoScrollInterval);
+                    this.autoScrollInterval = null;
+                }
+                
+                this.isAutoScrolling = false;
+                this.autoScrollToggle.innerHTML = '<i class="fas fa-play mr-2"></i>Resume Auto-scroll';
+            }
+            
+            toggleAutoScroll() {
+                if (this.isAutoScrolling) {
+                    this.stopAutoScroll();
+                } else {
+                    this.startAutoScroll();
+                }
+            }
+            
+            bindEvents() {
+                    this.prevBtn.addEventListener('click', () => {
+                        this.prevSlide();
+                        if (!this.isMobile) {
+                            this.stopAutoScroll(); // Stop auto-scroll on manual interaction (desktop only)
+                        }
+                    });
+                    
+                    this.nextBtn.addEventListener('click', () => {
+                        this.nextSlide();
+                        if (!this.isMobile) {
+                            this.stopAutoScroll(); // Stop auto-scroll on manual interaction (desktop only)
+                        }
+                    });
+                    
+                    this.autoScrollToggle.addEventListener('click', () => {
+                        this.toggleAutoScroll();
+                    });
+                    
+                    // Pause auto-scroll on hover (desktop only)
+                    if (!this.isMobile) {
+                        this.track.addEventListener('mouseenter', () => {
+                            if (this.isAutoScrolling) {
+                                clearInterval(this.autoScrollInterval);
+                            }
+                        });
+                        
+                        this.track.addEventListener('mouseleave', () => {
+                            if (this.isAutoScrolling) {
+                                this.startAutoScroll();
+                            }
+                        });
+                    }
+                    
+                    // Touch/swipe support for mobile - optimized for performance
+                    let startX = 0;
+                    let startY = 0;
+                    let isDragging = false;
+                    
+                    this.track.addEventListener('touchstart', (e) => {
+                        startX = e.touches[0].clientX;
+                        startY = e.touches[0].clientY;
+                        isDragging = true;
+                    }, { passive: true });
+                    
+                    this.track.addEventListener('touchmove', (e) => {
+                        if (!isDragging) return;
+                        
+                        // Calculate if it's a horizontal swipe
+                        const currentX = e.touches[0].clientX;
+                        const currentY = e.touches[0].clientY;
+                        const diffX = Math.abs(currentX - startX);
+                        const diffY = Math.abs(currentY - startY);
+                        
+                        // Only prevent default if horizontal swipe (to allow vertical scrolling)
+                        if (diffX > diffY && diffX > 10) {
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    this.track.addEventListener('touchend', (e) => {
+                        if (!isDragging) return;
+                        
+                        const endX = e.changedTouches[0].clientX;
+                        const diff = startX - endX;
+                        
+                        if (Math.abs(diff) > 50) { // Minimum swipe distance
+                            if (diff > 0) {
+                                this.nextSlide();
+                            } else {
+                                this.prevSlide();
+                            }
+                        }
+                        
+                        isDragging = false;
+                    }, { passive: true });
+                }
+            }
+
+        }
+        
+        // Initialize carousel when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ProgramCarousel();
+        });
+
+        // Search and Filter Functionality
+        const searchInput = document.getElementById('searchInput');
+        const filterButtons = document.querySelectorAll('.filter-button');
+
+        let currentFilter = 'all';
+
+        // Search functionality
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterPrograms(searchTerm, currentFilter);
+        });
+
+        // Filter functionality
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentFilter = this.dataset.filter;
+                const searchTerm = searchInput.value.toLowerCase();
+                filterPrograms(searchTerm, currentFilter);
+            });
+        });
+
+        function filterPrograms(searchTerm, filter) {
+            const programCards = document.querySelectorAll('.program-card');
+            let visibleCount = 0;
+            
+            programCards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                const category = card.dataset.category;
+                
+                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                const matchesFilter = filter === 'all' || category === filter;
+                
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Enhanced Chatbot Functionality
+        const chatToggle = document.getElementById('chatbot-toggle');
+        const chatWindow = document.getElementById('chatbot-window');
+        const chatClose = document.getElementById('chatbot-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+
+        chatToggle.addEventListener('click', () => {
+            chatWindow.classList.toggle('hidden');
+            if (!chatWindow.classList.contains('hidden')) {
+                chatInput.focus();
+            }
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWindow.classList.add('hidden');
+        });
+
+        const responses = {
+            documentation: "Our documentator is Irish Valerie Martinez.",
+            frontend: "Our frontend developer is Jiro Miko Viñas.",
+            backend: "Our backend developer is Brian Perez.",
+            coordinator: "Glenda J. Maglonso is our DLL-LMSTC Coordinator.",
+            programs: "We offer various training programs including technical skills, vocational training, and professional development courses.",
+            apply: "You can apply for our programs by clicking the 'Apply Now' button or visiting our registration page.",
+            hi: "Hello there! How can I help you today?",
+            hello: "Hello there! How can I help you today?",
+            thank_you: "You're welcome! Is there anything else you'd like to know?"
+        };
+
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 ${sender === 'user' ? 'text-right' : 'text-left'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `inline-block max-w-xs px-4 py-3 rounded-2xl ${
+                sender === 'user' 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-sm'
+                    : 'bg-white border border-gray-200 text-gray-800 shadow-sm rounded-bl-sm'
+            }`;
+            bubble.textContent = message;
+            
+            messageDiv.appendChild(bubble);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = chatInput.value.trim().toLowerCase();
+            if (!message) return;
+            
+            addMessage(chatInput.value, 'user');
+            
+            let reply = "Sorry, I didn't understand that. Please try asking about our programs, coordinators, or team members.";
+            
+            for (const [key, response] of Object.entries(responses)) {
+                if (message.includes(key.replace('_', ' '))) {
+                    reply = response;
+                    break;
+                }
+            }
+            
+            setTimeout(() => addMessage(reply, 'bot'), 800);
+            chatInput.value = '';
+        }
+
+        chatSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // User Dropdown Functionality
+        const userDropdownBtn = document.getElementById('userDropdownBtn');
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+        const dropdownIcon = document.getElementById('dropdownIcon');
+
+        userDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdownMenu.classList.toggle('show');
+            dropdownIcon.classList.toggle('rotate-180');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userDropdownBtn.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                userDropdownMenu.classList.remove('show');
+                dropdownIcon.classList.remove('rotate-180');
+            }
+        });
+
+        // Enhanced navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('nav');
+            if (window.scrollY > 100) {
+                navbar.classList.add('bg-white/95', 'shadow-xl');
+            } else {
+                navbar.classList.remove('bg-white/95', 'shadow-xl');
+            }
+        });
+
+        // Mobile Menu Functionality
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const menuIcon = document.getElementById('menu-icon');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('active');
+            mobileMenuOverlay.classList.add('active');
+            menuIcon.classList.remove('fa-bars');
+            menuIcon.classList.add('fa-times');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('active');
+            mobileMenuOverlay.classList.remove('active');
+            menuIcon.classList.remove('fa-times');
+            menuIcon.classList.add('fa-bars');
+            document.body.style.overflow = '';
+        }
+
+        mobileMenuBtn.addEventListener('click', () => {
+            if (mobileMenu.classList.contains('active')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        });
+
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+        // Close mobile menu when clicking on menu links
+        const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+    </script>
+</body>
+</html>

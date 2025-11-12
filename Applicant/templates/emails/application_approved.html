@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Approved</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #059669;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .congratulations {
+            text-align: center;
+            font-size: 32px;
+            margin: 20px 0;
+        }
+        .status-badge {
+            background-color: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .program-info {
+            background-color: #f0fdf4;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #059669;
+        }
+        .program-info h3 {
+            margin: 0 0 15px 0;
+            color: #059669;
+            font-size: 20px;
+        }
+        .info-row {
+            margin: 10px 0;
+            font-size: 15px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #4a5568;
+        }
+        .approval-message {
+            background-color: #ecfdf5;
+            border: 2px solid #10b981;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .approval-message h3 {
+            color: #059669;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+        .login-btn {
+            display: inline-block;
+            background-color: #059669;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .footer {
+            background-color: #f0fdf4;
+            padding: 20px 30px;
+            border-top: 1px solid #bbf7d0;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>DLL LMSTC</h1>
+            <p>Technical Education and Skills Development Authority</p>
+        </div>
+        
+        <div class="content">
+            <div class="congratulations">🎉 CONGRATULATIONS! 🎉</div>
+            
+            <h2 style="color: #059669; margin-bottom: 20px; text-align: center;">Your Application Has Been Approved!</h2>
+            
+            <p>Dear {{ applicant_name }},</p>
+            
+            <div class="approval-message">
+                <h3>Great News!</h3>
+                <p><strong>Congratulations, your {{ program_name }} application was approved! Please login to your account to check more details.</strong></p>
+                <span class="status-badge">APPROVED</span>
+            </div>
+            
+            <div class="program-info">
+                <h3>{{ program_name }}</h3>
+                <div class="info-row">
+                    <span class="info-label">Approval Date:</span> {{ approved_date }}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span> <span style="color: #059669; font-weight: bold;">Approved</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <p><strong>Next Steps:</strong></p>
+                <p>Please log in to your account to access your enrollment details, class schedules, and important program information.</p>
+                <a href="http://127.0.0.1:8000/Login/" class="login-btn">Login to Your Account</a>
+            </div>
+            
+            <p><strong>Important Reminders:</strong></p>
+            <ul>
+                <li>Log in to your account to view complete program details</li>
+                <li>Check your enrollment status and requirements</li>
+                <li>Review your class schedule and important dates</li>
+                <li>Contact us if you have any questions</li>
+            </ul>
+            
+            <p>We are excited to welcome you to DLL LMSTC and look forward to supporting your educational journey!</p>
+            
+            <p>Best regards,<br>
+            <strong>DLL LMSTC Admissions Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>For inquiries, please contact our admissions office during business hours.</p>
+        </div>
+    </div>
+</body>
+</html>

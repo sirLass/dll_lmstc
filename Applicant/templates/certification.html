@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate - Lucena Manpower Skill Training Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-5">
+    <div class="w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden relative p-2" style="background: linear-gradient(90deg, #1e40af 0%, #fbbf24 50%, #1e40af 100%);">
+        <div class="relative bg-white px-20 py-16 min-h-[600px] rounded-lg">
+            <!-- Decorative background elements -->
+            <i class="bi bi-mortarboard-fill absolute left-0 top-1/2 -translate-y-1/2 text-yellow-400 opacity-10 text-[120px] select-none pointer-events-none"></i>
+            <i class="bi bi-star-fill absolute right-0 top-1/2 -translate-y-1/2 text-yellow-400 opacity-10 text-[120px] select-none pointer-events-none"></i>
+            <!-- Certificate Header -->
+            <div class="text-center mb-10 relative z-10">
+                <div class="mx-auto mb-5 w-24 h-24 rounded-full bg-blue-900 flex items-center justify-center">
+                    <img src="{% static 'Images/icon.png' %}" alt="Logo" class="w-20 h-20 object-contain rounded-full" />
+                </div>
+                <h1 class="font-serif text-3xl md:text-4xl font-bold text-blue-900 leading-tight">Lucena Manpower Skill Training Center</h1>
+                <p class="uppercase tracking-wider text-base text-slate-500 font-semibold mt-1">Dalubhasaan ng Lungsod ng Lucena</p>
+            </div>
+            <!-- Certificate Title -->
+            <h2 class="text-center font-serif text-4xl font-semibold text-yellow-400 my-8 drop-shadow">Certificate of Completion</h2>
+            <!-- Certificate Text -->
+            <div class="text-center text-lg text-slate-700 my-6">
+                <p>This is to certify that</p>
+            </div>
+            <!-- Recipient Name -->
+            <div class="font-serif text-3xl font-bold text-blue-900 text-center my-6 py-4 border-b-4 border-yellow-400 w-full">[Recipient Name]</div>
+            <!-- Course Details -->
+            <div class="text-center text-base italic text-slate-500 my-6">
+                <p>has successfully completed the requirements for</p>
+                <p class="font-semibold text-lg text-blue-800">[Course/Training Program Name]</p>
+                <p>and has demonstrated proficiency in the required skills and competencies.</p>
+                <p class="mt-4">We sincerely thank you for your dedication and commitment in completing this program. We hope you continue to pursue more skills and achieve greater success in your future endeavors.</p>
+            </div>
+            <!-- Certificate Footer -->
+            <div class="flex flex-row justify-between items-end mt-16 pt-8 border-t-2 border-slate-200">
+                <div class="flex-1 text-center">
+                    <div class="mx-auto w-52 h-0.5 bg-blue-900 mb-2"></div>
+                    <p class="text-sm text-slate-500 font-medium">Trainor Name</p>
+                </div>
+                <div class="flex-1 text-center">
+                    <p class="text-sm text-slate-500 mb-1">Date Issued:</p>
+                    <p class="text-base text-blue-900 font-semibold">[Date]</p>
+                </div>
+                <div class="flex-1 text-center">
+                    <div class="mx-auto w-52 h-0.5 bg-blue-900 mb-2"></div>
+                    <p class="text-sm text-slate-500 font-medium">Training Coordinator</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

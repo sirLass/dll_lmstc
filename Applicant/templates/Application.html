@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DLL-LMSTC Registration Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Roboto', sans-serif; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-400 to-blue-600 min-h-screen flex items-center justify-center p-6">
+
+  <div class="bg-white w-full max-w-5xl p-8 rounded-lg shadow-lg space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-blue-700">DLL-LMSTC Registration Form</h1>
+        <p class="text-lg font-semibold text-gray-700">LEARNERS PROFILE FORM</p>
+      </div>
+      <div class="w-24 h-24 bg-gray-200 flex items-center justify-center text-gray-500 border relative cursor-pointer overflow-hidden rounded">
+        <input type="file" accept="image/*" onchange="previewID(this)" class="absolute inset-0 opacity-0 cursor-pointer">
+        <span id="id-label" class="text-sm">Upload<br>a 2X2<br>Picture</span>
+        <img id="id-preview" class="absolute inset-0 w-full h-full object-cover hidden" />
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form id="multi-step-form" action="{% url 'Dashboard' %}" method="POST">
+      
+      <!-- Step 1 -->
+      <div id="step-1" class="space-y-8">
+        <!-- 1. TWMS Auto Generated -->
+        <div>
+          <h2 class="font-bold text-lg text-blue-700 mb-2">1. TWMS Auto Generated</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-semibold text-gray-600">1.1 Unique Learner Identifier (ULI) Number:</label>
+              <input type="text" class="w-full border rounded p-2 mt-1" placeholder="" disabled="True" required>
+            </div>
+            <div>
+              <label class="text-sm font-semibold text-gray-600">1.2 Entry Date:</label>
+              <input type="date" class="w-full border rounded p-2 mt-1" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Learner/Manpower Profile -->
+        <div>
+          <h2 class="font-bold text-lg text-blue-700 mb-2">2. Learner/Manpower Profile</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Name -->
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-gray-600">2.1 Name</label>
+              <input type="text" class="w-full border rounded p-2" placeholder="Last Name, Extension Name (Jr., Sr.)" required>
+              <input type="text" class="w-full border rounded p-2" placeholder="First Name" required>
+              <input type="text" class="w-full border rounded p-2" placeholder="Middle Name" required>
+            </div>
+
+            <!-- Address -->
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-gray-600">2.2 Complete Permanent Mailing Address</label>
+            
+              <!-- Region -->
+              <select id="region" class="w-full border rounded p-2" onchange="loadProvinces()" required>
+                <option value="">-- Select Region --</option>
+              </select>
+            
+              <!-- Province -->
+              <select id="province" class="w-full border rounded p-2" onchange="loadCities()" required>
+                <option value="">-- Select Province --</option>
+              </select>
+            
+              <!-- City/Municipality -->
+              <select id="city" class="w-full border rounded p-2" onchange="loadBarangays()" required>
+                <option value="">-- Select City / Municipality --</option>
+              </select>
+            
+              <!-- Barangay -->
+              <select id="barangay" class="w-full border rounded p-2" required>
+                <option value="">-- Select Barangay --</option>
+              </select>
+            
+              <!-- District (manual input) -->
+              <input type="text" class="w-full border rounded p-2" placeholder="District" required>
+            
+              <!-- House No., Street, Subdivision/Barangay -->
+              <input type="text" class="w-full border rounded p-2" placeholder="House No., Street, Subdivision/Barangay" required>
+            
+              <!-- Email -->
+              <input type="email" class="w-full border rounded p-2" placeholder="Email Address/Facebook Account" required>
+            
+              <!-- Contact No. -->
+              <input type="text" class="w-full border rounded p-2" placeholder="Contact No." required>
+            
+              <!-- Nationality -->
+              <input type="text" class="w-full border rounded p-2" placeholder="Nationality" required>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="step-2" class="space-y-8 hidden">
+        <!-- 3. Personal Information -->
+      <div>
+      <h2 class="font-bold text-lg text-blue-700 mb-2">3. Personal Information</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- 3.1 Sex -->
+          <div>
+            <label class="text-sm font-semibold text-gray-600">3.1 Sex</label>
+            <div class="flex space-x-4 mt-2">
+              <label><input type="radio" name="sex" class="mr-1" required> Male</label>
+              <label><input type="radio" name="sex" class="mr-1"> Female</label>
+            </div>
+          </div>
+
+          <!-- 3.2 Civil Status -->
+          <div>
+            <label class="text-sm font-semibold text-gray-600">3.2 Civil Status</label>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <label><input type="radio" name="civil" class="mr-1" required> Single</label>
+              <label><input type="radio" name="civil" class="mr-1"> Married</label>
+              <label><input type="radio" name="civil" class="mr-1"> Widower</label>
+              <label><input type="radio" name="civil" class="mr-1"> Separated</label>
+              <label><input type="radio" name="civil" class="mr-1"> Solo Parent</label>
+            </div>
+          </div>
+
+          <!-- 3.3 Employment Status -->
+          <div>
+            <label class="text-sm font-semibold text-gray-600">3.3 Employment Status (Before the Training)</label>
+            <div class="flex space-x-4 mt-2">
+              <label><input type="radio" name="employment" class="mr-1" value="employed" onclick="toggleEmploymentFields()" required> Employed</label>
+              <label><input type="radio" name="employment" class="mr-1" value="unemployed" onclick="toggleEmploymentFields()"> Unemployed</label>
+            </div>
+          </div>
+
+          <!-- Monthly Income -->
+          <div id="monthly-income" class="hidden">
+            <label class="text-sm font-semibold text-gray-600">Monthly Income</label>
+            <input type="text" class="w-full border rounded p-2 mt-1" placeholder="Monthly Income" required>
+          </div>
+
+          <!-- Date Hired -->
+          <div id="date-hired" class="hidden">
+            <label class="text-sm font-semibold text-gray-600">Date Hired</label>
+            <input type="date" class="w-full border rounded p-2 mt-1" required>
+          </div>
+
+          <!-- Company Name -->
+          <div id="company-name" class="hidden">
+            <label class="text-sm font-semibold text-gray-600">Company Name</label>
+            <input type="text" class="w-full border rounded p-2 mt-1" placeholder="Company Name" required>
+          </div>
+
+          <!-- 3.4 Birthdate -->
+          <div>
+            <label class="text-sm font-semibold text-gray-600">3.4. Birthdate</label>
+            <div class="grid grid-cols-3 gap-2 mt-1">
+              <select class="border rounded p-2" id="month" required>
+                <option value="">Month</option>
+                <!-- Month Options -->
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <select class="border rounded p-2 " id="day" required>
+                <option value="">Day</option>
+                <!-- Day Options -->
+                <script>
+                  for (let i = 1; i <= 31; i++) {
+                    document.write(`<option value="${i < 10 ? '0' + i : i}">${i}</option>`);
+                  }
+                </script>
+              </select>
+              <select class="border rounded p-2" id="year" required>
+                <option value="">Year</option>
+                <!-- Year Options (example 1990 - 2025) -->
+                <script>
+                  const currentYear = new Date().getFullYear();
+                  for (let i = currentYear; i >= 1900; i--) {
+                    document.write(`<option value="${i}">${i}</option>`);
+                  }
+                </script>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Age -->
+          <div>
+            <label class="text-sm font-semibold text-gray-600">Age</label>
+            <input type="number" class="w-full border rounded p-2 mt-1" placeholder="Age" required>
+          </div>
+
+          <!-- 3.5 Birthplace -->
+          <div class="md:col-span-2">
+            <label class="text-sm font-semibold text-gray-600">3.5. Birthplace</label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+              <select id="regionb" class="border rounded p-2" onchange="loadProvincesB()" required>
+                <option value="">Region</option>
+              </select>
+              <select id="provinceb" class="border rounded p-2" onchange="loadCitiesB()" required>
+                <option value="">Province</option>
+              </select>
+              <select id="cityb" class="border rounded p-2" onchange="loadBarangaysB()" required>
+                <option value="">City/Municipality</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 3.6 Educational Attainment -->
+          <div class="md:col-span-2">
+            <label class="text-sm font-semibold text-gray-600">3.6. Educational Attainment (Before the Training)</label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+              <label><input type="radio" name="education" class="mr-1" required> No Grade Complete</label>
+              <label><input type="radio" name="education" class="mr-1"> Pre-School(Nursery/Kinder/Prep)</label>
+              <label><input type="radio" name="education" class="mr-1"> Elementary Undergraduate</label>
+              <label><input type="radio" name="education" class="mr-1"> Elementary Graduate</label>
+              <label><input type="radio" name="education" class="mr-1"> Junior Graduate</label>
+              <label><input type="radio" name="education" class="mr-1"> High School Graduate</label>
+              <label><input type="radio" name="education" class="mr-1"> Post Secondary Graduate</label>
+              <label><input type="radio" name="education" class="mr-1"> Post Secondary Undergraduate</label>
+              <label><input type="radio" name="education" class="mr-1"> Senior High Graduate</label>
+              <label><input type="radio" name="education" class="mr-1"> College Undergraduate</label>
+              <label><input type="radio" name="education" class="mr-1"> College UnderGraduate</label>
+              <label><input type="radio" name="education" class="mr-1"> College Graduate or Higher</label>
+            </div>
+          </div>
+
+          <!-- 3.7 Parent/Guardian -->
+          <div class="md:col-span-1">
+            <label class="text-sm font-semibold text-gray-600">3.7. Parent/Guardian</label>
+            <input type="text" class="w-full border rounded p-2 mt-1" placeholder="Name" required>
+          </div>
+
+          <!-- Complete Address -->
+          <div class="md:col-span-1">
+            <label class="text-sm font-semibold text-gray-600">Complete Permanent Mailing Address</label>
+            <input type="text" class="w-full border rounded p-2 mt-1" placeholder="Address" required>
+          </div>
+
+        </div>
+      </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="step-3" class="space-y-8 p-4">
+
+        <!-- 4. Classification -->
+        <div>
+          <h2 class="font-bold text-lg text-blue-700 mb-2">
+            4. Learner/Trainee/Student (Clients) Classification
+          </h2>
+
+          <form id="myForm">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <label><input type="checkbox" class="mr-1"> 4Ps Beneficiary</label>
+              <label><input type="checkbox" class="mr-1"> Displaced Workers</label>
+              <label><input type="checkbox" class="mr-1"> Family Members of AFP and PNP Wounded in-Action</label>
+              <label><input type="checkbox" class="mr-1"> Industry Workers</label>
+              <label><input type="checkbox" class="mr-1"> Out-of-School-Youth</label>
+              <label><input type="checkbox" class="mr-1"> Rebel Returnees/Decommissioned</label>
+              <label><input type="checkbox" class="mr-1"> TESDA Alumni</label>
+              <label><input type="checkbox" class="mr-1"> Victim of Natural Disaster and Calamities</label>
+              <label><input type="checkbox" class="mr-1"> Agrarian Reform Beneficiary</label>
+              <label><input type="checkbox" class="mr-1"> Drug Dependents Surrenderees/Surrenderers</label>
+              <label><input type="checkbox" class="mr-1"> Farmer and Fisherman</label>
+              <label><input type="checkbox" class="mr-1"> Inmates and Detainees</label>
+              <label><input type="checkbox" class="mr-1"> Overseas Filipino Workers (OFW) Dependents</label>
+              <label><input type="checkbox" class="mr-1"> Returning/Repatriated Overseas Filipino Workers (OFW)</label>
+              <label><input type="checkbox" class="mr-1"> TVET Trainers</label>
+              <label><input type="checkbox" class="mr-1"> Wounded-in-Action AFP & PNP Personnel</label>
+              <label><input type="checkbox" class="mr-1"> Balik Probinsya</label>
+              <label><input type="checkbox" class="mr-1"> Family Members of AFP and PNP Killed-in-Action</label>
+              <label><input type="checkbox" class="mr-1"> Indigenous People & Cultural Communities</label>
+              <label><input type="checkbox" class="mr-1"> MILF Beneficiary</label>
+              <label><input type="checkbox" class="mr-1"> RCEF-RESP</label>
+              <label><input type="checkbox" class="mr-1"> Student</label>
+              <label><input type="checkbox" class="mr-1"> Uniformed Personnel</label>
+  
+              <!-- Others Checkbox and Input -->
+              <div class="col-span-1 md:col-span-1 flex flex-col md:flex-row items-start md:items-center gap-2">
+                <label class="flex items-center">
+                  <input type="checkbox" id="othersCheckbox" class="mr-1"> Others:
+                </label>
+                <input type="text" id="othersInput" class="border rounded p-2 w-full md:w-1/2" placeholder="Please specify">
+              </div>
+            </div>
+
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Submit</button>
+
+          </form>
+          <script>
+            document.getElementById("myForm").addEventListener("submit", function (e) {
+              // Select all checkboxes inside the form
+              const checkboxes = document.querySelectorAll('#myForm input[type="checkbox"]');
+              // Check if at least one is checked
+              const oneChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+          
+              if (!oneChecked) {
+                e.preventDefault(); // stop form submission
+                alert("Please select at least one category.");
+              }
+            });
+          </script>
+          
+
+        </div>
+
+        <!-- 5. Disability -->
+        <div>
+          <h2 class="font-bold text-lg text-blue-700 mb-2">5. Type of Disability (For Persons with Disability only): To be filled up by the LMSTC personnel</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="mental_intellectual"> Mental/Intellectual</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="visual_disability"> Visual Disability</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="orthopedic_disability"> Orthopedic (Musculoskeletal) Disability</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="hearing_disability"> Hearing Disability</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="speech_impairment"> Speech Impairment</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="multiple_disabilities"> Multiple Disabilities, specify</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="psychosocial_disability"> Psychosocial Disability</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="chronic_illness"> Disability Due to Chronic Illness</label>
+            <label><input type="checkbox" class="mr-1" name="disability_type" value="learning_disability"> Learning Disability</label>
+          </div>
+        </div>
+
+        <!-- 6. Cause of Disability -->
+        <div>
+          <h2 class="font-bold text-lg text-blue-700 mb-2">6. Cause of Disability (For Persons with Disability only): To be filled up by the LMSTC personnel</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <label><input type="checkbox" class="mr-1" name="disability_cause" value="congenital_inborn"> Congenital/Inborn</label>
+            <label><input type="checkbox" class="mr-1" name="disability_cause" value="illness"> Illness</label>
+            <label><input type="checkbox" class="mr-1" name="disability_cause" value="injury"> Injury</label>
+          </div>
+        </div>
+
+        <!-- 7. Course and Scholarship -->
+        <div class="space-y-2">
+          <label class="font-bold text-lg text-blue-700 mb-2">7. Name of Course/Qualification</label>
+          <input type="text" class="w-full border rounded p-2" placeholder="Course/Qualification">
+
+          <label class="font-bold text-lg text-blue-700 mb-2">8. Scholarship Package (TWSP, PESFA, STEP, others)</label>
+          <input type="text" class="w-full border rounded p-2" placeholder="Scholarship Type">
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div id="step-4" class="bg-white w-full max-w-4xl p-8 rounded-lg shadow-lg space-y-8">
+        <!-- Step 4 Header -->
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-blue-800">Step 4: Privacy and Signature</h1>
+        </div>
+
+        <!-- Privacy Disclaimer -->
+        <div class="border-l-4 border-blue-600 bg-blue-50 p-4 text-sm text-gray-700 rounded text-center">
+          <p class="font-bold text-lg text-blue-700 mb-2">9. Privacy Disclaimer</p>
+          <p>
+            I hereby allow TESDA to use/post my contact details, name, email, cellphone/landline nos. and other
+            information I provided which may be used for processing of my scholarship application, for employment
+            opportunities and for the survey of TESDA programs.
+          </p>
+          <div class="flex justify-center space-x-8 mt-4">
+            <label class="inline-flex items-center space-x-2">
+              <input type="radio" name="agree" class="form-checkbox text-blue-600" />
+              <span>Agree</span>
+            </label>
+            <label class="inline-flex items-center space-x-2">
+              <input type="radio" name="agree" class="form-checkbox text-red-600" />
+              <span>Disagree</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Applicant's Signature Section -->
+        <div>
+          <h2 class="font-bold text-lg text-blue-700 mb-2">10. Applicant's Signature</h2>
+          <p class="text-sm text-gray-600 mb-6">This is to certify that the information stated above is true and correct.</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Signature Upload and Name -->
+            <div class="space-y-4 md:col-span-2">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Upload E-Signature</label>
+                <input type="file" accept="image/*" class="w-full border border-gray-300 rounded p-2">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Applicant's Name</label>
+                <input type="text" placeholder="Your Full Name" class="w-full border border-gray-300 rounded p-2">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date Accomplished</label>
+                <input type="date" class="w-full border border-gray-300 rounded p-2">
+              </div>
+            </div>
+
+            <!-- 1x1 Photo Upload -->
+            <div class="w-30 h-30 bg-gray-200 flex items-center justify-center text-gray-500 border relative cursor-pointer overflow-hidden rounded">
+              <input type="file" accept="image/*" onchange="preview1x1(this)" class="absolute inset-0 opacity-0 cursor-pointer">
+              <span id="pic-label" class="text-xs text-center px-2">Upload<br>1x1 picture taken within the last 6 months</span>
+              <img id="pic-preview" class="absolute inset-0 w-full h-full object-cover hidden" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex justify-center gap-4 pt-8">
+        <button type="button" id="prevBtn" class="px-8 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 hidden">Previous</button>
+        <button type="button" id="nextBtn" class="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Next</button>
+      </div>
+
+    </form>
+  </div>
+
+<script>
+  function previewID(input) {
+    const file = input.files[0];
+    const preview = document.getElementById('id-preview');
+    const label = document.getElementById('id-label');
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.classList.remove('hidden');
+        label.classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  let currentStep = 1;
+  const totalSteps = 4;
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  function showStep(step) {
+    for (let i = 1; i <= totalSteps; i++) {
+      const element = document.getElementById(`step-${i}`);
+      if (i === step) {
+        element.classList.remove('hidden');
+      } else {
+        element.classList.add('hidden');
+      }
+    }
+    prevBtn.style.display = (step === 1) ? 'none' : 'inline-block';
+    nextBtn.textContent = (step === totalSteps) ? 'Submit' : 'Next';
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (currentStep < totalSteps) {
+      currentStep++;
+      showStep(currentStep);
+    } else {
+      alert('Form Submitted!');
+      document.getElementById('multi-step-form').reset();
+      currentStep = 1;
+      showStep(currentStep);
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentStep > 1) {
+      currentStep--;
+      showStep(currentStep);
+    }
+  });
+
+  showStep(currentStep);
+
+
+  // Functionality for birthplace
+  const regionSelect = document.getElementById('region');
+  const provinceSelect = document.getElementById('province');
+  const citySelect = document.getElementById('city');
+  const barangaySelect = document.getElementById('barangay');
+
+  // Load regions
+  fetch('https://psgc.cloud/api/regions')
+    .then(response => response.json())
+    .then(data => {
+      data.forEach(region => {
+        const option = document.createElement('option');
+        option.value = region.code;
+        option.textContent = region.name;
+        regionSelect.appendChild(option);
+      });
+    })
+    .catch(error => console.log('Error loading regions:', error));
+
+  // Load provinces based on selected region
+  function loadProvinces() {
+    const regionCode = regionSelect.value;
+    provinceSelect.innerHTML = '<option value="">-- Select Province --</option>';
+    citySelect.innerHTML = '<option value="">-- Select City / Municipality --</option>';
+    barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+
+    if (regionCode) {
+      fetch(`https://psgc.cloud/api/regions/${regionCode}/provinces`)
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.code;
+            option.textContent = province.name;
+            provinceSelect.appendChild(option);
+          });
+        })
+        .catch(error => console.log('Error loading provinces:', error));
+    }
+  }
+
+  // Load cities based on selected province
+  function loadCities() {
+    const provinceCode = provinceSelect.value;
+    citySelect.innerHTML = '<option value="">-- Select City / Municipality --</option>';
+    barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+
+    if (provinceCode) {
+      fetch(`https://psgc.cloud/api/provinces/${provinceCode}/cities-municipalities`)
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city.code;
+            option.textContent = city.name;
+            citySelect.appendChild(option);
+          });
+        })
+        .catch(error => console.log('Error loading cities:', error));
+    }
+  }
+
+  // Load barangays based on selected city
+  function loadBarangays() {
+    const cityCode = citySelect.value;
+    barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
+
+    if (cityCode) {
+      fetch(`https://psgc.cloud/api/cities-municipalities/${cityCode}/barangays`)
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(barangay => {
+            const option = document.createElement('option');
+            option.value = barangay.code;
+            option.textContent = barangay.name;
+            barangaySelect.appendChild(option);
+          });
+        })
+        .catch(error => console.log('Error loading barangays:', error));
+    }
+  }
+
+  // Functionality for Birthplace
+  const regionSelectB = document.getElementById('regionb');
+  const provinceSelectB = document.getElementById('provinceb');
+  const citySelectB = document.getElementById('cityb');
+
+  // Load regions
+  fetch('https://psgc.cloud/api/regions')
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(region => {
+        const opt = document.createElement('option');
+        opt.value = region.code;
+        opt.textContent = region.name;
+        regionSelectB.appendChild(opt);
+      });
+    });
+
+  // Load provinces when region changes
+  function loadProvincesB() {
+    const code = regionSelectB.value;
+    provinceSelectB.innerHTML = '<option value="">Province</option>';
+    citySelectB.innerHTML = '<option value="">City/Municipality</option>';
+
+    if (!code) return;
+
+    fetch(`https://psgc.cloud/api/regions/${code}/provinces`)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(province => {
+          const opt = document.createElement('option');
+          opt.value = province.code;
+          opt.textContent = province.name;
+          provinceSelectB.appendChild(opt);
+        });
+      });
+  }
+
+  // Load cities when province changes
+  function loadCitiesB() {
+    const code = provinceSelectB.value;
+    citySelectB.innerHTML = '<option value="">City/Municipality</option>';
+
+    if (!code) return;
+
+    fetch(`https://psgc.cloud/api/provinces/${code}/cities-municipalities`)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(city => {
+          const opt = document.createElement('option');
+          opt.value = city.code;
+          opt.textContent = city.name;
+          citySelectB.appendChild(opt);
+        });
+      });
+  }
+
+  // Functionality for Employment Status
+  function toggleEmploymentFields() {
+    const employmentStatus = document.querySelector('input[name="employment"]:checked').value;
+    const monthlyIncome = document.getElementById('monthly-income');
+    const dateHired = document.getElementById('date-hired');
+    const companyName = document.getElementById('company-name');
+
+    // Show fields if employed, hide if unemployed
+    if (employmentStatus === 'employed') {
+      monthlyIncome.classList.remove('hidden');
+      dateHired.classList.remove('hidden');
+      companyName.classList.remove('hidden');
+    } else {
+      monthlyIncome.classList.add('hidden');
+      dateHired.classList.add('hidden');
+      companyName.classList.add('hidden');
+    }
+  }
+
+  // Call the function initially to set the correct visibility on page load
+  toggleEmploymentFields();
+
+  function preview1x1(input) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const preview = document.getElementById('pic-preview');
+          const label = document.getElementById('pic-label');
+          preview.src = e.target.result;
+          preview.classList.remove('hidden');
+          label.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+  
+</script> 
+
+</body>
+</html>

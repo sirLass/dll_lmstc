@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMSTC Learner's Profile Form</title>
+    {% load static %}
+    <script>
+        // Define the path to ph.json using Django's static file handling
+        const phJsonPath = "{% static 'data/ph.json' %}";
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 1rem 0.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            body {
+                padding: 1.5rem 1rem;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 2rem 1rem;
+            }
+        }
+        .form-container {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            padding: 1rem; /* Mobile first - smaller padding */
+            max-width: 1000px;
+            width: 100%;
+            border: 1px solid #e2e8f0; /* border border-gray-200 */
+        }
+        
+        @media (min-width: 640px) {
+            .form-container {
+                padding: 1.5rem;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .form-container {
+                padding: 2rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .form-container {
+                padding: 2.5rem;
+            }
+        }
+        .form-section-title {
+            font-size: 1rem; /* Mobile: text-base */
+            font-weight: 600; /* font-semibold */
+            margin-bottom: 1rem; /* Mobile: mb-4 */
+            color: #1a202c; /* text-gray-900 */
+            border-bottom: 2px solid #e2e8f0; /* border-b-2 border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        
+        @media (min-width: 640px) {
+            .form-section-title {
+                font-size: 1.125rem; /* text-lg */
+                margin-bottom: 1.25rem;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .form-section-title {
+                font-size: 1.25rem; /* text-xl */
+                margin-bottom: 1.5rem; /* mb-6 */
+            }
+        }
+        .form-label {
+            display: block;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #4a5568; /* text-gray-700 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .form-input, .form-select, .form-textarea {
+            display: block;
+            width: 100%;
+            padding: 0.875rem 0.75rem; /* Mobile: More vertical padding for touch */
+            font-size: 1rem; /* text-base */
+            line-height: 1.5;
+            color: #4a5568; /* text-gray-700 */
+            background-color: #ffffff;
+            border: 1px solid #cbd5e0; /* border border-gray-400 */
+            border-radius: 0.5rem; /* rounded-lg */
+            appearance: none;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        
+        @media (min-width: 768px) {
+            .form-input, .form-select, .form-textarea {
+                padding: 0.75rem 1rem;
+            }
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: #6366f1; /* focus:border-indigo-500 */
+            outline: 0;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); /* focus:ring-indigo-500 */
+        }
+        .form-radio-checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem; /* gap-4 */
+        }
+        .form-radio-checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .form-radio-checkbox-item input[type="radio"],
+        .form-radio-checkbox-item input[type="checkbox"] {
+            margin-right: 0.5rem; /* mr-2 */
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            border-radius: 0.25rem; /* rounded */
+            border: 1px solid #cbd5e0; /* border-gray-400 */
+            accent-color: #6366f1; /* For colored checkbox/radio */
+        }
+        .form-radio-checkbox-item label {
+            font-size: 0.875rem; /* text-sm */
+            color: #4a5568; /* text-gray-700 */
+            font-weight: normal;
+            margin-bottom: 0;
+        }
+        .grid-cols-custom-2 {
+            grid-template-columns: 1fr 2fr;
+        }
+        .upload-box {
+            position: relative;
+            width: 128px; /* w-32 */
+            height: 128px; /* h-32 */
+            border: 2px dashed #94a3b8; /* border-gray-400 */
+            border-radius: 0.5rem; /* rounded-lg */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #64748b; /* text-gray-500 */
+            font-size: 0.875rem; /* text-sm */
+            cursor: pointer;
+            overflow: hidden; /* To contain the image */
+        }
+        .upload-box input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10; /* Ensure it's clickable */
+        }
+        .upload-box img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover the box area */
+            z-index: 5; /* Below the input */
+        }
+        .upload-box .text-content {
+            position: relative;
+            z-index: 15; /* Above the image */
+            pointer-events: none; /* Allow click to pass through to input */
+        }
+
+        /* Styles for e-signature upload box */
+        .e-signature-upload-box {
+            position: relative;
+            width: 100%; /* Full width of its grid column */
+            height: 100px; /* Fixed height for signature area */
+            border: 2px dashed #94a3b8;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .e-signature-upload-box input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .e-signature-upload-box img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Use 'contain' for signatures to prevent stretching */
+            z-index: 5;
+        }
+        .e-signature-upload-box .text-content {
+            position: relative;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Custom style for the signature lines */
+        .signature-line {
+            border-bottom: 1px solid #94a3b8; /* A thin line */
+            width: 250px; /* Shorter fixed width */
+            margin-bottom: 0.25rem; /* Small space below the line */
+        }
+
+        /* Hidden class for toggling visibility */
+        .hidden-field {
+            display: none;
+        }
+        .hidden-page {
+            display: none;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #9ca3af;
+            cursor: pointer;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+        .modal-close-btn:hover {
+            background-color: #f3f4f6;
+            color: #4b5563;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-icon {
+            width: 3rem;
+            height: 3rem;
+            background-color: #dbeafe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .modal-body {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .modal-body p {
+            margin-bottom: 0.75rem;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal-btn:hover {
+            background-color: #2563eb;
+        }
+        .hidden {
+            display: none;
+        }
+
+        /* Progress Indicator Styles */
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 0.5rem;
+        }
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .progress-circle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            border: 3px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #9ca3af;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+        .progress-circle.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .progress-circle.completed {
+            background-color: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        .progress-label {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+            max-width: 80px;
+        }
+        .progress-label.active {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .progress-line {
+            height: 3px;
+            width: 3rem;
+            background-color: #e5e7eb;
+            margin: 0 -0.5rem;
+            margin-top: -1.65rem;
+            transition: background-color 0.3s ease;
+            z-index: 1;
+        }
+        .progress-line.completed {
+            background-color: #10b981;
+        }
+        @media (max-width: 640px) {
+            .progress-circle {
+                width: 2rem;
+                height: 2rem;
+                font-size: 0.75rem;
+            }
+            .progress-line {
+                width: 2rem;
+            }
+            .progress-label {
+                font-size: 0.65rem;
+                max-width: 60px;
+            }
+        }
+
+        /* Style for the new checkbox label */
+        .checkbox-label-with-text {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #4a5568; /* text-gray-700 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .checkbox-label-with-text input[type="checkbox"] {
+            margin-right: 0.5rem; /* mr-2 */
+            width: 1.25rem; /* w-5 */
+            height: 1.25rem; /* h-5 */
+            border-radius: 0.25rem; /* rounded */
+            border: 1px solid #cbd5e0; /* border-gray-400 */
+            accent-color: #6366f1; /* For colored checkbox */
+        }
+
+
+        @media (min-width: 768px) {
+            .grid-cols-md-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .grid-cols-md-4 {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            .grid-cols-md-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Modal -->
+    <div id="welcome-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeWelcomeModal()" aria-label="Close">
+                &times;
+            </button>
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 class="modal-title">Application Registration</h2>
+            </div>
+            <div class="modal-body">
+                <p><strong>Congratulations on successfully applying to the program!</strong></p>
+                <p>To complete your registration with LMSTC (Livelihood and Manpower Skills Training Center), please fill up all required entries in this Learner's Profile Form.</p>
+                <p><strong>Important:</strong></p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">
+                    <li>All fields marked as required must be completed</li>
+                    <li>Please ensure all information is accurate and up-to-date</li>
+                    <li>This information is needed by LMSTC for processing your application</li>
+                    <li>You will only fill up this form once</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closeWelcomeModal()">I Understand, Let's Begin</button>
+            </div>
+        </div>
+    </div>
+
+    <form id="learner-profile-form" method="post" action="{% url 'learner_form' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+    <div id="message-box" class="hidden fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50">
+        <span id="message-text"></span>
+        <button onclick="hideMessageBox()" class="ml-4 text-white font-bold">&times;</button>
+    </div>
+
+    <div class="form-container">
+        <!-- Cancel Application Button - Top Right -->
+        <div class="flex justify-end mb-4">
+            <button type="button" id="cancel-application-button" onclick="confirmCancelApplication()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-200">
+                Cancel Application
+            </button>
+        </div>
+
+        <!-- Progress Indicator - Centered -->
+        <div class="progress-container">
+            <div class="progress-step">
+                <div class="progress-circle active" id="progress-1">1</div>
+                <span class="progress-label active" id="label-1">Personal Info</span>
+            </div>
+            <div class="progress-line" id="line-1"></div>
+            <div class="progress-step">
+                <div class="progress-circle" id="progress-2">2</div>
+                <span class="progress-label" id="label-2">Details</span>
+            </div>
+            <div class="progress-line" id="line-2"></div>
+            <div class="progress-step">
+                <div class="progress-circle" id="progress-3">3</div>
+                <span class="progress-label" id="label-3">Classification</span>
+            </div>
+            <div class="progress-line" id="line-3"></div>
+            <div class="progress-step">
+                <div class="progress-circle" id="progress-4">4</div>
+                <span class="progress-label" id="label-4">Final</span>
+            </div>
+        </div>
+
+        <div class="relative mb-6 md:mb-8 flex flex-col md:flex-row items-center justify-between">
+            <div class="text-center md:text-left md:flex-grow">
+                <p class="text-sm sm:text-base md:text-lg font-bold text-gray-800">Technical Education and Skills Development Authority</p>
+                <p class="text-xs sm:text-sm md:text-md text-gray-600">Pangasiwaan sa Edukasyong Teknikal at Pagpapaunlad ng Kasanayan</p>
+                <p class="text-xs text-gray-500 mt-1 md:mt-2">MIS 03 – 01 (ver. 2020)</p>
+                <h1 class="text-lg sm:text-xl md:text-2xl font-extrabold text-gray-900 mt-4 md:mt-6 mb-3 md:mb-4 uppercase tracking-wide">Learners Profile Form</h1>
+            </div>
+            <div class="mt-4 md:mt-0 md:ml-8 flex-shrink-0">
+                <label for="top-id-picture-upload" class="upload-box">
+                    <img id="top-id-preview" src="" alt="ID Picture Preview" class="hidden">
+                    <input type="file" name="id_picture" id="top-id-picture-upload" accept="image/*" onchange="previewImage(event, 'top-id-preview')" required>
+                    <div class="text-content">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v9" />
+                        </svg>
+                        Upload ID Picture <br>
+                        <span class="text-xs">1x1 taken within <br> the last 6 months</span>
+                        <span class="mt-1 text-xs">mm/dd/yy</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-page" data-page="1">
+            <div class="mb-8">
+                <h2 class="form-section-title">1. T2MIS Auto Generated</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="uli-number" class="form-label">1.1. Unique Learner Identifier (ULI) Number:</label>
+                        <input type="text" id="uli-number" class="form-input" placeholder="ULI-XXXX-XXXX-XXXX" readonly disabled>
+                    </div>
+                    <div>
+                        <label for="entry-date" class="form-label">1.2. Entry Date:</label>
+                        <input type="date" id="entry-date" name="entry_date" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="form-section-title">2. Learner/Manpower Profile</h2>
+                <div class="mb-6">
+                    <label class="form-label">2.1. Name:</label>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <input type="text" id="last-name" name="last_name" class="form-input" placeholder="Last Name" oninput="this.value = this.value.toUpperCase()" required>
+                            <p class="text-xs text-gray-500 mt-1">Last Name</p>
+                        </div>
+                        <div>
+                            <input type="text" id="first-name" name="first_name" class="form-input" placeholder="First Name" oninput="this.value = this.value.toUpperCase()" required>
+                            <p class="text-xs text-gray-500 mt-1">First Name</p>
+                        </div>
+                        <div>
+                            <input type="text" id="middle-name" name="middle_name" class="form-input" placeholder="Middle Name" oninput="this.value = this.value.toUpperCase()">
+                            <p class="text-xs text-gray-500 mt-1">Middle Name</p>
+                        </div>
+                        <div>
+                            <input type="text" id="extension-name" name="extension_name" class="form-input" placeholder="Extension Name (Jr., Sr.)" oninput="this.value = this.value.toUpperCase()">
+                            <p class="text-xs text-gray-500 mt-1">Extension Name (Jr., Sr.)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">2.2. Complete Permanent Mailing Address:</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label for="region" class="form-label">Region</label>
+                            <select id="region" name="region"  class="form-select" required></select>
+                            <!-- Hidden field to store region name -->
+                            <input type="hidden" id="region-name" name="region_name">
+                        </div>
+                        <div>
+                            <label for="province" class="form-label">Province</label>
+                            <select id="province" name="province" class="form-select" disabled required></select>
+                            <!-- Hidden field to store province name -->
+                            <input type="hidden" id="province-name" name="province_name">
+                        </div>
+                        <div>
+                            <label for="district" class="form-label">District</label>
+                            <input type="text" id="district" name="district" class="form-input" placeholder="District" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div>
+                            <label for="municipality" class="form-label">City/Municipality</label>
+                            <select id="municipality" name="city"  class="form-select" disabled required></select>
+                            <!-- Hidden field to store city name -->
+                            <input type="hidden" id="city-name" name="city_name">
+                        </div>
+                        <div>
+                            <label for="barangay" class="form-label">Barangay</label>
+                            <select id="barangay" class="form-select" disabled required></select>
+                            <!-- Hidden field to store barangay name -->
+                            <input type="hidden" id="barangay-name" name="barangay_name">
+                        </div>
+                        <div>
+                            <label for="house-street" class="form-label">House No., Street, Subdivision/Purok</label>
+                            <input type="text" id="house-street"  name='street' class="form-input" placeholder="House No., Street, Subdivision/Purok" oninput="this.value = this.value.toUpperCase()" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <label for="email-facebook" class="form-label">Email Address/Facebook Account:</label>
+                        <input type="email" name="email" id="email-facebook" class="form-input" placeholder="your.email@example.com / facebook.com/yourprofile" oninput="this.value = this.value.toUpperCase()" required>
+                    </div>
+                    <div>
+                        <label for="contact-no" class="form-label">Contact No:</label>
+                        <input type="text" name="contact_number"  id="contact-no" class="form-input" placeholder="+63 9XX XXX XXXX" oninput="validateContactNo(this)">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <input type="text" name="nationality" id="nationality" class="form-input" placeholder="Nationality" oninput="this.value = this.value.toUpperCase()" required>
+                        <p class="text-xs text-gray-500 mt-1">Nationality</p>
+                    </div>
+                    <div>
+                        <label for="skills" class="form-label">Skills:</label>
+                        <input type="text" id="skills" name="skills" class="form-input" placeholder="e.g., Cooking, Driving" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-page hidden-page" data-page="2">
+            <div class="mb-8">
+                <h2 class="form-section-title">3. Personal Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="form-label">3.1. Sex</label>
+                        <div class="form-radio-checkbox-group">
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio" id="male" name="sex" value="Male" required>
+                                <label for="male">Male</label>
+                            </div>
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio" id="female" name="sex" value="Female" required>
+                                <label for="female">Female</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">3.2. Civil Status</label>
+                        <div class="form-radio-checkbox-group">
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio" name="civil_status" value="Single" id="single" required>
+                                <label for="single">Single</label>
+                            </div>
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio" id="married" name="civil_status" value="Married" required>
+                                <label for="married">Married</label>
+                            </div>
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio"  name="civil_status" value="Widower" id="widowed" required>
+                                <label for="widowed">Widowed</label>
+                            </div>
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio"  name="civil_status" value="Separated" id="separated" required>
+                                <label for="separated">Separated</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">3.3. Employment Status (before the training)</label>
+                        <div class="form-radio-checkbox-group flex-col">
+                            <div class="form-radio-checkbox-item">
+                                <input type="radio" id="employed" name="employment_status" value="Employed" onchange="toggleEmploymentFields()" required>
+                                <label for="employed">Employed</label>
+                            </div>
+                            <div id="employed-fields" class="w-full">
+                                <label for="monthly-income" class="form-label ml-6 mt-2">Monthly Income:</label>
+                                <input type="text" id="monthly-income" name="monthly_income" class="form-input ml-6" placeholder="Enter Monthly Income" oninput="this.value = this.value.toUpperCase()">
+                                <label for="date-hired" class="form-label ml-6 mt-2">Date Hired:</label>
+                                <input type="date" id="date-hired" name="date_hired" class="form-input ml-6">
+                                <label for="company-name" class="form-label ml-6 mt-2">Company Name:</label>
+                                <input type="text" id="company-name" name="company_name" class="form-input ml-6" placeholder="Enter Company Name" oninput="this.value = this.value.toUpperCase()">
+                            </div>
+                            <div class="form-radio-checkbox-item mt-2">
+                                <input type="radio" id="unemployed" name="employment_status" value="Unemployed" onchange="toggleEmploymentFields()" required>
+                                <label for="unemployed">Unemployed</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">3.4. Birthdate</label>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label for="month-birth" class="form-label">Month of Birth</label>
+                            <select id="month-birth" name="birth_month" class="form-select" onchange="populateDays(); calculateAge()" required></select>
+                        </div>
+                        <div>
+                            <label for="day-birth" class="form-label">Day of Birth</label>
+                            <select id="day-birth" name="birth_day" class="form-select" onchange="calculateAge()" required></select>
+                        </div>
+                        <div>
+                            <label for="year-birth" class="form-label">Year of Birth</label>
+                            <select id="year-birth" name="birth_year" class="form-select" onchange="populateDays(); calculateAge()" required></select>
+                        </div>
+                        <div>
+                            <label for="age" class="form-label">Age</label>
+                            <input type="text" id="age" class="form-input" placeholder="Age" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">3.5. Birthplace</label>
+                    <div class="checkbox-label-with-text mb-2">
+                        <input type="checkbox" id="same-as-mailing-birthplace">
+                        <label for="same-as-mailing-birthplace">Same as Permanent Address</label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="region-birthplace" class="form-label">Region</label>
+                            <select id="region-birthplace" class="form-select"></select>
+                            <!-- Hidden field to store birthplace region name -->
+                            <input type="hidden" id="birthplace-region-name" name="birthplace_regionb_name">
+                        </div>
+                        <div>
+                            <label for="province-birthplace" class="form-label">Province</labeL>
+                            <select id="province-birthplace" class="form-select" disabled></select>
+                            <!-- Hidden field to store birthplace province name -->
+                            <input type="hidden" id="birthplace-province-name" name="birthplace_provinceb_name">
+                        </div>
+                        <div>
+                            <label for="municipality-birthplace" class="form-label">City/Municipality</label>
+                            <select id="municipality-birthplace" class="form-select" disabled></select>
+                            <!-- Hidden field to store birthplace city name -->
+                            <input type="hidden" id="birthplace-city-name" name="birthplace_cityb_name">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="form-label">3.7. Parent/Guardian</label>
+                    <div class="checkbox-label-with-text mb-2">
+                        <input type="checkbox" id="same-as-mailing-parent-address">
+                        <label for="same-as-mailing-parent-address">Same as Permanent Address</label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <input type="text" id="parent-guardian-name" name="parent_guardian" class="form-input" placeholder="Name" oninput="this.value = this.value.toUpperCase()">
+                            <p class="text-xs text-gray-500 mt-1">Name</p>
+                        </div>
+                        <div>
+                            <input type="text" id="parent-guardian-address" name="permanent_address" class="form-input" placeholder="Complete Permanent Mailing Address" oninput="this.value = this.value.toUpperCase()">
+                            <p class="text-xs text-gray-500 mt-1">Complete Permanent Mailing Address</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-page hidden-page" data-page="3">
+            <div class="mb-8">
+                <h2 class="form-section-title">4. Learner/Trainee/Student (Clients) Classification:</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="4ps-beneficiary" name="client-classification" value="4Ps Beneficiary">
+                        <label for="4ps-beneficiary">4Ps Beneficiary</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="agrarian-reform" name="client-classification" value="Agrarian Reform Beneficiary">
+                        <label for="agrarian-reform">Agrarian Reform Beneficiary</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="balik-probinsya" name="client-classification" value="Balik Probinsya">
+                        <label for="balik-probinsya">Balik Probinsya</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="displaced-workers" name="client-classification" value="Displaced Workers">
+                        <label for="displaced-workers">Displaced Workers</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="drug-dependents" name="client-classification" value="Drug Dependents Surrenderees/Surrenderers">
+                        <label for="drug-dependents">Drug Dependents Surrenderees/Surrenderers</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="afp-pnp-kia" name="client-classification" value="Family Members of AFP and PNP Killed-in-Action">
+                        <label for="afp-pnp-kia">Family Members of AFP and PNP Killed-in-Action</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="afp-pnp-wia" name="client-classification" value="Family Members of AFP and PNP Wounded in-Action">
+                        <label for="afp-pnp-wia">Family Members of AFP and PNP Wounded in-Action</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="farmers-fishermen" name="client-classification" value="Farmers and Fishermen">
+                        <label for="farmers-fishermen">Farmers and Fishermen</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="indigenous-people" name="client-classification" value="Indigenous People & Cultural Communities">
+                        <label for="indigenous-people">Indigenous People & Cultural Communities</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="industry-workers" name="client-classification" value="Industry Workers">
+                        <label for="industry-workers">Industry Workers</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="inmates-detainees" name="client-classification" value="Inmates and Detainees">
+                        <label for="inmates-detainees">Inmates and Detainees</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="milf-beneficiary" name="client-classification" value="MILF Beneficiary">
+                        <label for="milf-beneficiary">MILF Beneficiary</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="out-of-school-youth" name="client-classification" value="Out-of-School-Youth">
+                        <label for="out-of-school-youth">Out-of-School-Youth</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="ofw-dependents" name="client-classification" value="Overseas Filipino Workers (OFW) Dependents">
+                        <label for="ofw-dependents">Overseas Filipino Workers (OFW) Dependents</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="rcef-resp" name="client-classification" value="RCEF-RESP">
+                        <label for="rcef-resp">RCEF-RESP</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="rebel-returnees" name="client-classification" value="Rebel Returnees/Decommissioned Combatants">
+                        <label for="rebel-returnees">Rebel Returnees/Decommissioned Combatants</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="returning-ofw" name="client-classification" value="Returning/Repatriated Overseas Filipino Workers (OFW)">
+                        <label for="returning-ofw">Returning/Repatriated Overseas Filipino Workers (OFW)</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="student" name="client-classification" value="Student">
+                        <label for="student">Student</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="tesda-alumni" name="client-classification" value="TESDA Alumni">
+                        <label for="tesda-alumni">TESDA Alumni</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="tvet-trainers" name="client-classification" value="TVET Trainers">
+                        <label for="tvet-trainers">TVET Trainers</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="uniformed-personnel" name="client-classification" value="Uniformed Personnel">
+                        <label for="uniformed-personnel">Uniformed Personnel</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="natural-disasters" name="client-classification" value="Victim of Natural Disasters and Calamities">
+                        <label for="natural-disasters">Victim of Natural Disasters and Calamities</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="wounded-afp-pnp" name="client-classification" value="Wounded-in-Action AFP & PNP Personnel">
+                        <label for="wounded-afp-pnp">Wounded-in-Action AFP & PNP Personnel</label>
+                    </div>
+                    <div class="form-radio-checkbox-item flex-grow">
+                        <input type="checkbox" id="others-classification" name="client-classification" value="Others">
+                        <label for="others-classification">Others:</label>
+                        <input type="text" id="others-classification-specify" class="form-input ml-2 flex-grow" placeholder="(Please Specify)" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="form-section-title">5. Type of Disability (for Persons with Disability Only): <span class="text-sm font-normal text-gray-500">To be filled up by the LMSTC personnel</span></h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="mental-intellectual" name="disability-type" value="Mental/Intellectual">
+                        <label for="mental-intellectual">Mental/Intellectual</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="visual-disability" name="disability-type" value="Visual Disability">
+                        <label for="visual-disability">Visual Disability</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="orthopedic-disability" name="disability-type" value="Orthopedic (Musculoskeletal) Disability">
+                        <label for="orthopedic-disability">Orthopedic (Musculoskeletal) Disability</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="hearing-disability" name="disability-type" value="Hearing Disability">
+                        <label for="hearing-disability">Hearing Disability</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="speech-impairment" name="disability-type" value="Speech Impairment">
+                        <label for="speech-impairment">Speech Impairment</label>
+                    </div>
+                    <div class="form-radio-checkbox-item flex-grow">
+                        <input type="checkbox" id="multiple-disabilities" name="disability-type" value="Multiple Disabilities">
+                        <label for="multiple-disabilities">Multiple Disabilities, specify</label>
+                        <input type="text" id="multiple-disabilities-specify" class="form-input ml-2 flex-grow" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="psycho-social-disability" name="disability-type" value="Psycho-social Disability">
+                        <label for="psycho-social-disability">Psycho-social Disability</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="chronic-illness-disability" name="disability-type" value="Disability Due to Chronic Illness">
+                        <label for="chronic-illness-disability">Disability Due to Chronic Illness</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="learning-disability" name="disability-type" value="Learning Disability">
+                        <label for="learning-disability">Learning Disability</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="form-section-title">6. Causes of Disability (for Persons with Disability Only): <span class="text-sm font-normal text-gray-500">To be filled up by the LMSTC personnel</span></h2>
+                <div class="form-radio-checkbox-group">
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="congenital-inborn" name="disability-cause" value="Congenital/Inborn">
+                        <label for="congenital-inborn">Congenital/Inborn</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="illness" name="disability-cause" value="Illness">
+                        <label for="illness">Illness</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="checkbox" id="injury" name="disability-cause" value="Injury">
+                        <label for="injury">Injury</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-page hidden-page" data-page="4">
+            <div class="mb-8">
+                <label for="course-qualification" class="form-label text-lg font-semibold">7. Name of Course/Qualification</label>
+                <input type="text" id="course-qualification" name="course_or_qualification" class="form-input" placeholder="e.g., Computer Programming NC IV" oninput="this.value = this.value.toUpperCase()">
+            </div>
+
+            <div class="mb-8">
+                <label for="scholarship-package" class="form-label text-lg font-semibold">8. If Scholar, What Type of Scholarship Package (TWSP, PESFA, STEP, others)?</label>
+                <input type="text" id="scholarship-package" name="scholarship_package" class="form-input" placeholder="e.g., TWSP" oninput="this.value = this.value.toUpperCase()">
+            </div>
+
+            <div class="mb-8">
+                <label for="educational-attainment" class="form-label text-lg font-semibold">Educational Attainment</label>
+                <input type="text" id="educational-attainment" name="educational_attainment" class="form-input" placeholder="e.g., High School Graduate" oninput="this.value = this.value.toUpperCase()">
+            </div>
+
+            <div class="mb-8">
+                <h2 class="form-section-title">9. Privacy Disclaimer</h2>
+                <p class="text-gray-700 mb-4">I hereby allow TESDA to use/post my contact details, name, email, cellphone/landline nos. and other information I provided which may be used for processing of my scholarship application, for employment opportunities and for the survey of TESDA programs.</p>
+                <div class="form-radio-checkbox-group">
+                    <div class="form-radio-checkbox-item">
+                        <input type="radio" id="agree-privacy" name="agree_to_privacy" value="True" required>
+                        <label for="agree-privacy">Agree</label>
+                    </div>
+                    <div class="form-radio-checkbox-item">
+                        <input type="radio" id="disagree-privacy" name="agree_to_privacy" value="False" required>
+                        <label for="disagree-privacy">Disagree</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="form-section-title">10. Applicant’s Signature</h2>
+                <p class="text-gray-700 mb-4">This is to certify that the information stated above is true and correct.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                    <div>
+                        <label for="applicant-printed-name" class="form-label">Applicant’s Printed Name:</label>
+                        <input type="text" id="applicant-printed-name" name="applicant_name" class="form-input" placeholder="Enter Printed Name" oninput="this.value = this.value.toUpperCase()" required>
+                    </div>
+                    <div>
+                        <label for="date-accomplished" class="form-label">Date Accomplished:</label>
+                        <input type="date" id="date-accomplished" name="date_accomplished" class="form-input" required>
+                    </div>
+                </div>
+                <!-- File input for applicant signature -->
+                <div class="mt-4">
+                    <label for="applicant-signature" class="form-label">Applicant's Signature:</label>
+                    <input type="file" id="applicant-signature" name="applicant_signature" class="form-input" accept="image/*" required>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+                <div class="md:col-span-2">
+                    <p class="text-gray-700 mb-4 text-left">Noted by:</p>
+                    <div class="signature-line"></div>
+                    <p class="text-xs text-gray-500 mt-1 uppercase text-left">Registrar/School Administrator</p>
+                    <p class="text-xs text-gray-500 uppercase text-left">(Signature Over Printed Name)</p>
+                    <div class="signature-line mt-6"></div>
+                    <p class="text-xs text-gray-500 mt-1 uppercase text-left">Date Received</p>
+                </div>
+                <div class="flex flex-col items-center justify-center space-y-6">
+                    <div class="flex flex-row gap-4">
+                        <label for="voter-id-yellow-card-upload" class="upload-box">
+                            <img id="voter-id-yellow-card-preview" src="" alt="Voter's ID or Yellow Card Preview" class="hidden">
+                            <input type="file" id="voter-id-yellow-card-upload" accept="image/*" onchange="previewImage(event, 'voter-id-yellow-card-preview')">
+                            <div class="text-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v9" />
+                                </svg>
+                                Upload Voter's ID <br>
+                                or Yellow Card
+                            </div>
+                        </label>
+                        <label for="bottom-id-picture-upload" class="upload-box">
+                            <img id="bottom-id-preview" src="" alt="ID Picture Preview" class="hidden">
+                            <input type="file" id="bottom-id-picture-upload" accept="image/*" onchange="previewImage(event, 'bottom-id-preview')">
+                            <div class="text-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v9" />
+                                </svg>
+                                Upload ID Picture <br>
+                                mm/dd/yy <br>
+                                <span class="text-xs">1x1 picture taken within the last 6 months</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-0 mt-8">
+            <div class="flex gap-3">
+                <button id="prev-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 sm:py-2 sm:px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 w-full sm:w-auto" style="display: none;">Previous</button>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" id="next-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 sm:py-2 sm:px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 w-full sm:w-auto">Next</button>
+                <button id="submit-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 sm:py-2 sm:px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 w-full sm:w-auto" style="display: none;">Submit</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let phDataGlobal = null; // Global variable to store the fetched ph.json data
+        let currentPage = 1;
+        const totalPages = 4; // Define the total number of pages
+
+        /**
+         * Shows the welcome modal on page load (only once)
+         */
+        function showWelcomeModal() {
+            // Check if modal has been shown before using localStorage
+            const modalShown = localStorage.getItem('lmstc_welcome_modal_shown');
+            
+            if (!modalShown) {
+                const modal = document.getElementById('welcome-modal');
+                modal.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Closes the welcome modal and marks it as shown
+         */
+        function closeWelcomeModal() {
+            const modal = document.getElementById('welcome-modal');
+            modal.classList.add('hidden');
+            // Mark modal as shown in localStorage so it won't appear again
+            localStorage.setItem('lmstc_welcome_modal_shown', 'true');
+        }
+
+        /**
+         * Confirms and cancels the application
+         */
+        function confirmCancelApplication() {
+            if (confirm('Are you sure you want to cancel your application? This will remove your application from the system and you will need to apply again.')) {
+                // Redirect to cancel application URL
+                window.location.href = "{% url 'cancel_application' %}";
+            }
+        }
+
+        /**
+         * Displays a message box to the user.
+         * @param {string} message The message to display.
+         * @param {string} type The type of message ('info' for blue, 'error' for red).
+         */
+        function showMessageBox(message, type = 'info') {
+            const msgBox = document.getElementById('message-box');
+            const msgText = document.getElementById('message-text');
+            msgText.textContent = message;
+            msgBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50`;
+            if (type === 'error') {
+                msgBox.classList.add('bg-red-500', 'text-white');
+            } else {
+                msgBox.classList.add('bg-blue-500', 'text-white');
+            }
+            msgBox.classList.remove('hidden');
+            setTimeout(hideMessageBox, 3000); // Auto-hide after 3 seconds
+        }
+
+        /**
+         * Hides the message box.
+         */
+        function hideMessageBox() {
+            document.getElementById('message-box').classList.add('hidden');
+        }
+
+        /**
+         * Fetches the ph.json file once and stores it.
+         * This function expects ph.json to be served from a web server.
+         * If the file cannot be fetched (e.g., due to local file restrictions or 'blob:' URL origin),
+         * the address dropdowns will not populate.
+         * To resolve this, ensure your HTML file and 'ph.json' are served from a web server
+         * (e.g., using Python's 'http.server', Node.js 'serve', or similar).
+         * @returns {Promise<Object>} A promise that resolves with the fetched data.
+         */
+        async function loadPhData() {
+            if (!phDataGlobal) {
+                try {
+                    // Attempt to fetch ph.json from the same directory as this HTML file.
+                    // This will only work if the HTML and JSON files are served from a web server.
+                    // If opened directly from the file system (e.g., file:///), this fetch will fail.
+                    const response = await fetch(phJsonPath);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    phDataGlobal = await response.json();
+                    console.log("ph.json loaded successfully from external file.");
+                } catch (error) {
+                    console.error("Error fetching ph.json from external file. Address dropdowns will not function without a web server:", error);
+                    showMessageBox("Failed to load address data. Please ensure 'ph.json' is accessible via a web server.", 'error');
+                    // phDataGlobal remains null if fetch failed, as per your explicit request.
+                    // This means the dropdowns will remain empty if the file cannot be loaded.
+                }
+            }
+            return phDataGlobal;
+        }
+
+        /**
+         * Retrieves specific data from the loaded phDataGlobal object.
+         * @param {string} type The type of data to retrieve (e.g., "regions", "provinces").
+         * @param {string} [regionCode] Optional region code for provinces.
+         * @param {string} [provinceName] Optional province name for municipalities.
+         * @param {string} [municipalityName] Optional municipality name for barangays.
+         * @returns {Array|Object} The requested data, or an empty array/object if not found.
+         */
+        function getData(type, regionCode = null, provinceName = null, municipalityName = null) {
+            if (!phDataGlobal) {
+                console.warn("Address data not loaded. Cannot retrieve address data.");
+                return [];
+            }
+
+            switch (type) {
+                case "regions":
+                    // For regions, we return the top-level object keys and their region_name
+                    return Object.keys(phDataGlobal).map(code => ({
+                        id: code,
+                        name: phDataGlobal[code].region_name
+                    }));
+                case "provinces":
+                    if (regionCode && phDataGlobal[regionCode] && phDataGlobal[regionCode].province_list) {
+                        return Object.keys(phDataGlobal[regionCode].province_list).map(name => ({
+                            id: name, // Use name as ID for provinces
+                            name: name
+                        }));
+                    }
+                    return [];
+                case "municipalities":
+                    if (regionCode && provinceName &&
+                        phDataGlobal[regionCode] &&
+                        phDataGlobal[regionCode].province_list &&
+                        phDataGlobal[regionCode].province_list[provinceName] &&
+                        phDataGlobal[regionCode].province_list[provinceName].municipality_list) {
+                        return Object.keys(phDataGlobal[regionCode].province_list[provinceName].municipality_list).map(name => ({
+                            id: name, // Use name as ID for municipalities
+                            name: name
+                        }));
+                    }
+                    return [];
+                case "barangays":
+                    if (regionCode && provinceName && municipalityName &&
+                        phDataGlobal[regionCode] &&
+                        phDataGlobal[regionCode].province_list &&
+                        phDataGlobal[regionCode].province_list[provinceName] &&
+                        phDataGlobal[regionCode].province_list[provinceName].municipality_list &&
+                        phDataGlobal[regionCode].province_list[provinceName].municipality_list[municipalityName] &&
+                        phDataGlobal[regionCode].province_list[provinceName].municipality_list[municipalityName].barangay_list) {
+                        return phDataGlobal[regionCode].province_list[provinceName].municipality_list[municipalityName].barangay_list.map(name => ({
+                            id: name, // Use name as ID for barangays
+                            name: name
+                        }));
+                    }
+                    return [];
+                default:
+                    return [];
+            }
+        }
+
+        /**
+         * Previews the selected image in the corresponding image tag.
+         * @param {Event} event The change event from the file input.
+         * @param {string} previewId The ID of the <img> element to display the preview.
+         */
+        function previewImage(event, previewId) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById(previewId);
+                output.src = reader.result;
+                output.classList.remove('hidden'); // Show the image
+
+                // Find the parent label and then its direct child with class 'text-content'
+                const parentLabel = output.closest('label.upload-box');
+                const textContent = parentLabel ? parentLabel.querySelector('.text-content') : null;
+
+                if (textContent) {
+                    textContent.classList.add('hidden'); // Hide the text content
+                }
+            };
+            if (event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            } else {
+                // If no file is selected, clear the preview and show text content
+                const output = document.getElementById(previewId);
+                output.src = "";
+                output.classList.add('hidden');
+
+                const parentLabel = output.closest('label.upload-box');
+                const textContent = parentLabel ? parentLabel.querySelector('.text-content') : null;
+
+                if (textContent) {
+                    textContent.classList.remove('hidden'); // Show the text content
+                }
+            }
+        }
+
+        /**
+         * Populates a dropdown with options from an array.
+         * @param {HTMLElement} selectElement The <select> element to populate.
+         * @param {Array<Object>|Array<string>|Array<number>} optionsArray An array of objects (with name/id) or strings/numbers for the options.
+         * @param {string} defaultText The default text for the first disabled option.
+         */
+        function populateDropdown(selectElement, optionsArray, defaultText) {
+            selectElement.innerHTML = ''; // Clear existing options
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = defaultText;
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            selectElement.appendChild(defaultOption);
+
+            optionsArray.forEach(item => {
+                const option = document.createElement('option');
+                if (typeof item === 'object' && item !== null && 'name' in item && 'id' in item) {
+                    option.value = item.id;
+                    option.textContent = item.name;
+                } else {
+                    option.value = item;
+                    option.textContent = item;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        /**
+         * Resets a select element to its default state.
+         * @param {HTMLElement} select The select element to reset.
+         * @param {string} label The placeholder text for the select.
+         */
+        function resetSelect(select, label) {
+            select.innerHTML = `<option value="">Select ${label}</option>`;
+            select.disabled = true;
+        }
+
+        /**
+         * Clears the selected value and resets a select element.
+         * @param {HTMLElement} select The select element to clear.
+         * @param {string} label The placeholder text for the select.
+         */
+        function clearSelect(select, label) {
+            select.value = '';
+            resetSelect(select, label);
+        }
+
+        // Get references to the select elements for mailing address
+        const regionSelect = document.getElementById('region');
+        const provinceSelect = document.getElementById('province');
+        const municipalitySelect = document.getElementById('municipality');
+        const barangaySelect = document.getElementById('barangay');
+        
+        // Get references to the hidden input elements for mailing address names
+        const regionNameInput = document.getElementById('region-name');
+        const provinceNameInput = document.getElementById('province-name');
+        const cityNameInput = document.getElementById('city-name');
+        const barangayNameInput = document.getElementById('barangay-name');
+
+        // Get references to the select elements for birthplace
+        const birthplaceRegionSelect = document.getElementById('region-birthplace');
+        const birthplaceProvinceSelect = document.getElementById('province-birthplace');
+        const birthplaceMunicipalitySelect = document.getElementById('municipality-birthplace');
+        
+        // Get references to the hidden input elements for birthplace names
+        const birthplaceRegionNameInput = document.getElementById('birthplace-region-name');
+        const birthplaceProvinceNameInput = document.getElementById('birthplace-province-name');
+        const birthplaceCityNameInput = document.getElementById('birthplace-city-name');
+
+        /**
+         * Populates the Region dropdown for mailing address.
+         */
+        async function populateMailingRegions() {
+            regionSelect.disabled = true;
+            populateDropdown(regionSelect, [], 'Loading Regions...');
+            try {
+                // Ensure data is loaded before attempting to get regions
+                await loadPhData();
+                const regions = getData('regions');
+                populateDropdown(regionSelect, regions, 'Select Region');
+            } catch (error) {
+                console.error("Error populating mailing regions:", error);
+                populateDropdown(regionSelect, [], 'Error loading regions');
+            } finally {
+                regionSelect.disabled = false;
+                resetSelect(provinceSelect, "Province");
+                resetSelect(municipalitySelect, "Municipality");
+                resetSelect(barangaySelect, "Barangay");
+            }
+        }
+
+        /**
+         * Populates the Province dropdown for mailing address based on the selected Region.
+         */
+        regionSelect.addEventListener('change', async () => {
+            const regionCode = regionSelect.value;
+            resetSelect(provinceSelect, "Province");
+            resetSelect(municipalitySelect, "Municipality");
+            resetSelect(barangaySelect, "Barangay");
+            
+            // Update region name hidden field
+            const selectedOption = regionSelect.options[regionSelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                regionNameInput.value = selectedOption.textContent;
+            } else {
+                regionNameInput.value = '';
+            }
+
+            if (!regionCode) return;
+
+            provinceSelect.disabled = true;
+            populateDropdown(provinceSelect, [], 'Loading Provinces...');
+            try {
+                const provinces = getData('provinces', regionCode);
+                populateDropdown(provinceSelect, provinces, 'Select Province');
+            } catch (error) {
+                console.error("Error populating mailing provinces:", error);
+                populateDropdown(provinceSelect, [], 'Error loading provinces');
+            } finally {
+                provinceSelect.disabled = false;
+            }
+        });
+
+        /**
+         * Populates the City/Municipality dropdown for mailing address based on the selected Province.
+         */
+        provinceSelect.addEventListener('change', async () => {
+            const regionCode = regionSelect.value;
+            const provinceName = provinceSelect.value;
+            resetSelect(municipalitySelect, "Municipality");
+            resetSelect(barangaySelect, "Barangay");
+            
+            // Update province name hidden field
+            const selectedOption = provinceSelect.options[provinceSelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                provinceNameInput.value = selectedOption.textContent;
+            } else {
+                provinceNameInput.value = '';
+            }
+
+            if (!provinceName) return;
+
+            municipalitySelect.disabled = true;
+            populateDropdown(municipalitySelect, [], 'Loading Cities/Municipalities...');
+            try {
+                const municipalities = getData('municipalities', regionCode, provinceName);
+                populateDropdown(municipalitySelect, municipalities, 'Select City/Municipality');
+            } catch (error) {
+                console.error("Error populating mailing municipalities:", error);
+                populateDropdown(municipalitySelect, [], 'Error loading Cities/Municipalities');
+            } finally {
+                municipalitySelect.disabled = false;
+            }
+        });
+
+        /**
+         * Populates the Barangay dropdown for mailing address based on the selected City/Municipality.
+         */
+        municipalitySelect.addEventListener('change', async () => {
+            const regionCode = regionSelect.value;
+            const provinceName = provinceSelect.value;
+            const municipalityName = municipalitySelect.value;
+            resetSelect(barangaySelect, "Barangay");
+            
+            // Update city name hidden field
+            const selectedOption = municipalitySelect.options[municipalitySelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                cityNameInput.value = selectedOption.textContent;
+            } else {
+                cityNameInput.value = '';
+            }
+
+            if (!municipalityName) return;
+
+            barangaySelect.disabled = true;
+            populateDropdown(barangaySelect, [], 'Loading Barangays...');
+            try {
+                const barangays = getData('barangays', regionCode, provinceName, municipalityName);
+                populateDropdown(barangaySelect, barangays, 'Select Barangay');
+            } catch (error) {
+                console.error("Error populating mailing barangays:", error);
+                populateDropdown(barangaySelect, [], 'Error loading Barangays');
+            } finally {
+                barangaySelect.disabled = false;
+            }
+        });
+        
+        // Update barangay name hidden field when barangay is selected
+        barangaySelect.addEventListener('change', () => {
+            const selectedOption = barangaySelect.options[barangaySelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                barangayNameInput.value = selectedOption.textContent;
+            } else {
+                barangayNameInput.value = '';
+            }
+        });
+
+        // --- Birthplace Address Logic (similar to mailing address) ---
+
+        /**
+         * Populates the Birthplace Region dropdown.
+         */
+        async function populateBirthplaceRegions() {
+            birthplaceRegionSelect.disabled = true;
+            populateDropdown(birthplaceRegionSelect, [], 'Loading Regions...');
+            try {
+                // Ensure data is loaded before attempting to get regions
+                await loadPhData();
+                const regions = getData('regions');
+                populateDropdown(birthplaceRegionSelect, regions, 'Select Region');
+            } catch (error) {
+                console.error("Error populating birthplace regions:", error);
+                populateDropdown(birthplaceRegionSelect, [], 'Error loading regions');
+            } finally {
+                birthplaceRegionSelect.disabled = false;
+                resetSelect(birthplaceProvinceSelect, "Province");
+                resetSelect(birthplaceMunicipalitySelect, "City/Municipality");
+            }
+        }
+
+        /**
+         * Populates the Birthplace Province dropdown based on the selected Birthplace Region.
+         */
+        birthplaceRegionSelect.addEventListener('change', async () => {
+            const regionCode = birthplaceRegionSelect.value;
+            resetSelect(birthplaceProvinceSelect, "Province");
+            resetSelect(birthplaceMunicipalitySelect, "City/Municipality");
+            
+            // Update birthplace region name hidden field
+            const selectedOption = birthplaceRegionSelect.options[birthplaceRegionSelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                birthplaceRegionNameInput.value = selectedOption.textContent;
+            } else {
+                birthplaceRegionNameInput.value = '';
+            }
+
+            if (!regionCode) return;
+
+            birthplaceProvinceSelect.disabled = true;
+            populateDropdown(birthplaceProvinceSelect, [], 'Loading Provinces...');
+            try {
+                const provinces = getData('provinces', regionCode);
+                populateDropdown(birthplaceProvinceSelect, provinces, 'Select Province');
+            } catch (error) {
+                console.error("Error populating birthplace provinces:", error);
+                populateDropdown(birthplaceProvinceSelect, [], 'Error loading provinces');
+            } finally {
+                birthplaceProvinceSelect.disabled = false;
+            }
+        });
+
+        /**
+         * Populates the Birthplace City/Municipality dropdown based on the selected Birthplace Province.
+         */
+        birthplaceProvinceSelect.addEventListener('change', async () => {
+            const regionCode = birthplaceRegionSelect.value;
+            const provinceName = birthplaceProvinceSelect.value;
+            resetSelect(birthplaceMunicipalitySelect, "City/Municipality");
+            
+            // Update birthplace province name hidden field
+            const selectedOption = birthplaceProvinceSelect.options[birthplaceProvinceSelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                birthplaceProvinceNameInput.value = selectedOption.textContent;
+            } else {
+                birthplaceProvinceNameInput.value = '';
+            }
+
+            if (!provinceName) return;
+
+            birthplaceMunicipalitySelect.disabled = true;
+            populateDropdown(birthplaceMunicipalitySelect, [], 'Loading Cities/Municipalities...');
+            try {
+                const municipalities = getData('municipalities', regionCode, provinceName);
+                populateDropdown(birthplaceMunicipalitySelect, municipalities, 'Select City/Municipality');
+            } catch (error) {
+                console.error("Error populating birthplace municipalities:", error);
+                populateDropdown(birthplaceMunicipalitySelect, [], 'Error loading Cities/Municipalities');
+            } finally {
+                birthplaceMunicipalitySelect.disabled = false;
+            }
+        });
+        
+        // Update birthplace city name hidden field when birthplace city is selected
+        birthplaceMunicipalitySelect.addEventListener('change', () => {
+            const selectedOption = birthplaceMunicipalitySelect.options[birthplaceMunicipalitySelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+                birthplaceCityNameInput.value = selectedOption.textContent;
+            } else {
+                birthplaceCityNameInput.value = '';
+            }
+        });
+
+        // --- New Autofill Functions ---
+
+        /**
+         * Autofills or clears the birthplace fields based on checkbox state.
+         */
+        async function toggleBirthplaceFromMailing() {
+            const checkbox = document.getElementById('same-as-mailing-birthplace');
+            if (checkbox.checked) {
+                if (!phDataGlobal) {
+                    showMessageBox("Address data not loaded. Please ensure ph.json is accessible.", 'error');
+                    checkbox.checked = false; // Uncheck if data not available
+                    return;
+                }
+
+                const mailingRegionCode = regionSelect.value;
+                const mailingProvinceName = provinceSelect.value;
+                const mailingMunicipalityName = municipalitySelect.value;
+
+                if (!mailingRegionCode || !mailingProvinceName || !mailingMunicipalityName) {
+                    showMessageBox("Please fill in the Complete Permanent Mailing Address (Region, Province, City/Municipality) first.", 'info');
+                    checkbox.checked = false;
+                    return;
+                }
+
+                // 1. Populate Region dropdown for birthplace
+                const regions = getData('regions');
+                populateDropdown(birthplaceRegionSelect, regions, 'Select Region');
+                birthplaceRegionSelect.value = mailingRegionCode;
+                birthplaceRegionSelect.disabled = false; // Enable after populating
+
+                // 2. Populate Province dropdown for birthplace based on selected region
+                const provinces = getData('provinces', mailingRegionCode);
+                populateDropdown(birthplaceProvinceSelect, provinces, 'Select Province');
+                // Check if the mailing province exists in the newly populated birthplace province options
+                if (provinces.some(p => p.id === mailingProvinceName)) {
+                    birthplaceProvinceSelect.value = mailingProvinceName;
+                    birthplaceProvinceSelect.disabled = false; // Enable after populating
+                } else {
+                    showMessageBox("Mailing Province not found in birthplace options. Please select manually.", 'error');
+                    checkbox.checked = false; // Uncheck if not fully filled
+                    clearSelect(birthplaceProvinceSelect, "Province"); // Clear subsequent fields
+                    clearSelect(birthplaceMunicipalitySelect, "City/Municipality");
+                    return;
+                }
+
+                // 3. Populate Municipality dropdown for birthplace based on selected province
+                const municipalities = getData('municipalities', mailingRegionCode, mailingProvinceName);
+                populateDropdown(birthplaceMunicipalitySelect, municipalities, 'Select City/Municipality');
+                // Check if the mailing municipality exists in the newly populated birthplace municipality options
+                if (municipalities.some(m => m.id === mailingMunicipalityName)) {
+                    birthplaceMunicipalitySelect.value = mailingMunicipalityName;
+                    birthplaceMunicipalitySelect.disabled = false; // Enable after populating
+                    showMessageBox("Birthplace autofilled successfully.", 'info');
+                } else {
+                    showMessageBox("Mailing City/Municipality not found in birthplace options. Please select manually.", 'error');
+                    checkbox.checked = false; // Uncheck if not fully filled
+                    clearSelect(birthplaceMunicipalitySelect, "City/Municipality"); // Clear subsequent fields
+                    return;
+                }
+
+            } else {
+                // If unchecked, clear the birthplace fields
+                clearSelect(birthplaceRegionSelect, "Region");
+                clearSelect(birthplaceProvinceSelect, "Province");
+                clearSelect(birthplaceMunicipalitySelect, "City/Municipality");
+                showMessageBox("Birthplace fields cleared.", 'info');
+            }
+        }
+
+        /**
+         * Autofills or clears the Parent/Guardian Address field based on checkbox state.
+         */
+        function toggleParentAddressFromMailing() {
+            const checkbox = document.getElementById('same-as-mailing-parent-address');
+            const parentGuardianAddressInput = document.getElementById('parent-guardian-address');
+
+            if (checkbox.checked) {
+                const houseStreetAddress = document.getElementById('house-street').value;
+                const barangayText = barangaySelect.options[barangaySelect.selectedIndex]?.textContent || '';
+                const municipalityText = municipalitySelect.options[municipalitySelect.selectedIndex]?.textContent || '';
+                const provinceText = provinceSelect.options[provinceSelect.selectedIndex]?.textContent || '';
+
+                const addressParts = [houseStreetAddress, barangayText, municipalityText, provinceText].filter(part => part.trim() !== '');
+                
+                if (addressParts.length === 0) {
+                    showMessageBox("Please fill in the Complete Permanent Mailing Address first.", 'info');
+                    checkbox.checked = false; // Uncheck if source is empty
+                    return;
+                }
+
+                parentGuardianAddressInput.value = addressParts.join(', ').toUpperCase(); // Ensure copied text is also uppercase
+                showMessageBox("Parent/Guardian Address autofilled.", 'info');
+            } else {
+                parentGuardianAddressInput.value = '';
+                showMessageBox("Parent/Guardian Address cleared.", 'info');
+            }
+        }
+
+        /**
+         * Toggles the visibility of monthly income and date hired fields based on employment status.
+         */
+        function toggleEmploymentFields() {
+            const employedRadio = document.getElementById('employed');
+            const employedFieldsDiv = document.getElementById('employed-fields');
+
+            if (employedRadio.checked) {
+                employedFieldsDiv.classList.remove('hidden-field');
+            } else {
+                employedFieldsDiv.classList.add('hidden-field');
+            }
+        }
+
+        /**
+         * Validates the contact number input to allow only digits and limit length to 11.
+         * @param {HTMLInputElement} inputElement The input field to validate.
+         */
+        function validateContactNo(inputElement) {
+            let value = inputElement.value;
+            // Remove any non-digit characters
+            value = value.replace(/\D/g, '');
+            // Limit to 11 digits
+            if (value.length > 11) {
+                value = value.substring(0, 11);
+            }
+            inputElement.value = value;
+        }
+
+        // Function to get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        /**
+         * Populates the month dropdown.
+         */
+        function populateMonths() {
+            const monthSelect = document.getElementById('month-birth');
+            const months = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            populateDropdown(monthSelect, months, 'Select Month');
+        }
+
+        /**
+         * Populates the year dropdown (last 100 years from current).
+         */
+        function populateYears() {
+            const yearSelect = document.getElementById('year-birth');
+            const currentYear = new Date().getFullYear();
+            const years = [];
+            for (let i = currentYear; i >= currentYear - 100; i--) {
+                years.push(i);
+            }
+            populateDropdown(yearSelect, years, 'Select Year');
+        }
+
+        /**
+         * Populates the day dropdown based on selected month and year.
+         */
+        function populateDays() {
+            const daySelect = document.getElementById('day-birth');
+            const monthSelect = document.getElementById('month-birth');
+            const yearSelect = document.getElementById('year-birth');
+
+            const selectedMonthIndex = monthSelect.selectedIndex > 0 ? monthSelect.selectedIndex - 1 : -1; // 0-indexed
+            const selectedYear = parseInt(yearSelect.value);
+
+            if (selectedMonthIndex === -1 || isNaN(selectedYear)) {
+                populateDropdown(daySelect, [], 'Select Day');
+                return;
+            }
+
+            const daysInMonth = new Date(selectedYear, selectedMonthIndex + 1, 0).getDate();
+            const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+            populateDropdown(daySelect, days, 'Select Day');
+        }
+
+        /**
+         * Calculates age based on selected birthdate and updates the age field.
+         */
+        function calculateAge() {
+            const monthSelect = document.getElementById('month-birth');
+            const daySelect = document.getElementById('day-birth');
+            const yearSelect = document.getElementById('year-birth');
+            const ageInput = document.getElementById('age');
+
+            const selectedMonthIndex = monthSelect.selectedIndex > 0 ? monthSelect.selectedIndex - 1 : -1;
+            const selectedDay = parseInt(daySelect.value);
+            const selectedYear = parseInt(yearSelect.value);
+
+            if (selectedMonthIndex === -1 || isNaN(selectedDay) || isNaN(selectedYear)) {
+                ageInput.value = '';
+                return;
+            }
+
+            const birthDate = new Date(selectedYear, selectedMonthIndex, selectedDay);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            ageInput.value = age >= 0 ? age : ''; // Ensure age is not negative
+        }
+
+        /**
+         * Updates the progress indicator based on the current page.
+         * @param {number} pageNum The current page number.
+         */
+        function updateProgressIndicator(pageNum) {
+            for (let i = 1; i <= totalPages; i++) {
+                const circle = document.getElementById(`progress-${i}`);
+                const label = document.getElementById(`label-${i}`);
+                const line = document.getElementById(`line-${i}`);
+
+                if (i < pageNum) {
+                    // Completed steps
+                    circle.classList.remove('active');
+                    circle.classList.add('completed');
+                    label.classList.remove('active');
+                    if (line) line.classList.add('completed');
+                } else if (i === pageNum) {
+                    // Current step
+                    circle.classList.remove('completed');
+                    circle.classList.add('active');
+                    label.classList.add('active');
+                } else {
+                    // Future steps
+                    circle.classList.remove('active', 'completed');
+                    label.classList.remove('active');
+                    if (line) line.classList.remove('completed');
+                }
+            }
+        }
+
+        /**
+         * Validates page 1 fields.
+         * @returns {boolean} True if all required fields are filled.
+         */
+        function validatePage1() {
+            const requiredFields = [
+                { id: 'top-id-picture-upload', name: 'ID Picture' },
+                { id: 'last-name', name: 'Last Name' },
+                { id: 'first-name', name: 'First Name' },
+                { id: 'region', name: 'Region' },
+                { id: 'province', name: 'Province' },
+                { id: 'municipality', name: 'City/Municipality' },
+                { id: 'barangay', name: 'Barangay' },
+                { id: 'house-street', name: 'House/Street Address' },
+                { id: 'email-facebook', name: 'Email Address' },
+                { id: 'nationality', name: 'Nationality' }
+            ];
+
+            for (const field of requiredFields) {
+                const element = document.getElementById(field.id);
+                if (!element) continue;
+
+                if (element.type === 'file') {
+                    if (!element.files || element.files.length === 0) {
+                        showMessageBox(`Please upload ${field.name}`, 'error');
+                        element.focus();
+                        return false;
+                    }
+                } else if (!element.value || element.value.trim() === '') {
+                    showMessageBox(`Please fill in ${field.name}`, 'error');
+                    element.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Validates page 2 fields.
+         * @returns {boolean} True if all required fields are filled.
+         */
+        function validatePage2() {
+            const requiredFields = [
+                { name: 'sex', type: 'radio', label: 'Sex' },
+                { name: 'civil_status', type: 'radio', label: 'Civil Status' },
+                { name: 'employment_status', type: 'radio', label: 'Employment Status' },
+                { id: 'month-birth', name: 'Birth Month' },
+                { id: 'day-birth', name: 'Birth Day' },
+                { id: 'year-birth', name: 'Birth Year' }
+            ];
+
+            for (const field of requiredFields) {
+                if (field.type === 'radio') {
+                    const radioButtons = document.getElementsByName(field.name);
+                    let isChecked = false;
+                    for (const radio of radioButtons) {
+                        if (radio.checked) {
+                            isChecked = true;
+                            break;
+                        }
+                    }
+                    if (!isChecked) {
+                        showMessageBox(`Please select ${field.label}`, 'error');
+                        return false;
+                    }
+                } else if (field.id) {
+                    const element = document.getElementById(field.id);
+                    if (!element || !element.value || element.value.trim() === '') {
+                        showMessageBox(`Please select ${field.name}`, 'error');
+                        if (element) element.focus();
+                        return false;
+                    }
+                }
+            }
+
+            // Additional validation for employed status
+            const employedRadio = document.getElementById('employed');
+            if (employedRadio && employedRadio.checked) {
+                const monthlyIncome = document.getElementById('monthly-income');
+                const dateHired = document.getElementById('date-hired');
+                const companyName = document.getElementById('company-name');
+
+                if (!monthlyIncome.value || monthlyIncome.value.trim() === '') {
+                    showMessageBox('Please enter Monthly Income', 'error');
+                    monthlyIncome.focus();
+                    return false;
+                }
+                if (!dateHired.value || dateHired.value.trim() === '') {
+                    showMessageBox('Please enter Date Hired', 'error');
+                    dateHired.focus();
+                    return false;
+                }
+                if (!companyName.value || companyName.value.trim() === '') {
+                    showMessageBox('Please enter Company Name', 'error');
+                    companyName.focus();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * Validates page 3 fields.
+         * @returns {boolean} True if all required fields are filled.
+         */
+        function validatePage3() {
+            // Page 3 has no strictly required fields (checkboxes are optional)
+            // Return true to allow navigation
+            return true;
+        }
+
+        /**
+         * Validates page 4 fields.
+         * @returns {boolean} True if all required fields are filled.
+         */
+        function validatePage4() {
+            const requiredFields = [
+                { name: 'agree_to_privacy', type: 'radio', label: 'Privacy Agreement' },
+                { id: 'applicant-printed-name', name: 'Applicant\'s Printed Name' },
+                { id: 'date-accomplished', name: 'Date Accomplished' },
+                { id: 'applicant-signature', name: 'Applicant\'s Signature' }
+            ];
+
+            for (const field of requiredFields) {
+                if (field.type === 'radio') {
+                    const radioButtons = document.getElementsByName(field.name);
+                    let isChecked = false;
+                    for (const radio of radioButtons) {
+                        if (radio.checked) {
+                            isChecked = true;
+                            break;
+                        }
+                    }
+                    if (!isChecked) {
+                        showMessageBox(`Please select ${field.label}`, 'error');
+                        return false;
+                    }
+                } else if (field.id) {
+                    const element = document.getElementById(field.id);
+                    if (!element) continue;
+
+                    if (element.type === 'file') {
+                        if (!element.files || element.files.length === 0) {
+                            showMessageBox(`Please upload ${field.name}`, 'error');
+                            element.focus();
+                            return false;
+                        }
+                    } else if (!element.value || element.value.trim() === '') {
+                        showMessageBox(`Please fill in ${field.name}`, 'error');
+                        element.focus();
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Shows the specified page and updates button visibility.
+         * @param {number} pageNum The page number to show.
+         */
+        function showPage(pageNum) {
+            const pages = document.querySelectorAll('.form-page');
+            pages.forEach(page => {
+                if (parseInt(page.dataset.page) === pageNum) {
+                    page.classList.remove('hidden-page');
+                } else {
+                    page.classList.add('hidden-page');
+                }
+            });
+
+            const prevButton = document.getElementById('prev-button');
+            const nextButton = document.getElementById('next-button');
+            const submitButton = document.getElementById('submit-button');
+
+            // Show/hide Previous button
+            if (pageNum === 1) {
+                prevButton.style.display = 'none';
+            } else {
+                prevButton.style.display = 'block';
+            }
+
+            // Show/hide Next and Submit buttons
+            if (pageNum === totalPages) {
+                nextButton.style.display = 'none';
+                submitButton.style.display = 'block';
+            } else {
+                nextButton.style.display = 'block';
+                submitButton.style.display = 'none';
+            }
+            
+            // Update progress indicator
+            updateProgressIndicator(pageNum);
+            
+            currentPage = pageNum;
+            
+            // Scroll to top of form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Navigates to the next page after validation.
+         */
+        function nextPage() {
+            // Validate current page before proceeding
+            let isValid = false;
+            
+            switch (currentPage) {
+                case 1:
+                    isValid = validatePage1();
+                    break;
+                case 2:
+                    isValid = validatePage2();
+                    break;
+                case 3:
+                    isValid = validatePage3();
+                    break;
+                case 4:
+                    isValid = validatePage4();
+                    break;
+                default:
+                    isValid = true;
+            }
+            
+            if (isValid && currentPage < totalPages) {
+                showPage(currentPage + 1);
+            }
+        }
+
+        /**
+         * Navigates to the previous page.
+         */
+        function prevPage() {
+            if (currentPage > 1) {
+                showPage(currentPage - 1);
+            }
+        }
+
+        // Initialize dropdowns and set default dates on page load
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Show welcome modal on first visit
+            showWelcomeModal();
+
+            const today = getTodayDate();
+            const entryDateInput = document.getElementById('entry-date');
+            const dateAccomplishedInput = document.getElementById('date-accomplished');
+
+            if (entryDateInput) {
+                entryDateInput.value = today;
+            }
+            if (dateAccomplishedInput) {
+                dateAccomplishedInput.value = today;
+            }
+
+            populateMailingRegions(); // Initial population of mailing address regions
+            toggleEmploymentFields(); // Set initial visibility of employment fields
+
+            // Populate birthdate dropdowns
+            populateMonths();
+            populateYears();
+            populateDays(); // Populate days initially (will be empty until month/year selected)
+
+            // Add event listeners for birthdate changes
+            document.getElementById('month-birth').addEventListener('change', () => {
+                populateDays();
+                calculateAge();
+            });
+            document.getElementById('year-birth').addEventListener('change', () => {
+                populateDays();
+                calculateAge();
+            });
+            document.getElementById('day-birth').addEventListener('change', calculateAge);
+
+            // Populate birthplace dropdowns
+            populateBirthplaceRegions();
+
+            // Add event listeners for the new "Same as Permanent Address" checkboxes
+            document.getElementById('same-as-mailing-birthplace').addEventListener('change', toggleBirthplaceFromMailing);
+            document.getElementById('same-as-mailing-parent-address').addEventListener('change', toggleParentAddressFromMailing);
+
+            // Set up navigation button event listeners
+            document.getElementById('next-button').addEventListener('click', nextPage);
+            document.getElementById('prev-button').addEventListener('click', prevPage);
+            document.getElementById('submit-button').addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default button behavior
+                
+                // Validate page 4 before submitting
+                if (!validatePage4()) {
+                    return; // Stop submission if validation fails
+                }
+                
+                // Show loading message
+                showMessageBox("Submitting form, please wait...", 'info');
+                
+                // Get the form element and submit it
+                const form = document.getElementById('learner-profile-form');
+                if (form) {
+                    form.submit();
+                } else {
+                    showMessageBox("Error: Form not found. Please try again.", 'error');
+                }
+            });
+
+            // Show the first page on load
+            showPage(1);
+        });
+    </script>
+</form>
+</body>
+</html>

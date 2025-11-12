@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLL - LMSTC Programs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars from appearing initially */
+            background-color: #f3f4f6; /* Light gray background */
+        }
+
+        /* Custom gradient for the sidebar */
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #4a90e2 0%, #2a6dbd 100%);
+        }
+
+        /* Styling for the navigation overlay page (used for non-table pages) */
+        .overlay-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            flex-direction: column;
+            z-index: 1000; /* Ensure it's on top */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .overlay-page.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .overlay-page button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .overlay-page button:hover {
+            background-color: #2a6dbd;
+        }
+
+        /* Dropdown specific styles */
+        .dropdown-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .dropdown-menu.active {
+            max-height: 100px; /* Adjust based on content */
+        }
+
+        /* Table specific styles */
+        .container-card {
+            background-color: white;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow-md */
+            padding: 2rem; /* p-8 */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
+        }
+        th {
+            background-color: #f9fafb; /* gray-50 */
+            font-weight: 600; /* font-semibold */
+            color: #4b5563; /* gray-700 */
+            text-transform: uppercase;
+            font-size: 0.75rem; /* text-xs */
+        }
+        .sort-icon {
+            margin-left: 0.5rem;
+            font-size: 0.625rem; /* text-xs */
+            color: #9ca3af; /* gray-400 */
+        }
+        .pagination-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid #d1d5db; /* gray-300 */
+            background-color: white;
+            color: #4b5563; /* gray-700 */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .pagination-button:hover:not(.active) {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .pagination-button.active {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* Above overlay page */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #4b5563;
+        }
+
+        /* Notification container and individual notification styles */
+        #notificationContainer {
+            position: fixed;
+            top: 50%; /* Centered vertically */
+            left: 50%; /* Centered horizontally */
+            transform: translate(-50%, -50%); /* Adjust for exact centering */
+            z-index: 4000; /* Above everything else */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center; /* Center horizontally if multiple notifications */
+        }
+
+        .notification {
+            background-color: #4CAF50; /* Default: Green for success */
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            min-width: 250px;
+        }
+
+        .notification.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .notification.success {
+            background-color: #4CAF50; /* Green */
+        }
+
+        .notification.error {
+            background-color: #EF4444; /* Red */
+        }
+
+        .notification.info {
+            background-color: #3B82F6; /* Blue */
+        }
+
+        .notification .icon {
+            margin-right: 10px;
+            font-size: 1.25rem;
+        }
+
+        /* Chart specific styles */
+        .chart-container {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 300px; /* Ensure charts have space */
+        }
+        .chart-container h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 1rem;
+        }
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-gray-100">
+
+    <div id="overlayPage" class="overlay-page">
+        <p id="overlayText"></p>
+        <button id="goBackBtn">Go Back</button>
+    </div>
+
+    <div id="trainerRegistrationModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+            <h3 class="text-2xl font-bold text-blue-500 mb-6 text-center">Trainer Registration</h3>
+            <form id="trainerRegistrationForm" class="space-y-4">
+                <div>
+                    <label for="fullName" class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500" placeholder="Enter full name" required>
+                </div>
+                <div>
+                    <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500" placeholder="Enter email" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500 pr-10" placeholder="Enter password" required>
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-600">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="programsHandled" class="block text-gray-700 text-sm font-bold mb-2">Programs</label>
+                    <input type="text" id="programsHandled" name="programsHandled" list="programOptions" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500" placeholder="Select or type programs (comma-separated for multiple)" required>
+                    <datalist id="programOptions">
+                        </datalist>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md w-full hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Register Trainer
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="viewTrainorModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeViewTrainorModalBtn">&times;</button>
+            <h3 class="text-2xl font-bold text-blue-500 mb-6 text-center">Trainer Details</h3>
+            <div class="space-y-4 text-gray-700">
+                <div>
+                    <p class="font-bold">Full Name:</p>
+                    <p id="viewTrainorFullName"></p>
+                </div>
+                <div>
+                    <p class="font-bold">Email:</p>
+                    <p id="viewTrainorEmail"></p>
+                </div>
+                <div>
+                    <p class="font-bold">Programs Handled:</p>
+                    <p id="viewTrainorProgramsHandled"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editTrainorModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeEditTrainorModalBtn">&times;</button>
+            <h3 class="text-2xl font-bold text-blue-500 mb-6 text-center">Edit Trainer</h3>
+            <form id="editTrainorForm" class="space-y-4">
+                <input type="hidden" id="editTrainorOriginalEmail">
+                <div>
+                    <label for="editTrainorFullName" class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
+                    <input type="text" id="editTrainorFullName" name="fullName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="editTrainorEmail" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                    <input type="email" id="editTrainorEmail" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label for="editTrainorProgramsHandled" class="block text-gray-700 text-sm font-bold mb-2">Programs</label>
+                    <input type="text" id="editTrainorProgramsHandled" name="programsHandled" list="programOptions" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md w-full hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="archiveReasonModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeArchiveModalBtn">&times;</button>
+            <h3 class="text-2xl font-bold text-red-500 mb-6 text-center">Archive Job</h3>
+            <form id="archiveReasonForm" class="space-y-4">
+                <div>
+                    <label for="archiveReason" class="block text-gray-700 text-sm font-bold mb-2">Reason for Archiving</label>
+                    <textarea id="archiveReason" name="archiveReason" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-red-500 focus:border-red-500" placeholder="Enter reason for archiving" required></textarea>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancelArchiveBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
+                        Archive
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="notificationContainer"></div>
+
+
+    <aside class="w-64 sidebar-gradient text-white flex flex-col p-4 shadow-lg rounded-r-lg">
+        <div class="flex items-center mb-8">
+            <img src="https://placehold.co/40x40/ffffff/000000?text=Logo" alt="Logo" class="mr-3 rounded-full">
+            <h1 class="text-xl font-bold">DLL - LMSTC</h1>
+        </div>
+        <nav class="flex-1">
+            <ul>
+                <li class="mb-4">
+                    <a href="#" class="nav-link flex items-center p-2 rounded-lg bg-blue-700" data-page="Dashboard" data-content-type="dashboard">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="mb-4">
+                    <div class="dropdown-toggle flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors cursor-pointer">
+                        <i class="fas fa-user-graduate mr-3"></i>
+                        Student Profile
+                        <i class="fas fa-chevron-down ml-auto text-xs transition-transform duration-300 transform"></i>
+                    </div>
+                    <ul class="dropdown-menu ml-6 mt-2 space-y-2">
+                        <li>
+                            <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Applicant List" data-content-type="applicant-list">
+                                <i class="fas fa-clipboard-list mr-3"></i>
+                                Applicant List
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Approved Applicants" data-content-type="approved-applicants">
+                                <i class="fas fa-user-check mr-3"></i>
+                                Approved Applicants
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="mb-4">
+                    <div class="dropdown-toggle flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors cursor-pointer" data-page="Job Posting">
+                        <i class="fas fa-briefcase mr-3"></i>
+                        Job Posting
+                        <i class="fas fa-chevron-down ml-auto text-xs transition-transform duration-300 transform"></i>
+                    </div>
+                    <ul class="dropdown-menu ml-6 mt-2 space-y-2">
+                        <li>
+                            <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Active Jobs" data-content-type="active-jobs">
+                                <i class="fas fa-briefcase mr-3"></i>
+                                Active Jobs
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Archived Jobs" data-content-type="archived-jobs">
+                                <i class="fas fa-archive mr-3"></i>
+                                Archived Jobs
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="mb-4">
+                    <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Program" data-content-type="programs">
+                        <i class="fas fa-book mr-3"></i>
+                        Program
+                    </a>
+                </li>
+                <li class="mb-4">
+                    <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Trainor" data-content-type="trainor-list">
+                        <i class="fas fa-chalkboard-teacher mr-3"></i>
+                        Trainor
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="mt-auto">
+            <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Sign Out" data-content-type="overlay">
+                <i class="fas fa-sign-out-alt mr-3"></i>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto">
+        <header class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-bold text-blue-700">Admin Control Panel</h2>
+            <div class="flex items-center space-x-4">
+                <i class="fas fa-bell text-gray-600 text-xl cursor-pointer hover:text-blue-500"></i>
+                <div class="text-gray-600">Welcome Back</div>
+                <img src="https://placehold.co/40x40/cccccc/333333?text=User" alt="User Avatar" class="rounded-full cursor-pointer">
+            </div>
+        </header>
+
+        <h2 class="text-3xl font-bold text-gray-800 mb-6" id="mainContentTitle">Dashboard</h2>
+
+        <div id="dashboardContent" class="hidden">
+            <div id="summaryCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">No. of Applicant</p>
+                        <p id="numApplicants" class="text-2xl font-bold text-gray-800">7</p>
+                    </div>
+                    <i class="fas fa-user-plus text-blue-500 text-3xl"></i>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">No. of Approved Applicant</p>
+                        <p id="numApprovedApplicants" class="text-2xl font-bold text-gray-800">12</p>
+                    </div>
+                    <i class="fas fa-user-check text-green-500 text-3xl"></i>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">No. of Drop Out</p>
+                        <p id="numDropOut" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    <i class="fas fa-user-times text-red-500 text-3xl"></i>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">No. of Programs</p>
+                        <p id="numPrograms" class="text-2xl font-bold text-gray-800">10</p>
+                    </div>
+                    <i class="fas fa-book-open text-purple-500 text-3xl"></i>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div id="programDemandChartContainer" class="chart-container">
+                    <h3>Program Demand Over Time</h3>
+                    <svg id="programDemandChart" class="chart-svg"></svg>
+                </div>
+
+                <div id="completersIncompletersChartContainer" class="chart-container">
+                    <h3>Completers VS Incompleters</h3>
+                    <svg id="completersIncompletersChart" class="chart-svg"></svg>
+                </div>
+            </div>
+
+            <div id="summaryApplicantsTableContainer" class="container-card">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Summary Count of Applicants and Approved Applicants</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tl-md">Program Name</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Number of Application</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tr-md">Number of Approved Applicants</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryApplicantsTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="activeJobsContent" class="hidden">
+            <div class="container-card mb-6">
+                <div class="flex flex-col md:flex-row justify-center items-center mb-4">
+                    <h4 class="text-xl font-bold text-gray-800">Active Jobs</h4>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                    <div class="flex items-center space-x-2">
+                        <label for="activeJobsShowEntries" class="text-gray-700">Show</label>
+                        <select id="activeJobsShowEntries" class="border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-gray-700">entries</span>
+                    </div>
+                    <div class="flex items-center space-x-2 md:space-x-4">
+                        <label for="activeJobsSearch" class="text-gray-700">Search:</label>
+                        <input type="text" id="activeJobsSearch" class="border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Search...">
+                        <button id="postJobBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            <i class="fas fa-plus mr-2"></i>Post Job
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tl-md">Job Title</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Posted Date</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tr-md">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeJobsTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center mt-6 space-y-4 md:space-y-0">
+                    <div class="text-gray-700" id="activeJobsPaginationInfo">
+                        Showing 0 to 0 of 0 entries
+                    </div>
+                    <div class="flex space-x-2" id="activeJobsPaginationControls">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="archivedJobsContent" class="hidden">
+            <div class="container-card mb-6">
+                <div class="flex flex-col md:flex-row justify-center items-center mb-4">
+                    <h4 class="text-xl font-bold text-gray-800">Archived Jobs</h4>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                    <div class="flex items-center space-x-2">
+                        <label for="archivedJobsShowEntries" class="text-gray-700">Show</label>
+                        <select id="archivedJobsShowEntries" class="border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-gray-700">entries</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label for="archivedJobsSearch" class="text-gray-700">Search:</label>
+                        <input type="text" id="archivedJobsSearch" class="border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Search...">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tl-md">Job Title</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Posted Date</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider">Reason for Archiving</th>
+                                <th class="py-3 px-4 bg-blue-500 text-left text-xs font-semibold text-white uppercase tracking-wider rounded-tr-md">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archivedJobsTableBody" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center mt-6 space-y-4 md:space-y-0">
+                    <div class="text-gray-700" id="archivedJobsPaginationInfo">
+                        Showing 0 to 0 of 0 entries
+                    </div>
+                    <div class="flex space-x-2" id="archivedJobsPaginationControls">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="programsContent" class="grid grid-cols-1 sm:grid-cols-2 gap-6 hidden">
+            </div>
+
+        <div id="tableContent" class="container-card hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-2">
+                    <label for="showEntries" class="text-gray-700">Show</label>
+                    <select id="showEntries" class="border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="text-gray-700">entries</span>
+                </div>
+                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-x-4 md:space-y-0">
+                    <div class="flex items-center space-x-2">
+                        <label for="search" class="text-gray-700">Search:</label>
+                        <input type="text" id="search" class="border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Search...">
+                    </div>
+                    <div id="addTrainorButtonContainer" class="hidden">
+                        <button id="addTrainorBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            <i class="fas fa-plus mr-2"></i>Add Trainor
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead id="dynamicTableHeader">
+                        </thead>
+                    <tbody id="dynamicTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center mt-6 space-y-4 md:space-y-0">
+                <div class="text-gray-700" id="paginationInfo">
+                    Showing 0 to 0 of 0 entries
+                </div>
+                <div class="flex space-x-2" id="paginationControls">
+                    </div>
+            </div>
+        </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlayPage = document.getElementById('overlayPage');
+            const overlayText = document.getElementById('overlayText');
+            const goBackBtn = document.getElementById('goBackBtn');
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            const mainContentTitle = document.getElementById('mainContentTitle');
+
+            // Content areas
+            const dashboardContent = document.getElementById('dashboardContent');
+            const programsContent = document.getElementById('programsContent');
+            const tableContent = document.getElementById('tableContent');
+            const activeJobsContent = document.getElementById('activeJobsContent');
+            const archivedJobsContent = document.getElementById('archivedJobsContent');
+
+            // Generic Table elements
+            const dynamicTableHeader = document.getElementById('dynamicTableHeader');
+            const dynamicTableBody = document.getElementById('dynamicTableBody');
+            const searchInput = document.getElementById('search');
+            const showEntriesSelect = document.getElementById('showEntries');
+            const paginationInfo = document.getElementById('paginationInfo');
+            const paginationControls = document.getElementById('paginationControls');
+            const addTrainorButtonContainer = document.getElementById('addTrainorButtonContainer');
+            const addTrainorBtn = document.getElementById('addTrainorBtn');
+
+            // Trainer Registration Modal elements
+            const trainerRegistrationModal = document.getElementById('trainerRegistrationModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const trainerRegistrationForm = document.getElementById('trainerRegistrationForm');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const programsHandledInput = document.getElementById('programsHandled');
+            const programOptionsDatalist = document.getElementById('programOptions');
+
+            // View Trainer Modal elements
+            const viewTrainorModal = document.getElementById('viewTrainorModal');
+            const closeViewTrainorModalBtn = document.getElementById('closeViewTrainorModalBtn');
+            const viewTrainorFullName = document.getElementById('viewTrainorFullName');
+            const viewTrainorEmail = document.getElementById('viewTrainorEmail');
+            const viewTrainorProgramsHandled = document.getElementById('viewTrainorProgramsHandled');
+
+            // Edit Trainer Modal elements
+            const editTrainorModal = document.getElementById('editTrainorModal');
+            const closeEditTrainorModalBtn = document.getElementById('closeEditTrainorModalBtn');
+            const editTrainorForm = document.getElementById('editTrainorForm');
+            const editTrainorFullName = document.getElementById('editTrainorFullName');
+            const editTrainorEmail = document.getElementById('editTrainorEmail');
+            const editTrainorProgramsHandled = document.getElementById('editTrainorProgramsHandled');
+            const editTrainorOriginalEmail = document.getElementById('editTrainorOriginalEmail'); // Hidden field to store original email for lookup
+
+
+            // Archive Reason Modal elements
+            const archiveReasonModal = document.getElementById('archiveReasonModal');
+            const closeArchiveModalBtn = document.getElementById('closeArchiveModalBtn');
+            const cancelArchiveBtn = document.getElementById('cancelArchiveBtn');
+            const archiveReasonForm = document.getElementById('archiveReasonForm');
+            const archiveReasonTextarea = document.getElementById('archiveReason');
+            let currentJobIdToArchive = null; // To store the ID of the job being archived
+
+            // Notification Container
+            const notificationContainer = document.getElementById('notificationContainer');
+
+            // Dashboard Summary Applicants Table Body
+            const summaryApplicantsTableBody = document.getElementById('summaryApplicantsTableBody');
+
+            // Active Jobs specific elements
+            const postJobBtn = document.getElementById('postJobBtn');
+            const activeJobsTableBody = document.getElementById('activeJobsTableBody');
+            const activeJobsSearchInput = document.getElementById('activeJobsSearch');
+            const activeJobsShowEntriesSelect = document.getElementById('activeJobsShowEntries');
+            const activeJobsPaginationInfo = document.getElementById('activeJobsPaginationInfo');
+            const activeJobsPaginationControls = document.getElementById('activeJobsPaginationControls');
+
+            // Archived Jobs specific elements
+            const archivedJobsTableBody = document.getElementById('archivedJobsTableBody');
+            const archivedJobsSearchInput = document.getElementById('archivedJobsSearch');
+            const archivedJobsShowEntriesSelect = document.getElementById('archivedJobsShowEntries');
+            const archivedJobsPaginationInfo = document.getElementById('archivedJobsPaginationInfo');
+            const archivedJobsPaginationControls = document.getElementById('archivedJobsPaginationControls');
+
+
+            // Sample Data
+            const allApplicants = [
+                { name: 'John Doe', program: 'Auto Electrical Assembly NCII', date: '2024-01-15', status: 'Pending' },
+                { name: 'Jane Smith', program: 'Bread and Pastry Production NC II', date: '2024-01-20', status: 'Pending' },
+                { name: 'Peter Jones', program: 'Auto Mechanical Assembly NCII', date: '2024-01-22', status: 'Pending' },
+                { name: 'Alice Brown', program: 'RAC SERVICING (DomRAC) NC II', date: '2024-01-25', status: 'Pending' },
+                { name: 'Bob White', program: 'Shielded Metal Arc Welding NC II', date: '2024-01-28', status: 'Pending' },
+                { name: 'Charlie Green', program: 'Dressmaking NC II', date: '2024-02-01', status: 'Approved' },
+                { name: 'Diana Prince', program: 'Hairdressing NC II', date: '2024-02-05', status: 'Approved' },
+                { name: 'Eve Adams', program: 'Massage Therapy NC II', date: '2024-02-10', status: 'Pending' },
+                { name: 'Frank Black', program: 'Auto Electrical Assembly NCII', date: '2024-02-12', status: 'Approved' },
+                { name: 'Grace Kelly', program: 'Bread and Pastry Production NC II', date: '2024-02-15', status: 'Approved' },
+            ];
+
+            const allTrainors = [
+                { id: 1, name: 'Mr. Jasper P. Banlasan', program: 'Auto Mechanical Assembly NCII', email: 'jasper@example.com' },
+                { id: 2, name: 'Engr. Mark Nel A. Inojosa', program: 'Auto Electrical Assembly NCII, Electronic Products Assembly and Service NC II, Electrical Installation and Maintenance NCII', email: 'marknel@example.com' },
+                { id: 3, name: 'Ms. Hazel R. Pornasdoro', program: 'Massage Therapy NC II', email: 'hazel@example.com' },
+                { id: 4, name: 'Ms. Ruth G. Naperi', program: 'Bread and Pastry Production NC II', email: 'ruth@example.com' },
+                { id: 5, name: 'Mr. Angelo J. Datinggaling', program: 'RAC SERVICING (DomRAC) NC II', email: 'angelo@example.com' },
+                { id: 6, name: 'Ms. Vanessa Aceron', program: 'Shielded Metal Arc Welding NC II', email: 'vanessa@example.com' },
+                { id: 7, name: 'Ms. Lorena Banlasan', program: 'Dressmaking NC II', email: 'lorena@example.com' },
+                { id: 8, name: 'Mr. Enrico R. San Buenaventura', program: 'Hairdressing NC II', email: 'enrico@example.com' },
+            ];
+
+            const availablePrograms = [
+                'Auto Mechanical Assembly NCII',
+                'Auto Electrical Assembly NCII',
+                'Electronic Products Assembly and Service NC II',
+                'Electrical Installation and Maintenance NCII',
+                'Massage Therapy NC II',
+                'Bread and Pastry Production NC II',
+                'RAC SERVICING (DomRAC) NC II',
+                'Shielded Metal Arc Welding NC II',
+                'Dressmaking NC II',
+                'Hairdressing NC II'
+            ];
+
+            // Sample Job data - now includes a reason for archiving
+            const allJobs = [
+                { id: 1, title: 'Bakeria', postedDate: 'May 28, 2025, 11:38 p.m.', status: 'Active', archiveReason: '' },
+                { id: 2, title: 'Electronic jobs', postedDate: 'May 28, 2025, 6:24 p.m.', status: 'Active', archiveReason: '' },
+                { id: 3, title: 'Job Post D', postedDate: 'May 26, 2025, 5:47 a.m.', status: 'Active', archiveReason: '' },
+                { id: 4, title: 'Job Post C', postedDate: 'May 26, 2025, 2:33 a.m.', status: 'Active', archiveReason: '' },
+                { id: 5, title: 'Job Post B', postedDate: 'May 23, 2025, 3:12 p.m.', status: 'Active', archiveReason: '' },
+                { id: 6, title: 'Software Developer', postedDate: 'May 22, 2025, 10:00 a.m.', status: 'Active', archiveReason: '' },
+                { id: 7, title: 'Data Analyst', postedDate: 'May 21, 2025, 09:00 a.m.', status: 'Active', archiveReason: '' },
+                { id: 8, title: 'UX Designer', postedDate: 'May 20, 2025, 02:00 p.m.', status: 'Active', archiveReason: '' },
+                { id: 9, title: 'Marketing Specialist', postedDate: 'May 19, 2025, 04:00 p.m.', status: 'Active', archiveReason: '' },
+                { id: 10, title: 'Customer Support', postedDate: 'May 18, 2025, 01:00 p.m.', status: 'Active', archiveReason: '' },
+                { id: 11, title: 'Project Manager', postedDate: 'May 17, 2025, 11:00 a.m.', status: 'Active', archiveReason: '' },
+                { id: 12, title: 'HR Coordinator', postedDate: 'May 16, 2025, 03:00 p.m.', status: 'Active', archiveReason: '' },
+            ];
+
+
+            // Dashboard Chart Data
+            const programDemandData = [
+                { program: 'Auto Electrical Assembly NCII', '1st Semester': 80, '2nd Semester': 120, '3rd Semester': 150, totalDemand: 350 },
+                { program: 'Auto Mechanical Assembly NCII', '1st Semester': 60, '2nd Semester': 90, '3rd Semester': 110, totalDemand: 260 },
+                { program: 'Bread and Pastry Production NC II', '1st Semester': 40, '2nd Semester': 70, '3rd Semester': 90, totalDemand: 200 },
+                { program: 'Electrical Installation and Maintenance NCII', '1st Semester': 70, '2nd Semester': 100, '3rd Semester': 130, totalDemand: 300 },
+                { program: 'Dressmaking NC II', '1st Semester': 50, '2nd Semester': 80, '3rd Semester': 100, totalDemand: 230 },
+            ];
+
+            const completersIncompletersData = [
+                { label: 'Completers', value: 70, color: '#10B981' }, // Green
+                { label: 'Incompleters', value: 30, color: '#EF4444' } // Red
+            ];
+
+            let currentPage = 1; // For generic tables (applicants, trainors)
+            let entriesPerPage = parseInt(showEntriesSelect.value);
+            let currentDisplayedData = [];
+            let currentTableColumns = [];
+            let currentActionType = '';
+
+            let activeJobsCurrentPage = 1; // For active jobs table
+            let activeJobsEntriesPerPage = parseInt(activeJobsShowEntriesSelect.value);
+            let currentFilteredActiveJobs = []; // To hold filtered active jobs data for pagination
+
+            let archivedJobsCurrentPage = 1; // For archived jobs table
+            let archivedJobsEntriesPerPage = parseInt(archivedJobsShowEntriesSelect.value);
+            let currentFilteredArchivedJobs = []; // To hold filtered archived jobs data for pagination
+
+
+            function showOverlay(pageName) {
+                overlayText.textContent = `You are on the ${pageName} page`;
+                overlayPage.classList.add('active');
+            }
+
+            function hideOverlay() {
+                overlayPage.classList.remove('active');
+            }
+
+            /**
+             * Displays a notification message.
+             * @param {string} message The message to display.
+             * @param {'success'|'error'|'info'} type The type of notification (e.g., 'success', 'error', 'info').
+             */
+            function showNotification(message, type = 'info') {
+                const notificationDiv = document.createElement('div');
+                notificationDiv.classList.add('notification', type);
+
+                let iconClass = '';
+                if (type === 'success') {
+                    iconClass = 'fas fa-check-circle';
+                } else if (type === 'error') {
+                    iconClass = 'fas fa-times-circle';
+                } else {
+                    iconClass = 'fas fa-info-circle';
+                }
+
+                notificationDiv.innerHTML = `<i class="icon ${iconClass}"></i><span>${message}</span>`;
+                notificationContainer.appendChild(notificationDiv);
+
+                // Trigger reflow to ensure transition plays
+                void notificationDiv.offsetWidth;
+
+                notificationDiv.classList.add('active');
+
+                setTimeout(() => {
+                    notificationDiv.classList.remove('active');
+                    notificationDiv.addEventListener('transitionend', () => {
+                        notificationDiv.remove();
+                    }, { once: true });
+                }, 3000); // Notification disappears after 3 seconds
+            }
+
+
+            // Generic table rendering functions (used for Applicants and Trainors)
+            function renderTableHeader(columns) {
+                let headerHtml = '<tr>';
+                columns.forEach(col => {
+                    headerHtml += `<th class="cursor-pointer">${col.header} <span class="sort-icon"><i class="fas fa-sort"></i></span></th>`;
+                });
+                headerHtml += `<th>Actions</th></tr>`;
+                dynamicTableHeader.innerHTML = headerHtml;
+            }
+
+            function renderTableRows(data, columns, actionType) {
+                dynamicTableBody.innerHTML = '';
+                const start = (currentPage - 1) * entriesPerPage;
+                const end = start + entriesPerPage;
+                const paginatedData = data.slice(start, end);
+
+                if (paginatedData.length === 0) {
+                    dynamicTableBody.innerHTML = `<tr><td colspan="${columns.length + 1}" class="text-center py-4 text-gray-500">No entries found.</td></tr>`;
+                }
+
+                paginatedData.forEach(item => {
+                    let rowHtml = '<tr>';
+                    columns.forEach(col => {
+                        rowHtml += `<td>${item[col.key]}</td>`;
+                    });
+
+                    let actionButtons = '';
+                    if (actionType === 'applicant-list') {
+                        actionButtons = `
+                            <button class="text-blue-600 hover:text-blue-800 mr-2">View</button>
+                            <button class="text-red-600 hover:text-red-800">Decline</button>
+                        `;
+                    } else if (actionType === 'approved-applicants') {
+                        actionButtons = `
+                            <button class="text-blue-600 hover:text-blue-800 mr-2">View</button>
+                            <button class="text-green-600 hover:text-green-800">Download PDF</button>
+                        `;
+                    } else if (actionType === 'trainor-list') {
+                        actionButtons = `
+                            <div class="flex space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800" onclick="window.viewTrainorDetails('${item.email}')">View</button>
+                                <button class="text-green-600 hover:text-green-800" onclick="window.editTrainorDetails('${item.email}')">Edit</button>
+                            </div>
+                        `;
+                    }
+                    rowHtml += `<td>${actionButtons}</td></tr>`;
+                    dynamicTableBody.insertAdjacentHTML('beforeend', rowHtml);
+                });
+                updatePaginationInfo(data.length);
+                updatePaginationButtons(data.length);
+            }
+
+            function updatePaginationInfo(totalEntries) {
+                const startEntry = (currentPage - 1) * entriesPerPage + 1;
+                const endEntry = Math.min(startEntry + entriesPerPage - 1, totalEntries);
+                paginationInfo.textContent = `Showing ${totalEntries > 0 ? startEntry : 0} to ${endEntry} of ${totalEntries} entries`;
+            }
+
+            function updatePaginationButtons(totalEntries) {
+                paginationControls.innerHTML = '';
+                const totalPages = Math.ceil(totalEntries / entriesPerPage);
+
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'pagination-button';
+                prevBtn.id = 'prevPageBtn';
+                prevBtn.textContent = 'Previous';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderTable(currentDisplayedData, currentTableColumns, currentActionType);
+                    }
+                });
+                paginationControls.appendChild(prevBtn);
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `pagination-button ${i === currentPage ? 'active' : ''}`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => {
+                        currentPage = i;
+                        renderTable(currentDisplayedData, currentTableColumns, currentActionType);
+                    });
+                    paginationControls.appendChild(pageBtn);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'pagination-button';
+                nextBtn.id = 'nextPageBtn';
+                nextBtn.textContent = 'Next';
+                nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+                nextBtn.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        renderTable(currentDisplayedData, currentTableColumns, currentActionType);
+                    }
+                });
+                paginationControls.appendChild(nextBtn);
+            }
+
+            function renderTable(data, columns, actionType) {
+                currentDisplayedData = data;
+                currentTableColumns = columns;
+                currentActionType = actionType;
+
+                renderTableHeader(columns);
+                renderTableRows(data, columns, actionType);
+            }
+
+            function filterData(data, searchTerm, type) {
+                let filtered = data;
+
+                if (type === 'approved-applicants') {
+                    filtered = filtered.filter(item => item.status === 'Approved');
+                }
+
+                if (searchTerm) {
+                    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                    filtered = filtered.filter(item => {
+                        for (const key in item) {
+                            if (typeof item[key] === 'string' && item[key].toLowerCase().includes(lowerCaseSearchTerm)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                return filtered;
+            }
+
+            function renderProgramCards() {
+                programsContent.innerHTML = '';
+                availablePrograms.forEach(programName => {
+                    const relatedTrainor = allTrainors.find(trainer => trainer.program.includes(programName)) || { name: 'N/A', email: 'N/A' };
+                    const programCardHtml = `
+                        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                            <p class="text-lg font-semibold text-gray-800 mb-2">Program Name: ${programName}</p>
+                            <p class="text-sm text-gray-600 mb-2">Program Trainor: ${relatedTrainor.name}</p>
+                            <p class="text-sm text-gray-600 mb-4">Approved Applicants: 0</p> <button class="view-button bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" data-program="${programName}">View</button>
+                        </div>
+                    `;
+                    programsContent.insertAdjacentHTML('beforeend', programCardHtml);
+                });
+                document.querySelectorAll('.view-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const programName = event.currentTarget.dataset.program;
+                        showOverlay(programName);
+                    });
+                });
+            }
+
+            function drawProgramDemandChart(data) {
+                const svg = d3.select("#programDemandChart");
+                svg.selectAll("*").remove();
+
+                const margin = { top: 20, right: 30, bottom: 80, left: 60 };
+                const programsDemandChartContainer = document.getElementById('programDemandChartContainer');
+                const width = programsDemandChartContainer.offsetWidth - margin.left - margin.right;
+                const height = programsDemandChartContainer.offsetHeight - margin.top - margin.bottom;
+
+                const g = svg.attr("width", width + margin.left + margin.right)
+                             .attr("height", height + margin.top + margin.bottom)
+                             .append("g")
+                             .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                const x0 = d3.scaleBand()
+                    .rangeRound([0, width])
+                    .paddingInner(0.1);
+
+                const x1 = d3.scaleBand()
+                    .padding(0.05);
+
+                const y = d3.scaleLinear()
+                    .rangeRound([height, 0]);
+
+                const z = d3.scaleOrdinal()
+                    .range(["#63B3ED", "#4299E1", "#3182CE"]);
+
+                const semesters = ['1st Semester', '2nd Semester', '3rd Semester'];
+
+                x0.domain(data.map(d => d.program));
+                x1.domain(semesters).rangeRound([0, x0.bandwidth()]);
+                y.domain([0, d3.max(data, d => d3.max(semesters, key => d[key]))]).nice();
+
+                g.append("g")
+                    .selectAll("g")
+                    .data(data)
+                    .enter().append("g")
+                    .attr("transform", d => `translate(${x0(d.program)},0)`)
+                    .selectAll("rect")
+                    .data(d => semesters.map(key => ({ key: key, value: d[key], program: d.program })))
+                    .enter().append("rect")
+                    .attr("x", d => x1(d.key))
+                    .attr("y", d => y(d.value))
+                    .attr("width", x1.bandwidth())
+                    .attr("height", d => height - y(d.value))
+                    .attr("fill", d => z(d.key));
+
+                const line = d3.line()
+                    .x(d => x0(d.program) + x0.bandwidth() / 2)
+                    .y(d => y(d.totalDemand));
+
+                g.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", "#F6AD55")
+                    .attr("stroke-width", 2)
+                    .attr("d", line);
+
+                g.selectAll(".dot")
+                    .data(data)
+                    .enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("cx", d => x0(d.program) + x0.bandwidth() / 2)
+                    .attr("cy", d => y(d.totalDemand))
+                    .attr("r", 4)
+                    .attr("fill", "#F6AD55");
+
+                g.append("g")
+                    .attr("class", "axis x-axis")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(x0))
+                    .selectAll("text")
+                    .attr("transform", "rotate(-45)")
+                    .style("text-anchor", "end");
+
+                g.append("g")
+                    .attr("class", "axis y-axis")
+                    .call(d3.axisLeft(y).ticks(5))
+                    .append("text")
+                    .attr("fill", "#000")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", "0.71em")
+                    .attr("text-anchor", "end")
+                    .text("Yearly Demand");
+
+                const legend = g.append("g")
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", 10)
+                    .attr("text-anchor", "end")
+                    .selectAll("g")
+                    .data(semesters.concat(['Total Demand']))
+                    .enter().append("g")
+                    .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+                legend.append("rect")
+                    .attr("x", width - 19)
+                    .attr("width", 19)
+                    .attr("height", 19)
+                    .attr("fill", d => {
+                        if (d === 'Total Demand') return "#F6AD55";
+                        return z(d);
+                    });
+
+                legend.append("text")
+                    .attr("x", width - 24)
+                    .attr("y", 9.5)
+                    .attr("dy", ".32em")
+                    .text(d => d);
+            }
+
+            function drawCompletersIncompletersChart(data) {
+                const svg = d3.select("#completersIncompletersChart");
+                svg.selectAll("*").remove();
+
+                const completersIncompletersChartContainer = document.getElementById('completersIncompletersChartContainer');
+                const width = completersIncompletersChartContainer.offsetWidth;
+                const height = completersIncompletersChartContainer.offsetHeight;
+                const radius = Math.min(width, height) / 2 - 80; // Adjusted radius to make it even smaller
+
+                const g = svg.attr("width", width)
+                             .attr("height", height)
+                             .append("g")
+                             .attr("transform", `translate(${width / 2},${height / 2})`);
+
+                const pie = d3.pie()
+                    .sort(null)
+                    .value(d => d.value);
+
+                const arc = d3.arc()
+                    .innerRadius(0)
+                    .outerRadius(radius);
+
+                const arcs = g.selectAll(".arc")
+                    .data(pie(data))
+                    .enter().append("g")
+                    .attr("class", "arc");
+
+                arcs.append("path")
+                    .attr("d", arc)
+                    .attr("fill", d => d.data.color);
+
+                const legend = g.selectAll(".legend")
+                    .data(data)
+                    .enter().append("g")
+                    .attr("class", "legend")
+                    .attr("transform", (d, i) => `translate(${radius + 20}, ${i * 20 - (data.length * 10)})`);
+
+                legend.append("rect")
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .attr("fill", d => d.color);
+
+                legend.append("text")
+                    .attr("x", 24)
+                    .attr("y", 9)
+                    .attr("dy", ".35em")
+                    .text(d => d.label);
+            }
+
+            function updateSummaryCards() {
+                document.getElementById('numApplicants').textContent = allApplicants.length;
+                document.getElementById('numApprovedApplicants').textContent = allApplicants.filter(a => a.status === 'Approved').length;
+                document.getElementById('numPrograms').textContent = availablePrograms.length;
+            }
+
+            function renderSummaryApplicantsTable() {
+                summaryApplicantsTableBody.innerHTML = '';
+
+                const programSummary = {};
+                availablePrograms.forEach(program => {
+                    programSummary[program] = {
+                        totalApplications: 0,
+                        approvedApplicants: 0
+                    };
+                });
+
+                allApplicants.forEach(applicant => {
+                    if (programSummary[applicant.program]) {
+                        programSummary[applicant.program].totalApplications++;
+                        if (applicant.status === 'Approved') {
+                            programSummary[applicant.program].approvedApplicants++;
+                        }
+                    }
+                });
+
+                const sortedPrograms = Object.keys(programSummary).sort();
+
+                sortedPrograms.forEach(programName => {
+                    const summary = programSummary[programName];
+                    const rowHtml = `
+                        <tr>
+                            <td class="py-2 px-4 whitespace-nowrap">${programName}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">${summary.totalApplications}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">${summary.approvedApplicants}</td>
+                        </tr>
+                    `;
+                    summaryApplicantsTableBody.insertAdjacentHTML('beforeend', rowHtml);
+                });
+            }
+
+            // Function to render Active Jobs table
+            function renderActiveJobsTable(data) {
+                activeJobsTableBody.innerHTML = ''; // Clear existing rows
+                currentFilteredActiveJobs = data; // Store the filtered data
+
+                const start = (activeJobsCurrentPage - 1) * activeJobsEntriesPerPage;
+                const end = start + activeJobsEntriesPerPage;
+                const paginatedData = data.slice(start, end);
+
+                if (paginatedData.length === 0) {
+                    activeJobsTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No active jobs found.</td></tr>`;
+                }
+
+                paginatedData.forEach(job => {
+                    const rowHtml = `
+                        <tr>
+                            <td class="py-2 px-4 whitespace-nowrap">${job.title}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">${job.postedDate}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    ${job.status}
+                                </span>
+                            </td>
+                            <td class="py-2 px-4 whitespace-nowrap">
+                                <button class="text-yellow-600 hover:text-yellow-800 mr-2">View</button>
+                                <button class="text-red-600 hover:text-red-800" onclick="window.archiveJob(${job.id})">Archive</button>
+                            </td>
+                        </tr>
+                    `;
+                    activeJobsTableBody.insertAdjacentHTML('beforeend', rowHtml);
+                });
+                updateActiveJobsPaginationInfo(data.length);
+                updateActiveJobsPaginationButtons(data.length);
+            }
+
+            // Function to render Archived Jobs table
+            function renderArchivedJobsTable(data) {
+                archivedJobsTableBody.innerHTML = ''; // Clear existing rows
+                currentFilteredArchivedJobs = data; // Store the filtered data
+
+                const start = (archivedJobsCurrentPage - 1) * archivedJobsEntriesPerPage;
+                const end = start + archivedJobsEntriesPerPage;
+                const paginatedData = data.slice(start, end);
+
+                if (paginatedData.length === 0) {
+                    archivedJobsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No archived jobs found.</td></tr>`;
+                }
+
+                paginatedData.forEach(job => {
+                    const rowHtml = `
+                        <tr>
+                            <td class="py-2 px-4 whitespace-nowrap">${job.title}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">${job.postedDate}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-300 text-gray-800">
+                                    ${job.status}
+                                </span>
+                            </td>
+                            <td class="py-2 px-4 whitespace-nowrap">${job.archiveReason || 'N/A'}</td>
+                            <td class="py-2 px-4 whitespace-nowrap">
+                                <button class="text-blue-600 hover:text-blue-800 mr-2">View</button>
+                                <button class="text-green-600 hover:text-green-800" onclick="window.restoreJob(${job.id})">Restore</button>
+                            </td>
+                        </tr>
+                    `;
+                    archivedJobsTableBody.insertAdjacentHTML('beforeend', rowHtml);
+                });
+                updateArchivedJobsPaginationInfo(data.length);
+                updateArchivedJobsPaginationButtons(data.length);
+            }
+
+
+            // Function to handle archiving a job (now shows modal)
+            window.archiveJob = function(jobId) {
+                currentJobIdToArchive = jobId; // Store the job ID
+                archiveReasonModal.classList.add('active'); // Show the modal
+            }
+
+            // Function to handle restoring a job
+            window.restoreJob = function(jobId) {
+                const jobIndex = allJobs.findIndex(job => job.id === jobId);
+                if (jobIndex !== -1) {
+                    allJobs[jobIndex].status = 'Active'; // Change status back to Active
+                    allJobs[jobIndex].archiveReason = ''; // Clear archive reason
+                    showNotification(`Job "${allJobs[jobIndex].title}" restored successfully!`, 'success');
+
+                    // Re-render both active and archived jobs tables to reflect changes
+                    const filteredActiveJobs = allJobs.filter(job => job.status === 'Active' && job.title.toLowerCase().includes(activeJobsSearchInput.value.toLowerCase()));
+                    renderActiveJobsTable(filteredActiveJobs);
+                    const filteredArchivedJobs = allJobs.filter(job => job.status === 'Archived' && job.title.toLowerCase().includes(archivedJobsSearchInput.value.toLowerCase()));
+                    renderArchivedJobsTable(filteredArchivedJobs);
+                } else {
+                    showNotification('Error: Job not found for restoration.', 'error');
+                }
+            }
+
+
+            // Update pagination info text for Active Jobs
+            function updateActiveJobsPaginationInfo(totalEntries) {
+                const startEntry = (activeJobsCurrentPage - 1) * activeJobsEntriesPerPage + 1;
+                const endEntry = Math.min(startEntry + activeJobsEntriesPerPage - 1, totalEntries);
+                activeJobsPaginationInfo.textContent = `Showing ${totalEntries > 0 ? startEntry : 0} to ${endEntry} of ${totalEntries} entries`;
+            }
+
+            // Update pagination buttons for Active Jobs
+            function updateActiveJobsPaginationButtons(totalEntries) {
+                activeJobsPaginationControls.innerHTML = ''; // Clear existing buttons
+                const totalPages = Math.ceil(totalEntries / activeJobsEntriesPerPage);
+
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'pagination-button';
+                prevBtn.textContent = 'Previous';
+                prevBtn.disabled = activeJobsCurrentPage === 1;
+                prevBtn.addEventListener('click', () => {
+                    if (activeJobsCurrentPage > 1) {
+                        activeJobsCurrentPage--;
+                        renderActiveJobsTable(currentFilteredActiveJobs);
+                    }
+                });
+                activeJobsPaginationControls.appendChild(prevBtn);
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `pagination-button ${i === activeJobsCurrentPage ? 'active' : ''}`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => {
+                        activeJobsCurrentPage = i;
+                        renderActiveJobsTable(currentFilteredActiveJobs);
+                    });
+                    activeJobsPaginationControls.appendChild(pageBtn);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'pagination-button';
+                nextBtn.textContent = 'Next';
+                nextBtn.disabled = activeJobsCurrentPage === totalPages || totalPages === 0;
+                nextBtn.addEventListener('click', () => {
+                    if (activeJobsCurrentPage < totalPages) {
+                        activeJobsCurrentPage++;
+                        renderActiveJobsTable(currentFilteredActiveJobs);
+                    }
+                    });
+                activeJobsPaginationControls.appendChild(nextBtn);
+            }
+
+            // Update pagination info text for Archived Jobs
+            function updateArchivedJobsPaginationInfo(totalEntries) {
+                const startEntry = (archivedJobsCurrentPage - 1) * archivedJobsEntriesPerPage + 1;
+                const endEntry = Math.min(startEntry + archivedJobsEntriesPerPage - 1, totalEntries);
+                archivedJobsPaginationInfo.textContent = `Showing ${totalEntries > 0 ? startEntry : 0} to ${endEntry} of ${totalEntries} entries`;
+            }
+
+            // Update pagination buttons for Archived Jobs
+            function updateArchivedJobsPaginationButtons(totalEntries) {
+                archivedJobsPaginationControls.innerHTML = ''; // Clear existing buttons
+                const totalPages = Math.ceil(totalEntries / archivedJobsEntriesPerPage);
+
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'pagination-button';
+                prevBtn.textContent = 'Previous';
+                prevBtn.disabled = archivedJobsCurrentPage === 1;
+                prevBtn.addEventListener('click', () => {
+                    if (archivedJobsCurrentPage > 1) {
+                        archivedJobsCurrentPage--;
+                        renderArchivedJobsTable(currentFilteredArchivedJobs);
+                    }
+                });
+                archivedJobsPaginationControls.appendChild(prevBtn);
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `pagination-button ${i === archivedJobsCurrentPage ? 'active' : ''}`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => {
+                        archivedJobsCurrentPage = i;
+                        renderArchivedJobsTable(currentFilteredArchivedJobs);
+                    });
+                    archivedJobsPaginationControls.appendChild(pageBtn);
+                }
+
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'pagination-button';
+                nextBtn.textContent = 'Next';
+                nextBtn.disabled = archivedJobsCurrentPage === totalPages || totalPages === 0;
+                nextBtn.addEventListener('click', () => {
+                    if (archivedJobsCurrentPage < totalPages) {
+                        archivedJobsCurrentPage++;
+                        renderArchivedJobsTable(currentFilteredArchivedJobs);
+                    }
+                });
+                archivedJobsPaginationControls.appendChild(nextBtn);
+            }
+
+
+            function showContent(contentType, pageName) {
+                // Hide all main content sections first
+                dashboardContent.classList.add('hidden');
+                programsContent.classList.add('hidden');
+                tableContent.classList.add('hidden');
+                activeJobsContent.classList.add('hidden');
+                archivedJobsContent.classList.add('hidden'); // Hide archived jobs content
+                overlayPage.classList.remove('active');
+                addTrainorButtonContainer.classList.add('hidden');
+
+                mainContentTitle.textContent = pageName;
+
+                if (contentType === 'dashboard') {
+                    dashboardContent.classList.remove('hidden');
+                    updateSummaryCards();
+                    drawProgramDemandChart(programDemandData);
+                    drawCompletersIncompletersChart(completersIncompletersData);
+                    renderSummaryApplicantsTable();
+                } else if (contentType === 'programs') {
+                    programsContent.classList.remove('hidden');
+                    renderProgramCards();
+                } else if (contentType === 'applicant-list' || contentType === 'approved-applicants') {
+                    tableContent.classList.remove('hidden');
+                    const applicantColumns = [
+                        { key: 'name', header: 'Applicant Name' },
+                        { key: 'program', header: 'Program Applied' },
+                        { key: 'date', header: 'Application Date' },
+                        { key: 'status', header: 'Status' }
+                    ];
+                    const dataToRender = filterData(allApplicants, searchInput.value, contentType);
+                    currentPage = 1;
+                    renderTable(dataToRender, applicantColumns, contentType);
+                } else if (contentType === 'trainor-list') {
+                    tableContent.classList.remove('hidden');
+                    addTrainorButtonContainer.classList.remove('hidden');
+                    const trainorColumns = [
+                        { key: 'name', header: 'Trainor Name' },
+                        { key: 'program', header: 'Programs Handled' },
+                        { key: 'email', header: 'Email' }
+                    ];
+                    const dataToRender = filterData(allTrainors, searchInput.value, contentType);
+                    currentPage = 1;
+                    renderTable(dataToRender, trainorColumns, contentType);
+                } else if (contentType === 'active-jobs') {
+                    activeJobsContent.classList.remove('hidden');
+                    activeJobsCurrentPage = 1; // Reset to first page when navigating to active jobs
+                    const filteredJobs = allJobs.filter(job => job.status === 'Active' && job.title.toLowerCase().includes(activeJobsSearchInput.value.toLowerCase()));
+                    renderActiveJobsTable(filteredJobs);
+                } else if (contentType === 'archived-jobs') { // New case for archived jobs
+                    archivedJobsContent.classList.remove('hidden');
+                    archivedJobsCurrentPage = 1; // Reset to first page when navigating to archived jobs
+                    const filteredArchivedJobs = allJobs.filter(job => job.status === 'Archived' && job.title.toLowerCase().includes(archivedJobsSearchInput.value.toLowerCase()));
+                    renderArchivedJobsTable(filteredArchivedJobs);
+                } else if (contentType === 'overlay') {
+                    showOverlay(pageName);
+                }
+            }
+
+            function populateProgramDatalist() {
+                programOptionsDatalist.innerHTML = '';
+                availablePrograms.forEach(program => {
+                    const option = document.createElement('option');
+                    option.value = program;
+                    programOptionsDatalist.appendChild(option);
+                });
+            }
+
+            // Event Listeners for Navigation Links
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const pageName = event.currentTarget.dataset.page;
+                    const contentType = event.currentTarget.dataset.contentType;
+                    showContent(contentType, pageName);
+
+                    navLinks.forEach(nav => nav.classList.remove('bg-blue-700'));
+                    link.classList.add('bg-blue-700');
+                });
+            });
+
+            // Event Listener for "Go Back" button on overlay
+            goBackBtn.addEventListener('click', hideOverlay);
+
+            // Toggle dropdown menus (updated to handle all dropdowns)
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const dropdownMenu = toggle.nextElementSibling;
+                    const dropdownChevron = toggle.querySelector('.fa-chevron-down');
+                    if (dropdownMenu && dropdownChevron) {
+                        dropdownMenu.classList.toggle('active');
+                        dropdownChevron.classList.toggle('rotate-180');
+                    }
+                });
+            });
+
+            // Table Search and Show Entries (now generic)
+            searchInput.addEventListener('keyup', () => {
+                const searchTerm = searchInput.value;
+                let baseData = [];
+                if (currentActionType === 'applicant-list' || currentActionType === 'approved-applicants') {
+                    baseData = allApplicants;
+                } else if (currentActionType === 'trainor-list') {
+                    baseData = allTrainors;
+                }
+                currentDisplayedData = filterData(baseData, searchTerm, currentActionType);
+                currentPage = 1;
+                renderTable(currentDisplayedData, currentTableColumns, currentActionType);
+            });
+
+            showEntriesSelect.addEventListener('change', (event) => {
+                entriesPerPage = parseInt(event.target.value);
+                currentPage = 1;
+                renderTable(currentDisplayedData, currentTableColumns, currentActionType);
+            });
+
+            // Event listener for the new Add Trainor button
+            addTrainorBtn.addEventListener('click', () => {
+                populateProgramDatalist();
+                trainerRegistrationModal.classList.add('active');
+            });
+
+            // Event listener for closing the trainer registration modal
+            closeModalBtn.addEventListener('click', () => {
+                trainerRegistrationModal.classList.remove('active');
+                trainerRegistrationForm.reset();
+            });
+
+            // Event listener for toggling password visibility
+            togglePassword.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                togglePassword.querySelector('i').classList.toggle('fa-eye');
+                togglePassword.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+
+            // Event listener for trainer registration form submission
+            trainerRegistrationForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const newProgramName = programsHandledInput.value.trim();
+
+                const newTrainer = {
+                    id: allTrainors.length > 0 ? Math.max(...allTrainors.map(t => t.id)) + 1 : 1, // Generate a new ID
+                    name: document.getElementById('fullName').value,
+                    email: document.getElementById('email').value,
+                    program: newProgramName,
+                };
+
+                if (newProgramName && !availablePrograms.includes(newProgramName)) {
+                    availablePrograms.push(newProgramName);
+                    availablePrograms.sort();
+                    populateProgramDatalist();
+                }
+
+                allTrainors.push(newTrainer);
+                trainerRegistrationModal.classList.remove('active');
+                trainerRegistrationForm.reset();
+
+                showNotification('Trainer registered successfully!', 'success');
+
+                showContent('trainor-list', 'Trainor');
+
+                if (mainContentTitle.textContent === 'Programs') {
+                    renderProgramCards();
+                }
+                if (mainContentTitle.textContent === 'Dashboard') {
+                    updateSummaryCards();
+                    renderSummaryApplicantsTable();
+                }
+            });
+
+            // View Trainer Details Functionality
+            window.viewTrainorDetails = function(email) {
+                const trainer = allTrainors.find(t => t.email === email);
+                if (trainer) {
+                    viewTrainorFullName.textContent = trainer.name;
+                    viewTrainorEmail.textContent = trainer.email;
+                    viewTrainorProgramsHandled.textContent = trainer.program;
+                    viewTrainorModal.classList.add('active');
+                } else {
+                    showNotification('Trainer not found.', 'error');
+                }
+            };
+
+            closeViewTrainorModalBtn.addEventListener('click', () => {
+                viewTrainorModal.classList.remove('active');
+            });
+
+            // Edit Trainer Details Functionality
+            window.editTrainorDetails = function(email) {
+                const trainer = allTrainors.find(t => t.email === email);
+                if (trainer) {
+                    editTrainorOriginalEmail.value = trainer.email; // Store original email for lookup
+                    editTrainorFullName.value = trainer.name;
+                    editTrainorEmail.value = trainer.email;
+                    editTrainorProgramsHandled.value = trainer.program;
+                    populateProgramDatalist(); // Ensure datalist is up-to-date
+                    editTrainorModal.classList.add('active');
+                } else {
+                    showNotification('Trainer not found.', 'error');
+                }
+            };
+
+            closeEditTrainorModalBtn.addEventListener('click', () => {
+                editTrainorModal.classList.remove('active');
+                editTrainorForm.reset();
+            });
+
+            editTrainorForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const originalEmail = editTrainorOriginalEmail.value;
+                const updatedName = editTrainorFullName.value.trim();
+                const updatedEmail = editTrainorEmail.value.trim();
+                const updatedPrograms = editTrainorProgramsHandled.value.trim();
+
+                const trainerIndex = allTrainors.findIndex(t => t.email === originalEmail);
+
+                if (trainerIndex !== -1) {
+                    // Check if the new email already exists for another trainer
+                    const emailExists = allTrainors.some((t, index) => t.email === updatedEmail && index !== trainerIndex);
+                    if (emailExists) {
+                        showNotification('Error: Email already exists for another trainer.', 'error');
+                        return;
+                    }
+
+                    allTrainors[trainerIndex].name = updatedName;
+                    allTrainors[trainerIndex].email = updatedEmail;
+                    allTrainors[trainerIndex].program = updatedPrograms;
+
+                    // Add new programs to availablePrograms if they don't exist
+                    updatedPrograms.split(',').map(p => p.trim()).forEach(program => {
+                        if (program && !availablePrograms.includes(program)) {
+                            availablePrograms.push(program);
+                        }
+                    });
+                    availablePrograms.sort(); // Keep the list sorted
+
+                    showNotification('Trainer details updated successfully!', 'success');
+                    editTrainorModal.classList.remove('active');
+                    editTrainorForm.reset();
+                    showContent('trainor-list', 'Trainor'); // Re-render the table
+                } else {
+                    showNotification('Error: Trainer not found for update.', 'error');
+                }
+            });
+
+
+            // Event listeners for Active Jobs buttons
+            postJobBtn.addEventListener('click', () => {
+                showOverlay('Post New Job');
+            });
+
+            // Active Jobs table search and show entries
+            activeJobsSearchInput.addEventListener('keyup', () => {
+                const searchTerm = activeJobsSearchInput.value;
+                const filteredJobs = allJobs.filter(job => job.status === 'Active' && job.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                activeJobsCurrentPage = 1; // Reset to first page on search
+                renderActiveJobsTable(filteredJobs);
+            });
+
+            activeJobsShowEntriesSelect.addEventListener('change', (event) => {
+                activeJobsEntriesPerPage = parseInt(event.target.value);
+                activeJobsCurrentPage = 1; // Reset to first page on entries change
+                const filteredJobs = allJobs.filter(job => job.status === 'Active' && job.title.toLowerCase().includes(activeJobsSearchInput.value.toLowerCase()));
+                renderActiveJobsTable(filteredJobs);
+            });
+
+            // Archived Jobs table search and show entries
+            archivedJobsSearchInput.addEventListener('keyup', () => {
+                const searchTerm = archivedJobsSearchInput.value;
+                const filteredJobs = allJobs.filter(job => job.status === 'Archived' && job.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                archivedJobsCurrentPage = 1; // Reset to first page on search
+                renderArchivedJobsTable(filteredJobs);
+            });
+
+            archivedJobsShowEntriesSelect.addEventListener('change', (event) => {
+                archivedJobsEntriesPerPage = parseInt(event.target.value);
+                archivedJobsCurrentPage = 1; // Reset to first page on entries change
+                const filteredJobs = allJobs.filter(job => job.status === 'Archived' && job.title.toLowerCase().includes(archivedJobsSearchInput.value.toLowerCase()));
+                renderArchivedJobsTable(filteredJobs);
+            });
+
+
+            // Event listeners for Archive Reason Modal
+            closeArchiveModalBtn.addEventListener('click', () => {
+                archiveReasonModal.classList.remove('active');
+                archiveReasonTextarea.value = ''; // Clear textarea
+                currentJobIdToArchive = null; // Clear stored job ID
+            });
+
+            cancelArchiveBtn.addEventListener('click', () => {
+                archiveReasonModal.classList.remove('active');
+                archiveReasonTextarea.value = ''; // Clear textarea
+                currentJobIdToArchive = null; // Clear stored job ID
+            });
+
+            archiveReasonForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const reason = archiveReasonTextarea.value.trim();
+
+                if (currentJobIdToArchive !== null && reason) {
+                    // Find the job and update its status and reason
+                    const jobIndex = allJobs.findIndex(job => job.id === currentJobIdToArchive);
+                    if (jobIndex !== -1) {
+                        allJobs[jobIndex].status = 'Archived';
+                        allJobs[jobIndex].archiveReason = reason;
+                        showNotification(`Job "${allJobs[jobIndex].title}" archived successfully!`, 'success');
+                    } else {
+                        showNotification('Error: Job not found for archiving.', 'error');
+                    }
+                } else {
+                    showNotification('Archiving cancelled or reason not provided.', 'info');
+                }
+
+                archiveReasonModal.classList.remove('active'); // Hide the modal
+                archiveReasonTextarea.value = ''; // Clear textarea
+                currentJobIdToArchive = null; // Clear stored job ID
+
+                // Re-render both active and archived jobs tables to reflect changes
+                const filteredActiveJobs = allJobs.filter(job => job.status === 'Active' && job.title.toLowerCase().includes(activeJobsSearchInput.value.toLowerCase()));
+                renderActiveJobsTable(filteredActiveJobs);
+                const filteredArchivedJobs = allJobs.filter(job => job.status === 'Archived' && job.title.toLowerCase().includes(archivedJobsSearchInput.value.toLowerCase()));
+                renderArchivedJobsTable(filteredArchivedJobs);
+            });
+
+
+            // Initial load: show dashboard content
+            showContent('dashboard', 'Dashboard');
+
+            // Handle window resize for charts
+            window.addEventListener('resize', () => {
+                if (mainContentTitle.textContent === 'Dashboard') {
+                    drawProgramDemandChart(programDemandData);
+                    drawCompletersIncompletersChart(completersIncompletersData);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

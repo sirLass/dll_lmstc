@@ -1,0 +1,220 @@
+<!-- Edit Incorrect Fields Modal -->
+<div id="editFieldsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 700px; max-height: 85vh; overflow-y: auto;">
+        <button class="modal-close-btn" onclick="closeEditFieldsModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; color: #9ca3af; cursor: pointer; z-index: 10;">&times;</button>
+        
+        <h2 class="text-2xl font-bold text-blue-600 mb-4">
+            <i class="fas fa-edit"></i> Edit Incorrect Information
+        </h2>
+        <p class="text-gray-600 mb-6">Please correct the fields marked by the admin. Only the marked fields can be edited.</p>
+        
+        <form id="editFieldsForm" method="POST" action="{% url 'update_marked_fields' %}">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                {% if marked_fields.first_name %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> First Name *
+                    </label>
+                    <input type="text" name="first_name" value="{{ profile.first_name }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.last_name %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Last Name *
+                    </label>
+                    <input type="text" name="last_name" value="{{ profile.last_name }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.middle_name %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Middle Name
+                    </label>
+                    <input type="text" name="middle_name" value="{{ profile.middle_name }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.extension_name %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Extension Name (Jr., Sr., etc.)
+                    </label>
+                    <input type="text" name="extension_name" value="{{ profile.extension_name }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.email %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Email Address *
+                    </label>
+                    <input type="email" name="email" value="{{ profile.email }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required>
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.contact_number %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Contact Number *
+                    </label>
+                    <input type="text" name="contact_number" value="{{ profile.contact_number }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required placeholder="+63 9XX XXX XXXX">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.nationality %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Nationality *
+                    </label>
+                    <input type="text" name="nationality" value="{{ profile.nationality }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.skills %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Skills
+                    </label>
+                    <input type="text" name="skills" value="{{ profile.skills }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           placeholder="e.g., Cooking, Driving" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.street %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> House No./Street/Subdivision *
+                    </label>
+                    <input type="text" name="street" value="{{ profile.street }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.district %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> District
+                    </label>
+                    <input type="text" name="district" value="{{ profile.district }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.sex %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Sex *
+                    </label>
+                    <select name="sex" class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" required>
+                        <option value="Male" {% if profile.sex == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if profile.sex == 'Female' %}selected{% endif %}>Female</option>
+                    </select>
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.civil_status %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Civil Status *
+                    </label>
+                    <select name="civil_status" class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" required>
+                        <option value="Single" {% if profile.civil_status == 'Single' %}selected{% endif %}>Single</option>
+                        <option value="Married" {% if profile.civil_status == 'Married' %}selected{% endif %}>Married</option>
+                        <option value="Widower" {% if profile.civil_status == 'Widower' %}selected{% endif %}>Widowed</option>
+                        <option value="Separated" {% if profile.civil_status == 'Separated' %}selected{% endif %}>Separated</option>
+                    </select>
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.employment_status %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Employment Status *
+                    </label>
+                    <select name="employment_status" class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" required>
+                        <option value="Employed" {% if profile.employment_status == 'Employed' %}selected{% endif %}>Employed</option>
+                        <option value="Unemployed" {% if profile.employment_status == 'Unemployed' %}selected{% endif %}>Unemployed</option>
+                    </select>
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.monthly_income %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Monthly Income
+                    </label>
+                    <input type="text" name="monthly_income" value="{{ profile.monthly_income }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.company_name %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Company Name
+                    </label>
+                    <input type="text" name="company_name" value="{{ profile.company_name }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.educational_attainment %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Educational Attainment *
+                    </label>
+                    <input type="text" name="educational_attainment" value="{{ profile.educational_attainment }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none" 
+                           required oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+                
+                {% if marked_fields.parent_guardian %}
+                <div class="form-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-exclamation-circle text-red-600"></i> Parent/Guardian Name
+                    </label>
+                    <input type="text" name="parent_guardian" value="{{ profile.parent_guardian }}" 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="closeEditFieldsModal()" 
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold transition-all duration-200">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
