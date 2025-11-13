@@ -12,6 +12,6 @@ services:
       - key: DEBUG
         value: False
       - key: ALLOWED_HOSTS
-        value: "dll-lmstcc-gza7.onrender.com"
+        value: "dll-lmstc-gza7.onrender.com"
       - key: RENDER
         value: True
