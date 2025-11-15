@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.contrib.auth.decorators import login_required
 from .philjobnet_scraper import scrape_philjobnet_jobs
-from .skill_matcher import match_jobs_for_user
+from .skill_matcher_sklearn import match_jobs_for_user
 from .models import ApplicantPasser
 import logging
 from datetime import datetime
@@ -38,7 +38,7 @@ def get_matched_jobs(request):
         # Get parameters
         limit = int(request.GET.get('limit', 50))
         limit = min(limit, 100)  # Cap at 100
-        min_threshold = float(request.GET.get('min_threshold', 10.0))  # Minimum match percentage
+        min_threshold = float(request.GET.get('min_threshold', 0.0))  # Show all jobs (0% threshold)
         
         # Scrape jobs from PhilJobNet
         logger.info(f"Fetching {limit} jobs from PhilJobNet for user {user.username}")
@@ -52,34 +52,26 @@ def get_matched_jobs(request):
                 'jobs': []
             })
         
-        # Match jobs with user's competencies
-        logger.info(f"Matching {len(peso_jobs)} jobs with user competencies (threshold: {min_threshold}%)")
+        # Match jobs with user's competencies - Return ALL jobs with match percentages
+        logger.info(f"Matching {len(peso_jobs)} jobs with user competencies using scikit-learn TF-IDF")
         matched_jobs = match_jobs_for_user(user, peso_jobs, min_threshold)
         
         # Log results
-        logger.info(f"Found {len(matched_jobs)} matching jobs for user {user.username}")
+        logger.info(f"Returning all {len(matched_jobs)} jobs ranked by match percentage for user {user.username}")
         
-        # If no matches found, notify user
-        if not matched_jobs:
-            return JsonResponse({
-                'success': True,
-                'jobs': [],
-                'total_count': 0,
-                'matched_count': 0,
-                'source': 'PhilJobNet',
-                'scraped_at': str(datetime.now()),
-                'message': 'No job skills match your program competencies. Try adjusting the match threshold.',
-                'no_match': True
-            })
+        # Count high matches (>= 30%) for statistics
+        high_matches = sum(1 for job in matched_jobs if job.get('match_percentage', 0) >= 30)
         
         return JsonResponse({
             'success': True,
             'jobs': matched_jobs,
             'total_count': len(peso_jobs),
             'matched_count': len(matched_jobs),
+            'high_match_count': high_matches,  # Jobs with >= 30% match
             'source': 'PhilJobNet',
             'scraped_at': str(datetime.now()),
-            'min_threshold': min_threshold
+            'min_threshold': min_threshold,
+            'show_all': True  # Flag to indicate all jobs are shown
         })
         
     except ValueError as e:

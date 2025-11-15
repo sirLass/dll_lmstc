@@ -486,11 +486,20 @@
         .notification-item {
             padding: 12px 16px;
             border-bottom: 1px solid #f0f0f0;
-            transition: background-color 0.2s ease;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
         }
 
         .notification-item:hover {
-            background-color: #f5f5f5;
+            background-color: #f0f7ff;
+            transform: translateX(3px);
+            border-left: 3px solid var(--sidebar-logo-color);
+            padding-left: 13px;
+        }
+
+        .notification-item:active {
+            background-color: #e6f2ff;
         }
 
         /* Modal styling */
@@ -2373,11 +2382,17 @@
             {% else %}
             <!-- Unlocked Content for Passers -->
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800">Job Recommendations</h2>
-                <button id="refresh-jobs-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                    <i class="fas fa-sync-alt" id="refresh-icon"></i>
-                    Refresh PESO Jobs
-                </button>
+                <h2 class="text-2xl font-semibold text-gray-800">Job Recommendations (All PESO Jobs Ranked)</h2>
+                <div class="flex gap-2">
+                    <button id="debug-open-all-jobs" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors hidden" title="Debug: Open all PESO job links">
+                        <i class="fas fa-external-link-alt"></i>
+                        Debug: Open All Links
+                    </button>
+                    <button id="refresh-jobs-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                        <i class="fas fa-sync-alt" id="refresh-icon"></i>
+                        Refresh PESO Jobs
+                    </button>
+                </div>
             </div>
 
             <!-- Statistics Cards -->
@@ -2397,7 +2412,7 @@
                 <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
                     <div class="flex items-center">
                         <div class="flex-1">
-                            <p class="text-sm text-gray-600">Skill Matches</p>
+                            <p class="text-sm text-gray-600">High Matches (≥30%)</p>
                             <p class="text-2xl font-bold text-gray-800" id="skill-matches-count">0</p>
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
@@ -3321,27 +3336,79 @@
                     return;
                 }
 
-                const notificationsHTML = notifications.map(notification => `
-                    <div class="notification-item ${notification.is_read ? 'opacity-60' : ''}"
-                         data-notification-id="${notification.id}">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h4 class="font-semibold text-sm ${notification.is_read ? 'text-gray-600' : 'text-blue-600'}">${notification.title}</h4>
-                                <p class="text-xs text-gray-600 mt-1">${notification.message}</p>
-                                <p class="text-xs text-gray-400 mt-1">${notification.created_at}</p>
+                const notificationsHTML = notifications.map(notification => {
+                    // Check if this is a correction notification
+                    const isCorrectionNotif = 
+                        notification.title.toLowerCase().includes('correct') ||
+                        notification.title.toLowerCase().includes('information') ||
+                        notification.title.toLowerCase().includes('profile') ||
+                        notification.message.toLowerCase().includes('correct') ||
+                        notification.message.toLowerCase().includes('personal info') ||
+                        notification.message.toLowerCase().includes('update your information');
+                    
+                    const correctionIcon = isCorrectionNotif ? '<i class="fas fa-exclamation-circle text-red-500 mr-2"></i>' : '';
+                    const clickHint = isCorrectionNotif ? '<p class="text-xs text-blue-600 mt-1 font-semibold"><i class="fas fa-arrow-right"></i> Click to view profile</p>' : '';
+                    
+                    return `
+                        <div class="notification-item ${notification.is_read ? 'opacity-60' : ''}"
+                             data-notification-id="${notification.id}"
+                             data-notification-title="${notification.title}"
+                             data-notification-message="${notification.message}"
+                             style="cursor: pointer;">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-sm ${notification.is_read ? 'text-gray-600' : 'text-blue-600'} flex items-center">
+                                        ${correctionIcon}${notification.title}
+                                    </h4>
+                                    <p class="text-xs text-gray-600 mt-1">${notification.message}</p>
+                                    ${clickHint}
+                                    <p class="text-xs text-gray-400 mt-1">${notification.created_at}</p>
+                                </div>
+                                ${!notification.is_read ? '<div class="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>' : ''}
                             </div>
-                            ${!notification.is_read ? '<div class="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>' : ''}
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 notificationsList.innerHTML = notificationsHTML;
 
                 // Add click handlers for individual notifications
+                // Feature: Auto-navigate to Profile section when clicking correction notifications
                 document.querySelectorAll('.notification-item').forEach(item => {
                     item.addEventListener('click', function() {
                         const notificationId = this.dataset.notificationId;
+                        const notificationTitle = this.dataset.notificationTitle || '';
+                        const notificationMessage = this.dataset.notificationMessage || '';
+                        
+                        // Check if notification is about correction/personal info
+                        // This detects keywords related to profile corrections
+                        const isCorrectionNotification = 
+                            notificationTitle.toLowerCase().includes('correct') ||
+                            notificationTitle.toLowerCase().includes('information') ||
+                            notificationTitle.toLowerCase().includes('profile') ||
+                            notificationMessage.toLowerCase().includes('correct') ||
+                            notificationMessage.toLowerCase().includes('personal info') ||
+                            notificationMessage.toLowerCase().includes('update your information');
+                        
+                        // Mark notification as read
                         markNotificationAsRead(notificationId);
+                        
+                        // If it's a correction notification, automatically navigate to Profile section
+                        if (isCorrectionNotification) {
+                            // Close notification box
+                            notificationBox.classList.add('hidden');
+                            
+                            // Navigate to Profile section
+                            showSection('profile');
+                            
+                            // Scroll to top of profile section for better UX
+                            setTimeout(() => {
+                                const profileSection = document.getElementById('profile-section');
+                                if (profileSection) {
+                                    profileSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }, 100);
+                        }
                     });
                 });
             }
@@ -3725,6 +3792,12 @@
                 viewAllJobsBtn.addEventListener('click', () => showSection('jobs'));
                 prevPageBtn.addEventListener('click', () => changePage(currentPage - 1));
                 nextPageBtn.addEventListener('click', () => changePage(currentPage + 1));
+                
+                // Debug button to open all PESO job links
+                const debugBtn = document.getElementById('debug-open-all-jobs');
+                if (debugBtn) {
+                    debugBtn.addEventListener('click', openAllJobLinks);
+                }
             }
 
             // Refresh jobs from PhilJobNet with Skill Matching
@@ -3732,20 +3805,20 @@
                 showLoading(true);
                 refreshIcon.classList.add('animate-spin');
                 
-                // Fetch skill-matched jobs from PhilJobNet
-                fetch('/api/matched-jobs/?limit=50&min_threshold=10')
+                // Fetch ALL jobs from PhilJobNet ranked by skill match (min_threshold=0)
+                fetch('/api/matched-jobs/?limit=50&min_threshold=0')
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Check if no matches found
-                            if (data.no_match || data.matched_count === 0) {
+                            // Always show all jobs (they're ranked by match percentage)
+                            if (data.matched_count === 0 || !data.jobs || data.jobs.length === 0) {
                                 jobsData = [];
                                 filteredJobs = [];
                                 renderNoMatchMessage();
                                 updateStatistics();
-                                showNotification('No job skills match your program competencies.', 'info');
+                                showNotification('No jobs available from PESO at this time.', 'info');
                             } else {
-                                // Transform matched job data
+                                // Transform job data - ALL jobs are included and ranked
                                 jobsData = data.jobs.map(job => ({
                                     id: job.id,
                                     title: job.title,
@@ -3770,7 +3843,20 @@
                                 currentPage = 1;
                                 updateStatistics();
                                 renderJobs();
-                                showNotification(`Found ${data.matched_count} matching jobs out of ${data.total_count} available!`, 'success');
+                                
+                                // Show different messages based on match quality
+                                const highMatches = data.high_match_count || 0;
+                                if (highMatches > 0) {
+                                    showNotification(`Showing all ${data.total_count} PESO jobs ranked by match. ${highMatches} high matches (≥30%) found!`, 'success');
+                                } else {
+                                    showNotification(`Showing all ${data.total_count} PESO jobs ranked by skill match percentage.`, 'info');
+                                }
+                                
+                                // Show debug button if jobs have URLs
+                                const debugBtn = document.getElementById('debug-open-all-jobs');
+                                if (debugBtn && jobsData.some(job => job.url)) {
+                                    debugBtn.classList.remove('hidden');
+                                }
                             }
                         } else {
                             // Handle error from API
@@ -3882,7 +3968,7 @@
 
             // Render jobs
             function renderJobs() {
-                const jobsPerPage = 5;
+                const jobsPerPage = 10;  // Show more jobs per page
                 const startIndex = (currentPage - 1) * jobsPerPage;
                 const endIndex = startIndex + jobsPerPage;
                 const jobsToShow = filteredJobs.slice(startIndex, endIndex);
@@ -3899,23 +3985,50 @@
                     return;
                 }
 
-                jobsContainer.innerHTML = jobsToShow.map(job => {
+                jobsContainer.innerHTML = jobsToShow.map((job, index) => {
                     const matchScore = Math.round(job.match_percentage || job.matchScore || 0);
-                    const matchColor = matchScore >= 70 ? 'bg-green-100 text-green-800' : 
-                                       matchScore >= 50 ? 'bg-blue-100 text-blue-800' : 
-                                       'bg-yellow-100 text-yellow-800';
+                    const globalRank = startIndex + index + 1;  // Global ranking across all jobs
+                    
+                    // Enhanced color coding based on match percentage
+                    let matchColor, matchBgColor, matchBorderColor;
+                    if (matchScore >= 70) {
+                        matchColor = 'text-green-800';
+                        matchBgColor = 'bg-green-100';
+                        matchBorderColor = 'border-green-300';
+                    } else if (matchScore >= 50) {
+                        matchColor = 'text-blue-800';
+                        matchBgColor = 'bg-blue-100';
+                        matchBorderColor = 'border-blue-300';
+                    } else if (matchScore >= 30) {
+                        matchColor = 'text-yellow-800';
+                        matchBgColor = 'bg-yellow-100';
+                        matchBorderColor = 'border-yellow-300';
+                    } else if (matchScore >= 15) {
+                        matchColor = 'text-orange-800';
+                        matchBgColor = 'bg-orange-100';
+                        matchBorderColor = 'border-orange-300';
+                    } else {
+                        matchColor = 'text-gray-700';
+                        matchBgColor = 'bg-gray-100';
+                        matchBorderColor = 'border-gray-300';
+                    }
                     const jobSalary = job.salary || 'Competitive';
                     const jobType = job.employment_type || job.type || 'Full-time';
                     const jobPosted = job.posted_date || job.posted || new Date().toISOString();
                     
                     return `
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200 job-card-item" data-job-id="${job.id}">
-                        <div class="flex justify-between items-start mb-4">
+                    <div class="bg-white rounded-lg shadow-sm border-l-4 ${matchBorderColor} p-6 hover:shadow-md transition-shadow duration-200 job-card-item relative" data-job-id="${job.id}">
+                        <!-- Ranking Badge -->
+                        <div class="absolute top-4 left-4 ${matchBgColor} ${matchColor} rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm shadow-sm">
+                            #${globalRank}
+                        </div>
+                        
+                        <div class="flex justify-between items-start mb-4 ml-12">
                             <div class="flex-1">
                                 <div class="flex items-center mb-2 flex-wrap gap-2">
                                     <h3 class="text-lg font-semibold text-gray-800">${job.title}</h3>
                                     ${job.isNew ? '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium"><i class="fas fa-star mr-1"></i>New</span>' : ''}
-                                    <span class="${matchColor} text-xs px-3 py-1 rounded-full font-semibold">
+                                    <span class="${matchBgColor} ${matchColor} text-xs px-3 py-1 rounded-full font-semibold border ${matchBorderColor}">
                                         <i class="fas fa-chart-line mr-1"></i>${matchScore}% Match
                                     </span>
                                 </div>
@@ -3937,13 +4050,13 @@
                                 <p class="text-lg font-semibold text-green-600 mb-2">${jobSalary}</p>
                                 <p class="text-sm text-gray-500 mb-3">${jobType}</p>
                                 ${job.url ? `
-                                    <a href="${job.url}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                                        <i class="fas fa-external-link-alt mr-1"></i>View Details
+                                    <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                        <i class="fas fa-external-link-alt mr-1"></i>Apply Now
                                     </a>
                                 ` : `
-                                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors apply-job-btn" data-job-id="${job.id}">
-                                        Apply Now
-                                    </button>
+                                    <span class="inline-block bg-gray-400 text-white px-4 py-2 rounded-lg text-sm cursor-not-allowed" title="No URL available">
+                                        <i class="fas fa-ban mr-1"></i>No Link
+                                    </span>
                                 `}
                             </div>
                         </div>
@@ -4020,13 +4133,47 @@
                 }
             }
 
+            // Debug function: Open all PESO job links
+            function openAllJobLinks() {
+                if (!jobsData || jobsData.length === 0) {
+                    showNotification('No jobs loaded yet. Please refresh jobs first.', 'warning');
+                    return;
+                }
+                
+                const jobsWithUrls = jobsData.filter(job => job.url);
+                
+                if (jobsWithUrls.length === 0) {
+                    showNotification('No job URLs available to open.', 'warning');
+                    return;
+                }
+                
+                // Confirm before opening multiple tabs
+                const confirmed = confirm(`This will open ${jobsWithUrls.length} PESO job links in new tabs. Continue?`);
+                
+                if (confirmed) {
+                    // Open first 10 jobs to avoid browser blocking
+                    const jobsToOpen = jobsWithUrls.slice(0, 10);
+                    jobsToOpen.forEach((job, index) => {
+                        setTimeout(() => {
+                            window.open(job.url, '_blank', 'noopener,noreferrer');
+                        }, index * 200);  // Delay to avoid popup blocker
+                    });
+                    
+                    showNotification(`Opening ${jobsToOpen.length} PESO job links...`, 'success');
+                    
+                    if (jobsWithUrls.length > 10) {
+                        showNotification(`Only opening first 10 out of ${jobsWithUrls.length} jobs to avoid popup blocker.`, 'info');
+                    }
+                }
+            }
+            
             // Update statistics
             function updateStatistics() {
                 totalJobsCount.textContent = jobsData.length;
-                // Skill matches are jobs with 70% or higher match percentage
+                // High matches are jobs with 30% or higher match percentage
                 const highMatches = jobsData.filter(job => {
                     const matchScore = job.match_percentage || job.matchScore || 0;
-                    return matchScore >= 70;
+                    return matchScore >= 30;
                 }).length;
                 skillMatchesCount.textContent = highMatches;
                 newJobsCount.textContent = jobsData.filter(job => job.isNew).length;
@@ -4042,7 +4189,7 @@
 
             // Update pagination
             function updatePagination() {
-                const jobsPerPage = 5;
+                const jobsPerPage = 10;  // Match the renderJobs function
                 totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
                 
                 if (totalPages <= 1) {

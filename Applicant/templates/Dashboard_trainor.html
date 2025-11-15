@@ -688,29 +688,22 @@
         }
 
         /* Competency checkbox styling */
-        .competency-checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: var(--table-header-blue);
-            transform: scale(1.2);
-            transition: all 0.2s ease;
-        }
 
-        .competency-checkbox:hover {
-            transform: scale(1.3);
-            box-shadow: 0 0 0 3px rgba(74, 137, 220, 0.2);
-        }
+.competency-checkbox:checked {
+    background-color: var(--table-header-blue);
+}
 
-        .competency-checkbox:checked {
-            background-color: var(--table-header-blue);
-        }
+/* Warning style for unchecked boxes */
+.competency-checkbox:not(:checked) {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+    animation: pulseWarning 2s infinite;
+}
 
-        /* Header checkbox styling */
-        .competency-check-all {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
+@keyframes pulseWarning {
+    0%, 100% { outline-color: #fbbf24; }
+    50% { outline-color: #f59e0b; }
+}
             accent-color: white;
             margin-left: 8px;
             transform: scale(1.1);
@@ -799,6 +792,139 @@
             0% { transform: scale(1.2); }
             50% { transform: scale(1.4); }
             100% { transform: scale(1.2); }
+        }
+
+        /* Remove warning when all are checked in a row */
+        tr.all-checked .competency-checkbox:not(:checked) {
+            outline: none;
+            animation: none;
+        }
+
+        /* Complete button styling */
+        .complete-btn {
+            background-color: #10b981;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+            display: none;
+        }
+
+        .complete-btn:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .complete-btn:active {
+            transform: translateY(0);
+        }
+
+        .complete-btn.show {
+            display: inline-block;
+            animation: fadeInBtn 0.5s ease;
+        }
+
+        @keyframes fadeInBtn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Confirmation Modal Styles */
+        .confirmation-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .confirmation-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirmation-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 450px;
+            width: 90%;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .confirmation-modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-modal-icon {
+            font-size: 2.5rem;
+            color: #f59e0b;
+            margin-right: 15px;
+        }
+
+        .confirmation-modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .confirmation-modal-body {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .confirmation-modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .modal-btn-cancel {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .modal-btn-cancel:hover {
+            background-color: #d1d5db;
+        }
+
+        .modal-btn-confirm {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background-color: #059669;
         }
 
         /* Calendar Styles */
@@ -2005,6 +2131,7 @@
                     <li><a href="#" data-section="clone" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-clone mr-3"></i> <span class="sidebar-text">Batch & Semester</span></a></li>
                     <li><a href="#" data-section="modules" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-book mr-3"></i> <span class="sidebar-text">Modules and Manuals</span></a></li>
                     <li><a href="#" data-section="policy" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-file-contract mr-3"></i> <span class="sidebar-text">Policy and Guidelines</span></a></li>
+                    <li><a href="#" data-section="tickets" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-3"></i> <span class="sidebar-text">Support Tickets</span></a></li>
                 </ul>
             </nav>
         </div>
@@ -2815,6 +2942,7 @@
                                 {% endif %}
                                 <th rowspan="2">Progress %</th>
                                 <th rowspan="2">REMARKS</th>
+                                <th rowspan="2">ACTION</th>
                             </tr>
                             <tr>
                                 {% if trainer_program.program_competencies.basic_competencies %}
@@ -2866,6 +2994,11 @@
                                 <td class="progress-cell trainee-progress">{{ approved.progress|default:0 }}%</td>
                                 <td class="text-sm">
                                     <span class="status-badge {{ approved.status|lower }}">{{ approved.get_status_display }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="complete-btn" data-trainee-id="{{ approved.applicant.id }}" data-trainee-name="{% if approved.applicant.learner_profile.first %}{{ approved.applicant.learner_profile.first.last_name }}, {{ approved.applicant.learner_profile.first.first_name }}{% else %}{{ approved.applicant.get_full_name|default:approved.applicant.username }}{% endif %}">
+                                        <i class="fas fa-check-circle mr-1"></i> Complete
+                                    </button>
                                 </td>
                             </tr>
                             {% empty %}
@@ -3181,6 +3314,243 @@
             </div>
             <div class="modal-buttons">
                 <button type="button" id="closeArchiveActivityBtn" class="cancel-button">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Tickets Section -->
+    <div id="tickets-section" class="content-section">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-5">Support Tickets from Trainees</h2>
+        
+        <div class="bg-white rounded-lg shadow">
+            <!-- Filter and Search -->
+            <div class="p-4 border-b border-gray-200 bg-gray-50">
+                <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="flex-1">
+                        <input type="text" id="ticketSearchInput" placeholder="Search by trainee name, subject, or ticket ID..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="ticketStatusFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <select id="ticketPriorityFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Priority</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets List -->
+            <div class="p-6">
+                <div id="ticketsContainer">
+                    <!-- Tickets from trainees in this program -->
+                    {% if program_tickets %}
+                        <div class="space-y-4">
+                            {% for ticket in program_tickets %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors ticket-item" 
+                                data-ticket-id="{{ ticket.id }}"
+                                data-ticket-number="{{ ticket.ticket_id }}"
+                                data-subject="{{ ticket.subject }}"
+                                data-description="{{ ticket.description }}"
+                                data-status="{{ ticket.status }}" 
+                                data-priority="{{ ticket.priority }}"
+                                data-category="{{ ticket.get_category_display }}"
+                                data-trainee-name="{% if ticket.applicant.learner_profile.first %}{{ ticket.applicant.learner_profile.first.last_name }}, {{ ticket.applicant.learner_profile.first.first_name }}{% else %}{{ ticket.applicant.get_full_name|default:ticket.applicant.username }}{% endif %}"
+                                data-trainee-program="{{ ticket.applicant.program.program_title|default:'N/A' }}"
+                                data-created-at="{{ ticket.created_at|timesince }} ago"
+                                data-updated-at="{{ ticket.updated_at|timesince }} ago">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <!-- Header -->
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-xs font-mono text-gray-500">#{{ ticket.ticket_id }}</span>
+                                            
+                                            {% if ticket.status == 'open' %}
+                                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">OPEN</span>
+                                            {% elif ticket.status == 'in_progress' %}
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-semibold">IN PROGRESS</span>
+                                            {% elif ticket.status == 'resolved' %}
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">RESOLVED</span>
+                                            {% else %}
+                                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-semibold">CLOSED</span>
+                                            {% endif %}
+                                            
+                                            {% if ticket.priority == 'critical' %}
+                                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold">CRITICAL</span>
+                                            {% elif ticket.priority == 'high' %}
+                                            <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-semibold">HIGH</span>
+                                            {% elif ticket.priority == 'medium' %}
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-semibold">MEDIUM</span>
+                                            {% else %}
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">LOW</span>
+                                            {% endif %}
+                                            
+                                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">{{ ticket.get_category_display }}</span>
+                                        </div>
+                                        
+                                        <!-- Subject -->
+                                        <h3 class="font-semibold text-gray-800 text-lg mb-2">{{ ticket.subject }}</h3>
+                                        
+                                        <!-- Description Preview -->
+                                        <p class="text-gray-600 text-sm mb-3">{{ ticket.description|truncatewords:20 }}</p>
+                                        
+                                        <!-- Metadata -->
+                                        <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-user mr-1"></i>
+                                                <span class="font-medium">{% if ticket.applicant.learner_profile.first %}{{ ticket.applicant.learner_profile.first.last_name }}, {{ ticket.applicant.learner_profile.first.first_name }}{% else %}{{ ticket.applicant.get_full_name|default:ticket.applicant.username }}{% endif %}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-graduation-cap mr-1"></i>
+                                                <span>{{ ticket.applicant.program.program_title|default:"N/A" }}</span>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                <span>{{ ticket.created_at|timesince }} ago</span>
+                                            </div>
+                                            {% if ticket.updated_at != ticket.created_at %}
+                                            <div class="flex items-center">
+                                                <i class="fas fa-sync-alt mr-1"></i>
+                                                <span>Updated {{ ticket.updated_at|timesince }} ago</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Actions -->
+                                    <div class="flex flex-col gap-2 ml-4">
+                                        <button onclick="viewTicketDetails('{{ ticket.id }}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                            <i class="fas fa-eye mr-1"></i> View Details
+                                        </button>
+                                        {% if ticket.status != 'closed' %}
+                                        <select onchange="updateTicketStatus('{{ ticket.id }}', this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                            <option value="" disabled selected>Update Status</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="resolved">Resolved</option>
+                                            <option value="closed">Close Ticket</option>
+                                        </select>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-12">
+                            <i class="fas fa-ticket-alt text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Tickets Yet</h3>
+                            <p class="text-gray-500">No support tickets have been submitted by your trainees.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Statistics Summary -->
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="openTicketsCount">0</div>
+                        <div class="text-xs text-gray-600 uppercase">Open</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-yellow-600" id="inProgressTicketsCount">0</div>
+                        <div class="text-xs text-gray-600 uppercase">In Progress</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="resolvedTicketsCount">0</div>
+                        <div class="text-xs text-gray-600 uppercase">Resolved</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-gray-600" id="totalTicketsCount">0</div>
+                        <div class="text-xs text-gray-600 uppercase">Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Details Modal -->
+    <div id="ticketDetailsModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-3xl">
+            <div class="flex items-center justify-between mb-4 border-b pb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Ticket Details</h3>
+                <button onclick="closeTicketDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <div id="ticketDetailsContent">
+                <!-- Ticket Header -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="modalTicketId" class="text-sm font-mono text-gray-500"></span>
+                        <span id="modalTicketStatus" class="text-xs px-2 py-1 rounded-full font-semibold"></span>
+                        <span id="modalTicketPriority" class="text-xs px-2 py-1 rounded-full font-semibold"></span>
+                        <span id="modalTicketCategory" class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full"></span>
+                    </div>
+                    <h4 id="modalTicketSubject" class="text-2xl font-bold text-gray-800 mb-2"></h4>
+                </div>
+                
+                <!-- Trainee Information -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h5 class="font-semibold text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-user-circle mr-2"></i>Trainee Information
+                    </h5>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Name:</span>
+                            <span id="modalTraineeName" class="font-medium text-gray-800 ml-2"></span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Program:</span>
+                            <span id="modalTraineeProgram" class="font-medium text-gray-800 ml-2"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ticket Description -->
+                <div class="mb-6">
+                    <h5 class="font-semibold text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-align-left mr-2"></i>Description
+                    </h5>
+                    <div id="modalTicketDescription" class="text-gray-700 bg-white border border-gray-200 rounded-lg p-4 whitespace-pre-wrap"></div>
+                </div>
+                
+                <!-- Timestamps -->
+                <div class="flex items-center gap-6 text-sm text-gray-600 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Created: <span id="modalCreatedAt" class="font-medium"></span></span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        <span>Updated: <span id="modalUpdatedAt" class="font-medium"></span></span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="border-t pt-4">
+                    <h5 class="font-semibold text-gray-700 mb-3">Update Status</h5>
+                    <div class="flex gap-2">
+                        <select id="modalStatusUpdate" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select new status...</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Close Ticket</option>
+                        </select>
+                        <button onclick="saveTicketStatus()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-save mr-2"></i>Update
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -3809,6 +4179,23 @@
                         } else {
                             progressCell.classList.add('text-red-600', 'font-medium');
                         }
+                    }
+                    
+                    // Show/hide Complete button based on 100% completion
+                    const completeBtn = row.querySelector('.complete-btn');
+                    if (completeBtn) {
+                        if (percentage === 100) {
+                            completeBtn.classList.add('show');
+                        } else {
+                            completeBtn.classList.remove('show');
+                        }
+                    }
+                    
+                    // Add/remove warning class for rows with incomplete checkboxes
+                    if (percentage === 100) {
+                        row.classList.add('all-checked');
+                    } else {
+                        row.classList.remove('all-checked');
                     }
                     
                     // Debug logging to help identify issues
@@ -6418,8 +6805,373 @@
             });
         });
 
+        // Tickets Section JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calculate ticket statistics
+            updateTicketStatistics();
+            
+            // Ticket search functionality
+            const ticketSearchInput = document.getElementById('ticketSearchInput');
+            if (ticketSearchInput) {
+                ticketSearchInput.addEventListener('input', filterTickets);
+            }
+            
+            // Status filter
+            const ticketStatusFilter = document.getElementById('ticketStatusFilter');
+            if (ticketStatusFilter) {
+                ticketStatusFilter.addEventListener('change', filterTickets);
+            }
+            
+            // Priority filter
+            const ticketPriorityFilter = document.getElementById('ticketPriorityFilter');
+            if (ticketPriorityFilter) {
+                ticketPriorityFilter.addEventListener('change', filterTickets);
+            }
+        });
+        
+        // Filter tickets based on search and filters
+        function filterTickets() {
+            const searchTerm = document.getElementById('ticketSearchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('ticketStatusFilter').value;
+            const priorityFilter = document.getElementById('ticketPriorityFilter').value;
+            
+            const ticketItems = document.querySelectorAll('.ticket-item');
+            
+            ticketItems.forEach(item => {
+                const ticketText = item.textContent.toLowerCase();
+                const ticketStatus = item.getAttribute('data-status');
+                const ticketPriority = item.getAttribute('data-priority');
+                
+                const matchesSearch = ticketText.includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || ticketStatus === statusFilter;
+                const matchesPriority = priorityFilter === 'all' || ticketPriority === priorityFilter;
+                
+                if (matchesSearch && matchesStatus && matchesPriority) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Update ticket statistics
+        function updateTicketStatistics() {
+            const ticketItems = document.querySelectorAll('.ticket-item');
+            let openCount = 0;
+            let inProgressCount = 0;
+            let resolvedCount = 0;
+            
+            ticketItems.forEach(item => {
+                const status = item.getAttribute('data-status');
+                if (status === 'open') openCount++;
+                else if (status === 'in_progress') inProgressCount++;
+                else if (status === 'resolved') resolvedCount++;
+            });
+            
+            document.getElementById('openTicketsCount').textContent = openCount;
+            document.getElementById('inProgressTicketsCount').textContent = inProgressCount;
+            document.getElementById('resolvedTicketsCount').textContent = resolvedCount;
+            document.getElementById('totalTicketsCount').textContent = ticketItems.length;
+        }
+        
+        // Store current ticket ID for modal operations
+        let currentTicketId = null;
+        
+        // View ticket details
+        function viewTicketDetails(ticketId) {
+            currentTicketId = ticketId;
+            
+            // Find ticket data from the DOM
+            const ticketElement = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+            if (!ticketElement) {
+                console.error('Ticket not found:', ticketId);
+                return;
+            }
+            
+            // Get ticket data from data attributes
+            const ticketData = {
+                id: ticketElement.dataset.ticketId,
+                ticketNumber: ticketElement.dataset.ticketNumber,
+                subject: ticketElement.dataset.subject,
+                description: ticketElement.dataset.description,
+                status: ticketElement.dataset.status,
+                priority: ticketElement.dataset.priority,
+                category: ticketElement.dataset.category,
+                traineeName: ticketElement.dataset.traineeName,
+                traineeProgram: ticketElement.dataset.traineeProgram,
+                createdAt: ticketElement.dataset.createdAt,
+                updatedAt: ticketElement.dataset.updatedAt
+            };
+            
+            // Populate modal
+            document.getElementById('modalTicketId').textContent = '#' + ticketData.ticketNumber;
+            document.getElementById('modalTicketSubject').textContent = ticketData.subject;
+            document.getElementById('modalTicketDescription').textContent = ticketData.description;
+            document.getElementById('modalTraineeName').textContent = ticketData.traineeName;
+            document.getElementById('modalTraineeProgram').textContent = ticketData.traineeProgram;
+            document.getElementById('modalTicketCategory').textContent = ticketData.category;
+            document.getElementById('modalCreatedAt').textContent = ticketData.createdAt;
+            document.getElementById('modalUpdatedAt').textContent = ticketData.updatedAt;
+            
+            // Set status badge
+            const statusBadge = document.getElementById('modalTicketStatus');
+            statusBadge.className = 'text-xs px-2 py-1 rounded-full font-semibold';
+            switch(ticketData.status) {
+                case 'open':
+                    statusBadge.className += ' bg-blue-100 text-blue-800';
+                    statusBadge.textContent = 'OPEN';
+                    break;
+                case 'in_progress':
+                    statusBadge.className += ' bg-yellow-100 text-yellow-800';
+                    statusBadge.textContent = 'IN PROGRESS';
+                    break;
+                case 'resolved':
+                    statusBadge.className += ' bg-green-100 text-green-800';
+                    statusBadge.textContent = 'RESOLVED';
+                    break;
+                case 'closed':
+                    statusBadge.className += ' bg-gray-100 text-gray-800';
+                    statusBadge.textContent = 'CLOSED';
+                    break;
+            }
+            
+            // Set priority badge
+            const priorityBadge = document.getElementById('modalTicketPriority');
+            priorityBadge.className = 'text-xs px-2 py-1 rounded-full font-semibold';
+            switch(ticketData.priority) {
+                case 'critical':
+                    priorityBadge.className += ' bg-red-100 text-red-800';
+                    priorityBadge.textContent = 'CRITICAL';
+                    break;
+                case 'high':
+                    priorityBadge.className += ' bg-orange-100 text-orange-800';
+                    priorityBadge.textContent = 'HIGH';
+                    break;
+                case 'medium':
+                    priorityBadge.className += ' bg-yellow-100 text-yellow-800';
+                    priorityBadge.textContent = 'MEDIUM';
+                    break;
+                case 'low':
+                    priorityBadge.className += ' bg-green-100 text-green-800';
+                    priorityBadge.textContent = 'LOW';
+                    break;
+            }
+            
+            // Reset status dropdown
+            document.getElementById('modalStatusUpdate').value = '';
+            
+            // Show modal
+            document.getElementById('ticketDetailsModal').classList.remove('hidden');
+            document.getElementById('ticketDetailsModal').classList.add('show');
+        }
+        
+        // Close ticket details modal
+        function closeTicketDetailsModal() {
+            document.getElementById('ticketDetailsModal').classList.remove('show');
+            setTimeout(() => {
+                document.getElementById('ticketDetailsModal').classList.add('hidden');
+            }, 300);
+            currentTicketId = null;
+        }
+        
+        // Save ticket status from modal
+        function saveTicketStatus() {
+            const newStatus = document.getElementById('modalStatusUpdate').value;
+            if (!newStatus || !currentTicketId) {
+                alert('Please select a status to update.');
+                return;
+            }
+            
+            updateTicketStatus(currentTicketId, newStatus);
+        }
+        
+        // Update ticket status
+        function updateTicketStatus(ticketId, newStatus) {
+            if (!newStatus) return;
+            
+            if (confirm('Are you sure you want to update this ticket status to: ' + newStatus.replace('_', ' ').toUpperCase() + '?')) {
+                // Show loading state
+                const statusElements = document.querySelectorAll(`[data-ticket-id="${ticketId}"]`);
+                
+                // Make AJAX call to update ticket status
+                fetch('/update-ticket-status/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        ticket_id: ticketId,
+                        status: newStatus
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal if open
+                        closeTicketDetailsModal();
+                        
+                        // Show success message
+                        showNotification('Ticket status updated successfully!', 'success');
+                        
+                        // Reload page to reflect changes
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification('Failed to update ticket status: ' + (data.error || 'Unknown error'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating ticket status:', error);
+                    showNotification('An error occurred while updating the ticket status.', 'error');
+                });
+            }
+        }
+
+        // Global variables for completion modal
+        let currentTraineeId = null;
+        let currentTraineeName = null;
+
+        // Function to open completion modal
+        function openCompletionModal(traineeId, traineeName) {
+            currentTraineeId = traineeId;
+            currentTraineeName = traineeName;
+            
+            document.getElementById('modalTraineeName').textContent = traineeName;
+            document.getElementById('completionModal').classList.add('show');
+        }
+
+        // Function to close completion modal
+        function closeCompletionModal() {
+            document.getElementById('completionModal').classList.remove('show');
+            currentTraineeId = null;
+            currentTraineeName = null;
+        }
+
+        // Function to confirm completion
+        function confirmCompletion() {
+            if (currentTraineeId) {
+                // Here you can add AJAX call to save completion status to database
+                console.log(`Completing trainee: ${currentTraineeName} (ID: ${currentTraineeId})`);
+                
+                // TODO: Add your backend API call here
+                // Example:
+                // fetch('/api/complete-trainee/', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //         'X-CSRFToken': getCookie('csrftoken')
+                //     },
+                //     body: JSON.stringify({
+                //         trainee_id: currentTraineeId
+                //     })
+                // })
+                // .then(response => response.json())
+                // .then(data => {
+                //     if (data.success) {
+                //         showSuccessModal(currentTraineeName);
+                //     }
+                // });
+                
+                // Update the row's status badge
+                const row = document.querySelector(`tr[data-trainee-id="${currentTraineeId}"]`);
+                if (row) {
+                    const statusBadge = row.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = 'COMPLETED';
+                        statusBadge.className = 'status-badge completed';
+                    }
+                }
+                
+                // Close confirmation modal and show success modal
+                closeCompletionModal();
+                showSuccessModal(currentTraineeName);
+            }
+        }
+
+        // Function to show success modal
+        function showSuccessModal(traineeName) {
+            document.getElementById('successTraineeName').textContent = traineeName;
+            document.getElementById('successModal').classList.add('show');
+        }
+
+        // Function to close success modal
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('show');
+        }
+
+        // Add event listeners to all Complete buttons when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click event listeners to Complete buttons
+            document.querySelectorAll('.complete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const traineeId = this.getAttribute('data-trainee-id');
+                    const traineeName = this.getAttribute('data-trainee-name');
+                    openCompletionModal(traineeId, traineeName);
+                });
+            });
+
+            // Close modal when clicking outside of it
+            document.getElementById('completionModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeCompletionModal();
+                }
+            });
+        });
+
 
     </script>
+
+    <!-- Confirmation Modal for Completing Trainee -->
+    <div id="completionModal" class="confirmation-modal">
+        <div class="confirmation-modal-content">
+            <div class="confirmation-modal-header">
+                <i class="fas fa-exclamation-triangle confirmation-modal-icon"></i>
+                <h3 class="confirmation-modal-title">Confirm Completion</h3>
+            </div>
+            <div class="confirmation-modal-body">
+                <p style="font-size: 1.1rem; margin-bottom: 15px;">Are you sure <strong id="modalTraineeName" style="color: #dc2626;"></strong> has completed all competencies?</p>
+                <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <p style="color: #92400e; font-weight: 600; margin-bottom: 5px;">
+                        <i class="fas fa-exclamation-circle"></i> Warning: This action is permanent!
+                    </p>
+                    <p style="color: #78350f; font-size: 0.9rem; line-height: 1.5;">
+                        Once you click "Yes", this trainee's completion status <strong>cannot be changed or undone</strong>. Please verify all checkboxes are correct before proceeding.
+                    </p>
+                </div>
+                <p class="text-sm" style="color: #6b7280;">This confirms that the trainee has successfully completed all required competencies.</p>
+            </div>
+            <div class="confirmation-modal-footer">
+                <button class="modal-btn modal-btn-cancel" onclick="closeCompletionModal()">No</button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmCompletion()">Yes, Complete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="confirmation-modal">
+        <div class="confirmation-modal-content">
+            <div class="confirmation-modal-header">
+                <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #10b981; margin-right: 15px;"></i>
+                <h3 class="confirmation-modal-title">Completion Successful</h3>
+            </div>
+            <div class="confirmation-modal-body">
+                <p style="font-size: 1.1rem; margin-bottom: 15px;">
+                    <strong id="successTraineeName" style="color: #10b981;"></strong> has been successfully marked as complete!
+                </p>
+                <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                    <p style="color: #065f46; font-size: 0.95rem; line-height: 1.6;">
+                        <i class="fas fa-info-circle"></i> All competencies have been verified and the trainee's status has been updated to <strong>COMPLETED</strong>.
+                    </p>
+                </div>
+                <p class="text-sm" style="color: #6b7280;">This action has been permanently saved and cannot be reversed.</p>
+            </div>
+            <div class="confirmation-modal-footer">
+                <button class="modal-btn modal-btn-confirm" onclick="closeSuccessModal()">OK</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

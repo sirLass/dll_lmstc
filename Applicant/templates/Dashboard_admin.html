@@ -2673,50 +2673,56 @@
                             <option value="all">All Status</option>
                             <option value="approved">Approved (Current)</option>
                             <option value="complete">Complete (Passed)</option>
+                            <option value="dropped">Dropped</option>
+                            <option value="failed">Failed</option>
                         </select>
                     </div>
                 </div>
             </div>
             <div id="reportCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {% for prog in Programss %}
-                <!-- Approved (Current) Card -->
+                <!-- Program Card -->
                 <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 report-card"
                      data-program="{{ prog.program_name }}"
-                     data-year="2025"
-                     data-status="approved">
+                     data-year="2025">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-lg font-semibold text-gray-800">{{ prog.program_name }}</p>
                         <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                            <i class="fas fa-user-check mr-1"></i>Approved
+                            <i class="fas fa-chart-bar mr-1"></i>Report
                         </span>
                     </div>
-                    <p class="text-sm text-gray-600 mb-2">Program Trainor: {{ prog.program_trainor }}</p>
-                    <p class="text-sm text-gray-600 mb-2">Approved Applicants: <span class="font-semibold text-blue-600">{{ prog.approved_count }}</span></p>
+                    <p class="text-sm text-gray-600 mb-2">Program Trainor: <span class="font-medium">{{ prog.program_trainor }}</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-blue-50 p-2 rounded">
+                            <p class="text-xs text-gray-600">Approved</p>
+                            <p class="text-lg font-semibold text-blue-600">{{ prog.approved_count }}</p>
+                        </div>
+                        <div class="bg-green-50 p-2 rounded">
+                            <p class="text-xs text-gray-600">Completed</p>
+                            <p class="text-lg font-semibold text-green-600">{{ prog.passed_count }}</p>
+                        </div>
+                        <div class="bg-orange-50 p-2 rounded">
+                            <p class="text-xs text-gray-600">Dropped</p>
+                            <p class="text-lg font-semibold text-orange-600">{{ prog.dropped_count|default:0 }}</p>
+                        </div>
+                        <div class="bg-red-50 p-2 rounded">
+                            <p class="text-xs text-gray-600">Failed</p>
+                            <p class="text-lg font-semibold text-red-600">{{ prog.failed_count|default:0 }}</p>
+                        </div>
+                    </div>
                     <p class="text-sm text-gray-600 mb-4">Year: <span class="font-medium text-blue-600">2025</span></p>
-                    <div class="flex gap-2">
-                        <button onclick="openProgramModal('{{ prog.id }}', 'approved')" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm">
-                            <i class="fas fa-list mr-1"></i>View Approved List
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="openProgramModal('{{ prog.id }}', 'approved')" class="status-btn approved-btn bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm">
+                            <i class="fas fa-user-check mr-1"></i>View Approved
                         </button>
-                    </div>
-                </div>
-                
-                <!-- Complete (Passed) Card -->
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 report-card"
-                     data-program="{{ prog.program_name }}"
-                     data-year="2025"
-                     data-status="complete">
-                    <div class="flex items-center justify-between mb-3">
-                        <p class="text-lg font-semibold text-gray-800">{{ prog.program_name }}</p>
-                        <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                            <i class="fas fa-graduation-cap mr-1"></i>Complete
-                        </span>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-2">Program Trainor: {{ prog.program_trainor }}</p>
-                    <p class="text-sm text-gray-600 mb-2">Completed Applicants: <span class="font-semibold text-green-600">{{ prog.passed_count }}</span></p>
-                    <p class="text-sm text-gray-600 mb-4">Year: <span class="font-medium text-blue-600">2025</span></p>
-                    <div class="flex gap-2">
-                        <button onclick="openProgramModal('{{ prog.id }}', 'complete')" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 text-sm">
-                            <i class="fas fa-certificate mr-1"></i>View Completed List
+                        <button onclick="openProgramModal('{{ prog.id }}', 'complete')" class="status-btn complete-btn bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 text-sm">
+                            <i class="fas fa-graduation-cap mr-1"></i>View Complete
+                        </button>
+                        <button onclick="openProgramModal('{{ prog.id }}', 'dropped')" class="status-btn dropped-btn bg-orange-500 text-white px-3 py-2 rounded-md hover:bg-orange-600 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 text-sm">
+                            <i class="fas fa-user-times mr-1"></i>View Dropped
+                        </button>
+                        <button onclick="openProgramModal('{{ prog.id }}', 'failed')" class="status-btn failed-btn bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-sm">
+                            <i class="fas fa-times-circle mr-1"></i>View Failed
                         </button>
                     </div>
                 </div>
@@ -2763,11 +2769,11 @@
             const noResultsMessage = document.getElementById('noReportsMessage');
             let visibleCount = 0;
 
+            // First, filter cards by Year and Program only
             reportCards.forEach(card => {
                 const cardYear = card.getAttribute('data-year');
                 const cardProgram = card.getAttribute('data-program');
-                const cardStatus = card.getAttribute('data-status');
-                
+
                 let showCard = true;
 
                 // Apply year filter
@@ -2780,18 +2786,71 @@
                     showCard = false;
                 }
 
-                // Apply status filter
-                if (reportCurrentStatusFilter !== 'all' && cardStatus !== reportCurrentStatusFilter) {
-                    showCard = false;
-                }
-
                 if (showCard) {
                     card.style.display = 'block';
-                    visibleCount++;
                 } else {
                     card.style.display = 'none';
                 }
             });
+
+            // Then, based on Status selection, show/hide buttons inside each visible card
+            const status = reportCurrentStatusFilter; // 'all', 'approved', 'complete', 'dropped', 'failed'
+            const buttonSelectorMap = {
+                approved: '.approved-btn',
+                complete: '.complete-btn',
+                dropped: '.dropped-btn',
+                failed: '.failed-btn'
+            };
+
+            // Count and limit to 10 visible cards
+            let shownCards = 0;
+            reportCards.forEach(card => {
+                if (card.style.display !== 'none') {
+                    // Control buttons visibility
+                    const approvedBtn = card.querySelector('.approved-btn');
+                    const completeBtn = card.querySelector('.complete-btn');
+                    const droppedBtn = card.querySelector('.dropped-btn');
+                    const failedBtn = card.querySelector('.failed-btn');
+
+                    // Default: show all
+                    [approvedBtn, completeBtn, droppedBtn, failedBtn].forEach(btn => {
+                        if (btn) btn.style.display = '';
+                    });
+
+                    if (status !== 'all') {
+                        // Hide all except the selected one
+                        [approvedBtn, completeBtn, droppedBtn, failedBtn].forEach(btn => {
+                            if (btn) btn.style.display = 'none';
+                        });
+                        const selector = buttonSelectorMap[status];
+                        const targetBtn = card.querySelector(selector);
+                        if (targetBtn) targetBtn.style.display = '';
+                    }
+
+                    // Enforce 10-card limit
+                    if (shownCards < 10) {
+                        card.classList.remove('hidden-by-limit');
+                        shownCards++;
+                    } else {
+                        card.classList.add('hidden-by-limit');
+                    }
+                } else {
+                    // If card is not visible from filters, ensure it's not counted and hidden by limit flag cleared
+                    card.classList.remove('hidden-by-limit');
+                }
+            });
+
+            // Apply the hidden-by-limit class to actually hide excess cards
+            reportCards.forEach(card => {
+                if (card.classList.contains('hidden-by-limit')) {
+                    card.style.display = 'none';
+                } else if (card.style.display !== 'none') {
+                    card.style.display = 'block';
+                }
+            });
+
+            // Count visible after limit
+            visibleCount = Array.from(reportCards).filter(c => c.style.display !== 'none').length;
 
             // Show/hide no results message
             if (visibleCount === 0) {
@@ -2800,6 +2859,7 @@
                 noResultsMessage.classList.add('hidden');
             }
         }
+
 
         // Update the openProgramModal function to use selected year
         function openProgramModal(programId) {
@@ -3018,8 +3078,14 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update modal title
-                    const statusLabel = statusType === 'approved' ? 'Approved' : 'Completed';
+                    // Update modal title and badge based on status
+                    const statusLabelMap = {
+                        approved: 'Approved',
+                        complete: 'Completed',
+                        dropped: 'Dropped',
+                        failed: 'Failed'
+                    };
+                    const statusLabel = statusLabelMap[statusType] || 'Approved';
                     modalTitle.textContent = `${data.program_name} - ${statusLabel} Applicants Master List Year 2025`;
                     
                     // Clear existing table content
@@ -3030,6 +3096,14 @@
                         data.applicants.forEach((applicant, index) => {
                             const row = document.createElement('tr');
                             row.className = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                            // Determine badge classes per status
+                            const badgeClassMap = {
+                                approved: 'bg-blue-100 text-blue-800',
+                                complete: 'bg-green-100 text-green-800',
+                                dropped: 'bg-orange-100 text-orange-800',
+                                failed: 'bg-red-100 text-red-800'
+                            };
+                            const badgeClass = badgeClassMap[statusType] || 'bg-blue-100 text-blue-800';
                             row.innerHTML = `
                                 <td class="border border-gray-300 p-3">${index + 1}</td>
                                 <td class="border border-gray-300 p-3">${applicant.name || 'N/A'}</td>
@@ -3037,9 +3111,7 @@
                                 <td class="border border-gray-300 p-3">${applicant.contact || 'N/A'}</td>
                                 <td class="border border-gray-300 p-3">${applicant.address || 'N/A'}</td>
                                 <td class="border border-gray-300 p-3">
-                                    <span class="px-2 py-1 ${statusType === 'approved' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'} rounded-full text-sm font-medium">
-                                        ${applicant.status || statusLabel}
-                                    </span>
+                                    <span class="px-2 py-1 ${badgeClass} rounded-full text-sm font-medium">${applicant.status || statusLabel}</span>
                                 </td>
                             `;
                             modalTableBody.appendChild(row);
@@ -3048,7 +3120,7 @@
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td colspan="6" class="border border-gray-300 p-4 text-center text-gray-500">
-                                No ${statusType === 'approved' ? 'approved' : 'completed'} applicants found for this program
+                                No ${statusLabel.toLowerCase()} applicants found for this program
                             </td>
                         `;
                         modalTableBody.appendChild(row);
@@ -6642,7 +6714,8 @@
             list.innerHTML = notifications.map(notification => `
                 <div class="notification-item p-3 border-b hover:bg-gray-50 cursor-pointer ${!notification.is_read ? 'bg-blue-50' : ''}"
                      data-notification-id="${notification.id}"
-                    onclick="markNotificationAsRead(${notification.id})">
+                     data-notification-type="${notification.notification_type}"
+                    onclick="markNotificationAsRead(${notification.id}, '${notification.notification_type}')">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <p class="text-sm font-medium text-gray-900 ${!notification.is_read ? 'font-bold' : ''}">${notification.title}</p>
@@ -6669,7 +6742,7 @@
             }
         }
 
-        async function markNotificationAsRead(notificationId) {
+        async function markNotificationAsRead(notificationId, notificationType) {
             try {
                 const response = await fetch(`/mark-notification-read/${notificationId}/`, {
                     method: 'POST',
@@ -6686,6 +6759,26 @@
                     }
                     // Reload notifications to update badge
                     loadNotifications();
+                    
+                    // Close the notification box
+                    const notificationBox = document.getElementById('notification-box');
+                    if (notificationBox) {
+                        notificationBox.classList.add('hidden');
+                    }
+                    
+                    // Navigate to Applicant List section for application-related notifications
+                    if (notificationType === 'application' || notificationType === 'rejection') {
+                        // Find the Applicant List navigation link and trigger it
+                        const applicantListLink = document.querySelector('[data-content-type="applicant-list"]');
+                        if (applicantListLink) {
+                            // Remove active class from all nav links
+                            document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('bg-blue-700'));
+                            // Add active class to applicant list link
+                            applicantListLink.classList.add('bg-blue-700');
+                            // Show the Applicant List content
+                            showContent('applicant-list', 'Applicant List');
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error marking notification as read:', error);
