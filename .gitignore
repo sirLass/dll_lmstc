@@ -1,1 +1,12 @@
 lmstcvenv/
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+*.log
+.env
+*.bak
+*.orig
+.DS_Store
+Thumbs.db
