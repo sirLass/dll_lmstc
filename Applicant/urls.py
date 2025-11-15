@@ -188,6 +188,7 @@ urlpatterns = [
     path('get_learner_profile/<int:profile_id>/', learner_views.get_learner_profile, name='get_learner_profile'),
     path('download_learner_profile/<int:profile_id>/', learner_views.download_learner_profile, name='download_learner_profile'),
     path('download-profile-pdf/', learner_views.download_profile_pdf, name='download_profile_pdf'),
+    path('download-registration-form/<int:profile_id>/', learner_views.registration_form_pdf, name='download_registration_form'),
     
     # Event Management URLs
     path('api/events/create/', event_views.create_event, name='create_event'),

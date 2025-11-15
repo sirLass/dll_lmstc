@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESDA Learners Profile Form - {{ full_name }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background-color: white; padding: 20px; border: 2px solid #000; }
+        .header { display: flex; border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 15px; align-items: center; gap: 20px; }
+        .logo-section { min-width: 100px; width: 100px; height: 100px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; background-color: #f9f9f9; }
+        .logo-section img { max-width: 90px; max-height: 90px; }
+        .header-text { flex: 1; text-align: center; }
+        .header-text h2 { color: #0066cc; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .header-text p { color: #0066cc; font-size: 12px; margin-bottom: 2px; }
+        .form-info { text-align: right; min-width: 100px; }
+        .form-info div { font-size: 11px; margin: 3px 0; }
+        .form-title { text-align: center; font-size: 20px; font-weight: bold; color: #0066cc; margin: 20px 0; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .id-picture-box { float: right; width: 120px; height: 140px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; margin: 0 0 15px 15px; background-color: #f9f9f9; text-align: center; }
+        .id-picture-box img { max-width: 120px; max-height: 140px; object-fit: cover; }
+        .section { clear: both; margin: 15px 0; border: 1px solid #000; }
+        .section-header { background-color: #e6e6e6; padding: 8px 10px; font-weight: bold; font-size: 12px; border-bottom: 1px solid #000; color: #0066cc; }
+        .section-content { padding: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+        .form-row.two-col { grid-template-columns: repeat(2, 1fr); }
+        .form-row.four-col { grid-template-columns: repeat(4, 1fr); }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 10px; margin-bottom: 3px; font-weight: normal; }
+        .classification-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .classification-table th, .classification-table td { border: 1px solid #000; padding: 8px; font-size: 11px; text-align: left; }
+        .classification-table th { background-color: #e6e6e6; font-weight: bold; }
+        .clearfix::after { content: ""; display: table; clear: both; }
+        .footer { margin-top: 20px; text-align: center; color: #666; font-size: 12px; }
+        .actions { margin-top: 10px; text-align: right; }
+        .btn { background: #2563eb; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <button id="downloadBtn" class="btn">Download PDF</button>
+    </div>
+    <div id="printArea" class="container">
+        <div class="header">
+            <div class="logo-section">
+                <!-- If you have a logo, place it under static and reference it here. -->
+                <!-- <img src="{% static 'Images/tesda.png' %}" alt="TESDA"> -->
+                <span style="font-size:11px;color:#999;text-align:center;">Logo</span>
+            </div>
+            <div class="header-text">
+                <h2>Technical Education and Skills Development Authority</h2>
+                <p>Pangalawaan sa Edukasyong Teknikal at Pagpapaunlad ng Kasanayan</p>
+            </div>
+            <div class="form-info">
+                <div><strong>MIS 03 - 01</strong></div>
+                <div><strong>NCR 2020</strong></div>
+            </div>
+        </div>
+
+        <div class="form-title">LEARNERS PROFILE FORM</div>
+
+        <div class="id-picture-box">
+            {% if profile.id_picture %}
+                <img src="{{ profile.id_picture.url }}" alt="ID Picture">
+            {% else %}
+                <span>ID Picture</span>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <div class="section-header">1. T2MIS Auto Generated</div>
+            <div class="section-content">
+                <div class="form-row two-col">
+                    <div class="input-group">
+                        <label>1.1. Unique Learner Identifier (ULI) Number:</label>
+                        <div>{{ profile.user.id|default:"-" }}</div>
+                    </div>
+                    <div class="input-group">
+                        <label>1.2. Entry Date:</label>
+                        <div>{{ profile.entry_date|date:'Y-m-d' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">2. Learner/Manpower Profile</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label>2.1. Name:</label>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Last Name, Extension Name (Jr., Sr.)</label>
+                            <div>{{ profile.last_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">First Name</label>
+                            <div>{{ profile.first_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Middle Name</label>
+                            <div>{{ profile.middle_name }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>2.2. Complete Permanent Mailing Address:</label>
+                    <div class="input-group" style="margin-bottom: 10px;">
+                        <label style="font-weight: normal; font-size: 10px;">House No., Street, Subdivision/Purok</label>
+                        <div>{{ profile.street }}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Barangay</label>
+                            <div>{{ profile.barangay_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">District</label>
+                            <div>{{ profile.district }}</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">City/Municipality</label>
+                            <div>{{ profile.city_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Province</label>
+                            <div>{{ profile.province_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Region</label>
+                            <div>{{ profile.region_name }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label style="font-weight: normal; font-size: 10px;">Email Address/Facebook Account:</label>
+                        <div>{{ profile.email }}</div>
+                    </div>
+                    <div class="input-group">
+                        <label style="font-weight: normal; font-size: 10px;">Contact No:</label>
+                        <div>{{ profile.contact_number }}</div>
+                    </div>
+                    <div class="input-group">
+                        <label style="font-weight: normal; font-size: 10px;">Nationality:</label>
+                        <div>{{ profile.nationality }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">3. Personal Information</div>
+            <div class="section-content">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>3.1. Sex:</label>
+                        <div>{{ profile.sex }}</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>3.2. Civil Status:</label>
+                        <div>{{ profile.civil_status }}</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>3.3. Employment Status (before the training):</label>
+                        <div>{{ profile.employment_status }}</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>3.4. Birthdate:</label>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Month of Birth</label>
+                            <div>{% if profile.birthdate %}{{ profile.birthdate|date:'m' }}{% endif %}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Day of Birth</label>
+                            <div>{% if profile.birthdate %}{{ profile.birthdate|date:'d' }}{% endif %}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Year of Birth</label>
+                            <div>{% if profile.birthdate %}{{ profile.birthdate|date:'Y' }}{% endif %}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>3.5. Birthplace:</label>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">City/Municipality</label>
+                            <div>{{ profile.birthplace_cityb_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Province</label>
+                            <div>{{ profile.birthplace_provinceb_name }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Region</label>
+                            <div>{{ profile.birthplace_regionb_name }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>3.6. Educational Attainment Before the Training (Trainee):</label>
+                    <div>
+                        {{ profile.educational_attainment }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>3.7. Parent/Guardian:</label>
+                    <div class="form-row two-col">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Name</label>
+                            <div>{{ profile.parent_guardian }}</div>
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Complete Permanent Mailing Address</label>
+                            <div>{{ profile.permanent_address }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">4. Learner/Trainee/Student (Clients) Classification:</div>
+            <div class="section-content">
+                <table class="classification-table">
+                    <tbody>
+                        <tr>
+                            <td colspan="3" style="background-color: #e6e6e6; font-weight: bold;">Classification Categories</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                {% with classes=profile.classifications.all %}
+                                    {% if classes %}
+                                        {% for c in classes %}
+                                            <div>{{ c.name }}</div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div>None</div>
+                                    {% endif %}
+                                {% endwith %}
+                                {% if profile.other_classification %}
+                                    <div>Others: {{ profile.other_classification }}</div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            Generated on: {{ today_str }}
+        </div>
+    </div>
+
+    <script>
+        function triggerDownload() {
+            const element = document.getElementById('printArea');
+            const opt = {
+                margin:       [5, 5, 5, 5],
+                filename:     `Learners_Profile_{{ full_name|default:'profile'|slugify }}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+        document.getElementById('downloadBtn').addEventListener('click', triggerDownload);
+        window.addEventListener('load', function () {
+            // Auto start after a short delay to allow images to load
+            setTimeout(triggerDownload, 600);
+        });
+    </script>
+</body>
+</html>

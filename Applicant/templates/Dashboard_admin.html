@@ -4967,11 +4967,9 @@
         }
 
         function downloadApplicantProfile(profileId) {
-            // In a real implementation, this would generate and download a PDF
-            // For now, we'll show a notification
-            showNotification('PDF download started for Profile ID: ' + profileId, 'success');
-            
-            // Close the modal after initiating download
+            const url = `/download-registration-form/${profileId}/`;
+            window.open(url, '_blank');
+            showNotification('Generating PDF for Profile ID: ' + profileId, 'success');
             closeApplicantProfileModal();
         }
 

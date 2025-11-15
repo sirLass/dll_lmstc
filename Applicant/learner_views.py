@@ -496,3 +496,42 @@ def download_profile_pdf(request):
             'success': False,
             'error': f'Error generating PDF: {str(e)}'
         }, status=500)
+
+
+@login_required
+def registration_form_pdf(request, profile_id):
+    """Render a registration-form styled page that auto-generates a PDF via html2pdf.js
+    This uses a dedicated template which mirrors registration_form.html but binds fields to the
+    Learner_Profile instance and triggers client-side PDF download.
+    """
+    try:
+        profile = get_object_or_404(Learner_Profile, id=profile_id)
+
+        # Build address text pieces for convenience
+        address_parts = []
+        if profile.street:
+            address_parts.append(profile.street)
+        if profile.barangay_name:
+            address_parts.append(profile.barangay_name)
+        if profile.city_name:
+            address_parts.append(profile.city_name)
+        if profile.province_name:
+            address_parts.append(profile.province_name)
+        if profile.region_name:
+            address_parts.append(profile.region_name)
+        address_text = ", ".join(address_parts)
+
+        context = {
+            'profile': profile,
+            'full_name': f"{profile.first_name} {profile.middle_name or ''} {profile.last_name}".strip(),
+            'address_text': address_text,
+            'today_str': datetime.now().strftime('%B %d, %Y %I:%M %p')
+        }
+
+        from django.shortcuts import render
+        return render(request, 'registration_form_pdf.html', context)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error preparing registration form PDF: {str(e)}'
+        }, status=500)
