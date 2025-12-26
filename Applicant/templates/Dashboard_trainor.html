@@ -700,6 +700,12 @@
     animation: pulseWarning 2s infinite;
 }
 
+/* Disabled state for competency checkboxes */
+.competency-checkbox:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 @keyframes pulseWarning {
     0%, 100% { outline-color: #fbbf24; }
     50% { outline-color: #f59e0b; }
@@ -2108,6 +2114,14 @@
         .download-btn:active {
             transform: scale(0.98);
         }
+
+        .document-panel {
+            display: none;
+        }
+
+        .document-panel.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -2129,9 +2143,9 @@
                     <li><a href="#" data-section="schedule" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-calendar-alt mr-3"></i> <span class="sidebar-text">Schedule</span></a></li>
                     <li><a href="#" data-section="task" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-graduation-cap mr-3"></i> <span class="sidebar-text">Program Competencies</span></a></li>
                     <li><a href="#" data-section="clone" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-clone mr-3"></i> <span class="sidebar-text">Batch & Semester</span></a></li>
-                    <li><a href="#" data-section="modules" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-book mr-3"></i> <span class="sidebar-text">Modules and Manuals</span></a></li>
-                    <li><a href="#" data-section="policy" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-file-contract mr-3"></i> <span class="sidebar-text">Policy and Guidelines</span></a></li>
+                    <li><a href="#" data-section="documents" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-folder-open mr-3"></i> <span class="sidebar-text">Documents</span></a></li>
                     <li><a href="#" data-section="tickets" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-ticket-alt mr-3"></i> <span class="sidebar-text">Support Tickets</span></a></li>
+                    <!-- <li><a href="#" data-section="clone-support" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors"><i class="fas fa-clone mr-3"></i> <span class="sidebar-text">Clone Support</span></a></li> -->
                 </ul>
             </nav>
         </div>
@@ -2965,7 +2979,7 @@
                         <tbody id="competenciesTableBody">
                             <!-- Load actual trainee data from Master list -->
                             {% for approved in approvedapplicant %}
-                            <tr data-trainee-id="{{ approved.applicant.id }}">
+                            <tr data-trainee-id="{{ approved.applicant.id }}" data-approved-id="{{ approved.id }}" {% if approved.status == 'finished' %}class="completed-row"{% endif %}>
                                 <td class="trainee-name-cell font-medium">
                                     {% if approved.applicant.learner_profile.first %}
                                         {{ approved.applicant.learner_profile.first.last_name }}, {{ approved.applicant.learner_profile.first.first_name }}
@@ -2978,17 +2992,17 @@
                                 </td>
                                 {% if trainer_program.program_competencies.basic_competencies %}
                                     {% for competency in trainer_program.program_competencies.basic_competencies %}
-                                    <td><input type="checkbox" class="competency-checkbox" data-competency-type="basic" data-competency-index="{{ forloop.counter0 }}" data-trainee-id="{{ approved.applicant.id }}"></td>
+                                    <td><input type="checkbox" class="competency-checkbox" data-competency-type="basic" data-competency-index="{{ forloop.counter0 }}" data-trainee-id="{{ approved.applicant.id }}" {% if approved.status == 'finished' %}disabled{% endif %}></td>
                                     {% endfor %}
                                 {% endif %}
                                 {% if trainer_program.program_competencies.common_competencies %}
                                     {% for competency in trainer_program.program_competencies.common_competencies %}
-                                    <td><input type="checkbox" class="competency-checkbox" data-competency-type="common" data-competency-index="{{ forloop.counter0 }}" data-trainee-id="{{ approved.applicant.id }}"></td>
+                                    <td><input type="checkbox" class="competency-checkbox" data-competency-type="common" data-competency-index="{{ forloop.counter0 }}" data-trainee-id="{{ approved.applicant.id }}" {% if approved.status == 'finished' %}disabled{% endif %}></td>
                                     {% endfor %}
                                 {% endif %}
                                 {% if trainer_program.program_competencies.core_competencies %}
                                     {% for competency in trainer_program.program_competencies.core_competencies %}
-                                    <td><input type="checkbox" class="competency-checkbox" data-competency-type="core" data-competency-index="{{ forloop.counter0 }}" data-trainee-id="{{ approved.applicant.id }}"></td>
+                                    <td><input type="checkbox" class="competency-checkbox" data-competency-type="core" data-competency-index="{{ forloop.counter0 }}" data-trainee-id="{{ approved.applicant.id }}" {% if approved.status == 'finished' %}disabled{% endif %}></td>
                                     {% endfor %}
                                 {% endif %}
                                 <td class="progress-cell trainee-progress">{{ approved.progress|default:0 }}%</td>
@@ -2996,9 +3010,11 @@
                                     <span class="status-badge {{ approved.status|lower }}">{{ approved.get_status_display }}</span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="complete-btn" data-trainee-id="{{ approved.applicant.id }}" data-trainee-name="{% if approved.applicant.learner_profile.first %}{{ approved.applicant.learner_profile.first.last_name }}, {{ approved.applicant.learner_profile.first.first_name }}{% else %}{{ approved.applicant.get_full_name|default:approved.applicant.username }}{% endif %}">
+                                    {% if approved.status != 'finished' %}
+                                    <button class="complete-btn" data-approved-id="{{ approved.id }}" data-trainee-id="{{ approved.applicant.id }}" data-trainee-name="{% if approved.applicant.learner_profile.first %}{{ approved.applicant.learner_profile.first.last_name }}, {{ approved.applicant.learner_profile.first.first_name }}{% else %}{{ approved.applicant.get_full_name|default:approved.applicant.username }}{% endif %}">
                                         <i class="fas fa-check-circle mr-1"></i> Complete
                                     </button>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
@@ -3136,127 +3152,297 @@
 
         </div>
 
-        <!-- Modules and Manuals Section -->
-        <div id="modules-section" class="content-section">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Modules and Manuals</h2>
-
-            <!-- Upload Section -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-semibold text-gray-800">Upload Documents</h4>
+        <!-- Documents Section -->
+        <div id="documents-section" class="content-section">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-800">Documents</h2>
+                    <p class="text-sm text-gray-500 mt-1">Upload, review, and manage training resources.</p>
                 </div>
-                <form id="modulesUploadForm" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="hidden" name="document_type" value="modules_manuals">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Files</label>
-                        <input type="file" id="modulesFileInput" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" 
-                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <p class="text-xs text-gray-500 mt-1">Supported formats: PDF, DOC, DOCX, XLS, XLSX (Max 10MB per file)</p>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-                        <textarea name="bulk_description" rows="3" placeholder="Enter description for these documents" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
-                    <button type="button" onclick="uploadModulesDocuments()" 
-                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300">
-                        <i class="fas fa-upload mr-2"></i>Upload Files
-                    </button>
-                </form>
-                <div id="modulesUploadStatus" class="mt-4 hidden"></div>
+                <div class="flex flex-col md:flex-row md:items-center gap-2">
+                    <label for="documentCategoryFilter" class="text-sm font-medium text-gray-700">Category</label>
+                    <select id="documentCategoryFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="modules">Modules &amp; Manuals</option>
+                        <option value="policy">Policy &amp; Guidelines</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- Documents Table -->
-            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-semibold text-gray-800">Uploaded Modules and Manuals</h4>
-                    <button onclick="refreshModulesTable()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                        <i class="fas fa-sync-alt mr-2"></i>Refresh
-                    </button>
+            <div class="document-panel active" data-document-panel="modules">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-800">Upload Modules and Manuals</h4>
+                    </div>
+                    <form id="modulesUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="document_type" value="modules_manuals">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Files</label>
+                            <input type="file" id="modulesFileInput" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" 
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">Supported formats: PDF, DOC, DOCX, XLS, XLSX (Max 10MB per file)</p>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                            <textarea name="bulk_description" rows="3" placeholder="Enter description for these documents" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <button type="button" onclick="uploadModulesDocuments()" 
+                                class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300">
+                            <i class="fas fa-upload mr-2"></i>Upload Files
+                        </button>
+                    </form>
+                    <div id="modulesUploadStatus" class="mt-4 hidden"></div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="data-table w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left">Document Name</th>
-                                <th class="text-left">Description</th>
-                                <th class="text-left">Uploaded By</th>
-                                <th class="text-left">Upload Date</th>
-                                <th class="text-left">File Size</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="modulesTableBody">
-                            <tr>
-                                <td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-800">Uploaded Modules and Manuals</h4>
+                        <button onclick="refreshModulesTable()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="text-left">Document Name</th>
+                                    <th class="text-left">Description</th>
+                                    <th class="text-left">Uploaded By</th>
+                                    <th class="text-left">Upload Date</th>
+                                    <th class="text-left">File Size</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modulesTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="document-panel" data-document-panel="policy">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-800">Upload Policy and Guidelines</h4>
+                    </div>
+                    <form id="policyUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="document_type" value="policy_guidelines">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Files</label>
+                            <input type="file" id="policyFileInput" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" 
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-1">Supported formats: PDF, DOC, DOCX, XLS, XLSX (Max 10MB per file)</p>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                            <textarea name="bulk_description" rows="3" placeholder="Enter description for these documents" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <button type="button" onclick="uploadPolicyDocuments()" 
+                                class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300">
+                            <i class="fas fa-upload mr-2"></i>Upload Files
+                        </button>
+                    </form>
+                    <div id="policyUploadStatus" class="mt-4 hidden"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-800">Uploaded Policy and Guidelines</h4>
+                        <button onclick="refreshPolicyTable()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="text-left">Document Name</th>
+                                    <th class="text-left">Description</th>
+                                    <th class="text-left">Uploaded By</th>
+                                    <th class="text-left">Upload Date</th>
+                                    <th class="text-left">File Size</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="policyTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Policy and Guidelines Section -->
-        <div id="policy-section" class="content-section">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Policy and Guidelines</h2>
+        <!-- Clone Support Section -->
+        <!-- <div id="clone-support-section" class="content-section">
+            {% include 'clone_support.html' %}
+        </div> -->
 
-            <!-- Upload Section -->
+           <!-- Support Tickets Section -->
+        <div id="tickets-section" class="content-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Support Tickets from Trainees</h2>
+            
+            <!-- Filter and Search (Policy-style card) -->
             <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-semibold text-gray-800">Upload Documents</h4>
+                    <h4 class="text-lg font-semibold text-gray-800">Filter and Search</h4>
                 </div>
-                <form id="policyUploadForm" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="hidden" name="document_type" value="policy_guidelines">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Files</label>
-                        <input type="file" id="policyFileInput" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx" 
-                               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <p class="text-xs text-gray-500 mt-1">Supported formats: PDF, DOC, DOCX, XLS, XLSX (Max 10MB per file)</p>
+                <div class="flex flex-col md:flex-row gap-4 items-center">
+                    <div class="flex-1 w-full">
+                        <input type="text" id="ticketSearchInput" placeholder="Search by trainee name, subject, or ticket ID..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-                        <textarea name="bulk_description" rows="3" placeholder="Enter description for these documents" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <select id="ticketStatusFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <select id="ticketPriorityFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Priority</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
                     </div>
-                    <button type="button" onclick="uploadPolicyDocuments()" 
-                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300">
-                        <i class="fas fa-upload mr-2"></i>Upload Files
-                    </button>
-                </form>
-                <div id="policyUploadStatus" class="mt-4 hidden"></div>
+                </div>
             </div>
 
-            <!-- Documents Table -->
+            <!-- Tickets (Policy-style card) -->
             <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-lg font-semibold text-gray-800">Uploaded Policy and Guidelines</h4>
-                    <button onclick="refreshPolicyTable()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <h4 class="text-lg font-semibold text-gray-800">Submitted Support Tickets</h4>
+                    <button onclick="refreshTicketsTable()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                         <i class="fas fa-sync-alt mr-2"></i>Refresh
                     </button>
                 </div>
+
+                <!-- Tickets Table -->
                 <div class="overflow-x-auto">
                     <table class="data-table w-full">
                         <thead>
                             <tr>
-                                <th class="text-left">Document Name</th>
-                                <th class="text-left">Description</th>
-                                <th class="text-left">Uploaded By</th>
-                                <th class="text-left">Upload Date</th>
-                                <th class="text-left">File Size</th>
+                                <th class="text-left">Ticket ID</th>
+                                <th class="text-left">Subject</th>
+                                <th class="text-left">Trainee</th>
+                                <th class="text-left">Program</th>
+                                <th class="text-left">Status</th>
+                                <th class="text-left">Priority</th>
+                                <th class="text-left">Category</th>
+                                <th class="text-left">Created</th>
+                                <th class="text-left">Updated</th>
                                 <th class="text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="policyTableBody">
-                            <tr>
-                                <td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td>
-                            </tr>
+                        <tbody id="ticketsTableBody">
+                            {% if program_tickets %}
+                                {% for ticket in program_tickets %}
+                                <tr class="ticket-item"
+                                    data-ticket-id="{{ ticket.id }}"
+                                    data-ticket-number="{{ ticket.ticket_id }}"
+                                    data-subject="{{ ticket.subject }}"
+                                    data-description="{{ ticket.description }}"
+                                    data-status="{{ ticket.status }}"
+                                    data-priority="{{ ticket.priority }}"
+                                    data-category="{{ ticket.get_category_display }}"
+                                    data-trainee-name="{% if ticket.created_by.learner_profile.first %}{{ ticket.created_by.learner_profile.first.last_name }}, {{ ticket.created_by.learner_profile.first.first_name }}{% else %}{{ ticket.created_by.get_full_name|default:ticket.created_by.username }}{% endif %}"
+                                    data-trainee-program="{{ selected_program.program_name|default:'N/A' }}"
+                                    data-created-at="{{ ticket.created_at|timesince }} ago"
+                                    data-updated-at="{{ ticket.updated_at|timesince }} ago">
+                                    <td class="align-top"><span class="text-xs font-mono text-gray-500">#{{ ticket.ticket_id }}</span></td>
+                                    <td class="align-top">
+                                        <div class="font-semibold text-gray-800">{{ ticket.subject }}</div>
+                                        <div class="text-gray-600 text-sm">{{ ticket.description|truncatewords:16 }}</div>
+                                    </td>
+                                    <td class="align-top">
+                                        {% if ticket.created_by.learner_profile.first %}{{ ticket.created_by.learner_profile.first.last_name }}, {{ ticket.created_by.learner_profile.first.first_name }}{% else %}{{ ticket.created_by.get_full_name|default:ticket.created_by.username }}{% endif %}
+                                    </td>
+                                    <td class="align-top">{{ selected_program.program_name|default:"N/A" }}</td>
+                                    <td class="align-top">
+                                        {% if ticket.status == 'open' %}
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">OPEN</span>
+                                        {% elif ticket.status == 'in_progress' %}
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-semibold">IN PROGRESS</span>
+                                        {% elif ticket.status == 'resolved' %}
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">RESOLVED</span>
+                                        {% else %}
+                                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-semibold">CLOSED</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-top">
+                                        {% if ticket.priority == 'critical' %}
+                                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold">CRITICAL</span>
+                                        {% elif ticket.priority == 'high' %}
+                                        <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-semibold">HIGH</span>
+                                        {% elif ticket.priority == 'medium' %}
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-semibold">MEDIUM</span>
+                                        {% else %}
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">LOW</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-top"><span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">{{ ticket.get_category_display }}</span></td>
+                                    <td class="align-top">{{ ticket.created_at|timesince }} ago</td>
+                                    <td class="align-top">{{ ticket.updated_at|timesince }} ago</td>
+                                    <td class="text-center align-top">
+                                        <div class="flex flex-col gap-2 items-center">
+                                            <button onclick="viewTicketDetails('{{ ticket.id }}')" class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                                <i class="fas fa-eye mr-1"></i> View
+                                            </button>
+                                            {% if ticket.status != 'closed' %}
+                                            <select onchange="updateTicketStatus('{{ ticket.id }}', this.value)" class="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                                <option value="" disabled selected>Status…</option>
+                                                <option value="in_progress">In Progress</option>
+                                                <option value="resolved">Resolved</option>
+                                                <option value="closed">Close Ticket</option>
+                                            </select>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center text-gray-500 py-6">No support tickets have been submitted by your trainees.</td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Statistics Summary -->
+                <div class="p-4 bg-gray-50 border-t border-gray-200">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600" id="openTicketsCount">0</div>
+                            <div class="text-xs text-gray-600 uppercase">Open</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-yellow-600" id="inProgressTicketsCount">0</div>
+                            <div class="text-xs text-gray-600 uppercase">In Progress</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600" id="resolvedTicketsCount">0</div>
+                            <div class="text-xs text-gray-600 uppercase">Resolved</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-600" id="totalTicketsCount">0</div>
+                            <div class="text-xs text-gray-600 uppercase">Total</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
 
     </div>
 
@@ -3318,164 +3504,12 @@
         </div>
     </div>
 
-    <!-- Support Tickets Section -->
-    <div id="tickets-section" class="content-section">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-5">Support Tickets from Trainees</h2>
-        
-        <div class="bg-white rounded-lg shadow">
-            <!-- Filter and Search -->
-            <div class="p-4 border-b border-gray-200 bg-gray-50">
-                <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-                    <div class="flex-1">
-                        <input type="text" id="ticketSearchInput" placeholder="Search by trainee name, subject, or ticket ID..." class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div class="flex gap-2">
-                        <select id="ticketStatusFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                            <option value="all">All Status</option>
-                            <option value="open">Open</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Closed</option>
-                        </select>
-                        <select id="ticketPriorityFilter" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                            <option value="all">All Priority</option>
-                            <option value="critical">Critical</option>
-                            <option value="high">High</option>
-                            <option value="medium">Medium</option>
-                            <option value="low">Low</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+ 
 
-            <!-- Tickets List -->
-            <div class="p-6">
-                <div id="ticketsContainer">
-                    <!-- Tickets from trainees in this program -->
-                    {% if program_tickets %}
-                        <div class="space-y-4">
-                            {% for ticket in program_tickets %}
-                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors ticket-item" 
-                                data-ticket-id="{{ ticket.id }}"
-                                data-ticket-number="{{ ticket.ticket_id }}"
-                                data-subject="{{ ticket.subject }}"
-                                data-description="{{ ticket.description }}"
-                                data-status="{{ ticket.status }}" 
-                                data-priority="{{ ticket.priority }}"
-                                data-category="{{ ticket.get_category_display }}"
-                                data-trainee-name="{% if ticket.applicant.learner_profile.first %}{{ ticket.applicant.learner_profile.first.last_name }}, {{ ticket.applicant.learner_profile.first.first_name }}{% else %}{{ ticket.applicant.get_full_name|default:ticket.applicant.username }}{% endif %}"
-                                data-trainee-program="{{ ticket.applicant.program.program_title|default:'N/A' }}"
-                                data-created-at="{{ ticket.created_at|timesince }} ago"
-                                data-updated-at="{{ ticket.updated_at|timesince }} ago">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex-1">
-                                        <!-- Header -->
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-xs font-mono text-gray-500">#{{ ticket.ticket_id }}</span>
-                                            
-                                            {% if ticket.status == 'open' %}
-                                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">OPEN</span>
-                                            {% elif ticket.status == 'in_progress' %}
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-semibold">IN PROGRESS</span>
-                                            {% elif ticket.status == 'resolved' %}
-                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">RESOLVED</span>
-                                            {% else %}
-                                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-semibold">CLOSED</span>
-                                            {% endif %}
-                                            
-                                            {% if ticket.priority == 'critical' %}
-                                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-semibold">CRITICAL</span>
-                                            {% elif ticket.priority == 'high' %}
-                                            <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-semibold">HIGH</span>
-                                            {% elif ticket.priority == 'medium' %}
-                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-semibold">MEDIUM</span>
-                                            {% else %}
-                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold">LOW</span>
-                                            {% endif %}
-                                            
-                                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">{{ ticket.get_category_display }}</span>
-                                        </div>
-                                        
-                                        <!-- Subject -->
-                                        <h3 class="font-semibold text-gray-800 text-lg mb-2">{{ ticket.subject }}</h3>
-                                        
-                                        <!-- Description Preview -->
-                                        <p class="text-gray-600 text-sm mb-3">{{ ticket.description|truncatewords:20 }}</p>
-                                        
-                                        <!-- Metadata -->
-                                        <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                                            <div class="flex items-center">
-                                                <i class="fas fa-user mr-1"></i>
-                                                <span class="font-medium">{% if ticket.applicant.learner_profile.first %}{{ ticket.applicant.learner_profile.first.last_name }}, {{ ticket.applicant.learner_profile.first.first_name }}{% else %}{{ ticket.applicant.get_full_name|default:ticket.applicant.username }}{% endif %}</span>
-                                            </div>
-                                            <div class="flex items-center">
-                                                <i class="fas fa-graduation-cap mr-1"></i>
-                                                <span>{{ ticket.applicant.program.program_title|default:"N/A" }}</span>
-                                            </div>
-                                            <div class="flex items-center">
-                                                <i class="fas fa-clock mr-1"></i>
-                                                <span>{{ ticket.created_at|timesince }} ago</span>
-                                            </div>
-                                            {% if ticket.updated_at != ticket.created_at %}
-                                            <div class="flex items-center">
-                                                <i class="fas fa-sync-alt mr-1"></i>
-                                                <span>Updated {{ ticket.updated_at|timesince }} ago</span>
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Actions -->
-                                    <div class="flex flex-col gap-2 ml-4">
-                                        <button onclick="viewTicketDetails('{{ ticket.id }}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                                            <i class="fas fa-eye mr-1"></i> View Details
-                                        </button>
-                                        {% if ticket.status != 'closed' %}
-                                        <select onchange="updateTicketStatus('{{ ticket.id }}', this.value)" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
-                                            <option value="" disabled selected>Update Status</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="resolved">Resolved</option>
-                                            <option value="closed">Close Ticket</option>
-                                        </select>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-12">
-                            <i class="fas fa-ticket-alt text-6xl text-gray-300 mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Tickets Yet</h3>
-                            <p class="text-gray-500">No support tickets have been submitted by your trainees.</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Statistics Summary -->
-            <div class="p-4 bg-gray-50 border-t border-gray-200">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-blue-600" id="openTicketsCount">0</div>
-                        <div class="text-xs text-gray-600 uppercase">Open</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-yellow-600" id="inProgressTicketsCount">0</div>
-                        <div class="text-xs text-gray-600 uppercase">In Progress</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-green-600" id="resolvedTicketsCount">0</div>
-                        <div class="text-xs text-gray-600 uppercase">Resolved</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-gray-600" id="totalTicketsCount">0</div>
-                        <div class="text-xs text-gray-600 uppercase">Total</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Clone Support Section -->
+    <!-- <div id="clone-support-section" class="content-section">
+        {% include 'clone_support.html' %}
+    </div> -->
 
     <!-- Ticket Details Modal -->
     <div id="ticketDetailsModal" class="modal-overlay hidden">
@@ -3957,6 +3991,19 @@
                     activeLink.classList.add('bg-blue-700');
                     activeLink.classList.remove('hover:bg-blue-600', 'transition-colors');
                 }
+                
+                // Load tables when Documents section is shown
+                if (sectionId === 'documents-section') {
+                    const documentFilter = document.getElementById('documentCategoryFilter');
+                    if (documentFilter) {
+                        const selectedType = documentFilter.value;
+                        if (selectedType === 'modules') {
+                            refreshModulesTable();
+                        } else if (selectedType === 'policy') {
+                            refreshPolicyTable();
+                        }
+                    }
+                }
             }
 
             sidebarLinks.forEach(link => {
@@ -3975,6 +4022,41 @@
                     this.classList.remove('hover:bg-blue-600', 'transition-colors');
                 });
             });
+
+            const documentFilter = document.getElementById('documentCategoryFilter');
+            const documentPanels = document.querySelectorAll('[data-document-panel]');
+
+            function toggleDocumentPanels(selectedType) {
+                documentPanels.forEach(panel => {
+                    const isActive = panel.dataset.documentPanel === selectedType;
+                    panel.classList.toggle('active', isActive);
+                });
+                
+                // Refresh the appropriate table when panel is switched
+                if (selectedType === 'modules') {
+                    refreshModulesTable();
+                } else if (selectedType === 'policy') {
+                    refreshPolicyTable();
+                }
+            }
+
+            if (documentFilter && documentPanels.length) {
+                toggleDocumentPanels(documentFilter.value);
+                documentFilter.addEventListener('change', (event) => {
+                    toggleDocumentPanels(event.target.value);
+                });
+                
+                // Load modules table on page load if Documents section is active
+                const documentsSection = document.getElementById('documents-section');
+                if (documentsSection && documentsSection.classList.contains('active')) {
+                    const selectedType = documentFilter.value;
+                    if (selectedType === 'modules') {
+                        refreshModulesTable();
+                    } else if (selectedType === 'policy') {
+                        refreshPolicyTable();
+                    }
+                }
+            }
 
             // Competencies functionality
             initializeCompetencies();
@@ -4122,6 +4204,10 @@
                         // Find all checkboxes in the same column based on competency type and index
                         const targetSelector = `.competency-checkbox[data-competency-type="${competencyType}"][data-competency-index="${competencyIndex}"]`;
                         document.querySelectorAll(targetSelector).forEach(targetCheckbox => {
+                            // Skip completed rows or disabled checkboxes
+                            if (targetCheckbox.disabled || (targetCheckbox.closest('tr') && targetCheckbox.closest('tr').classList.contains('completed-row'))) {
+                                return;
+                            }
                             targetCheckbox.checked = isChecked;
                             // Save each checkbox state
                             const traineeId = targetCheckbox.getAttribute('data-trainee-id');
@@ -4184,7 +4270,7 @@
                     // Show/hide Complete button based on 100% completion
                     const completeBtn = row.querySelector('.complete-btn');
                     if (completeBtn) {
-                        if (percentage === 100) {
+                        if (percentage === 100 && !row.classList.contains('completed-row')) {
                             completeBtn.classList.add('show');
                         } else {
                             completeBtn.classList.remove('show');
@@ -6459,6 +6545,12 @@
                 
                 // Set up confirmation button handler
                 confirmBtn.onclick = function() {
+                    const programSelector = document.getElementById('programSelector');
+                    const programId = programSelector ? programSelector.value : null;
+                    if (!programId) {
+                        alert('Please select a program before ending the semester.');
+                        return;
+                    }
                     // Call the end_semester endpoint
                     fetch('{% url "end_semester" %}', {
                         method: 'POST',
@@ -6466,7 +6558,7 @@
                             'Content-Type': 'application/json',
                             'X-CSRFToken': getCookie('csrftoken')
                         },
-                        body: JSON.stringify({})
+                        body: JSON.stringify({ program_id: programId })
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -6497,7 +6589,12 @@
         function selectAndSaveSemester(semester) {
             currentSemester = semester;
             updateSemesterButtonStates(semester);
-            saveSemesterSettings();
+            
+            // Get the currently selected program ID from the program selector
+            const programSelector = document.getElementById('programSelector');
+            const programId = programSelector ? programSelector.value : null;
+            
+            saveSemesterSettings(programId);
             
             // Show/hide Semester End button based on semester
             const semesterEndContainer = document.getElementById('semesterEndButtonContainer');
@@ -6547,11 +6644,21 @@
             return ordinals[num] || num + 'th';
         }
 
-        function saveSemesterSettings() {
+        function saveSemesterSettings(programId) {
             const settingsText = document.getElementById('settingsSavedText');
             if (settingsText) {
                 settingsText.textContent = 'Saving...';
                 settingsText.parentElement.querySelector('i').className = 'fas fa-spinner fa-spin text-blue-500';
+            }
+
+            // Prepare the request data
+            const requestData = {
+                semester: currentSemester  // Current semester selection
+            };
+            
+            // Only include program_id if available (for multi-program support)
+            if (programId) {
+                requestData.program_id = programId;
             }
 
             fetch('/save-semester-settings/', {
@@ -6560,9 +6667,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({
-                    semester: currentSemester  // Only send semester, batch is admin-controlled
-                })
+                body: JSON.stringify(requestData)
             })
             .then(response => response.json())
             .then(data => {
@@ -6829,6 +6934,17 @@
             }
         });
         
+        // Refresh tickets table (used by the Refresh button in the Support Tickets section)
+        function refreshTicketsTable() {
+            // simple full reload to fetch latest tickets; mirrors refreshPolicyTable pattern
+            try {
+                location.reload();
+            } catch (e) {
+                // fallback if reload is blocked
+                window.location = window.location.href;
+            }
+        }
+        
         // Filter tickets based on search and filters
         function filterTickets() {
             const searchTerm = document.getElementById('ticketSearchInput').value.toLowerCase();
@@ -7031,11 +7147,13 @@
 
         // Global variables for completion modal
         let currentTraineeId = null;
+        let currentApprovedId = null;
         let currentTraineeName = null;
 
         // Function to open completion modal
-        function openCompletionModal(traineeId, traineeName) {
+        function openCompletionModal(traineeId, approvedId, traineeName) {
             currentTraineeId = traineeId;
+            currentApprovedId = approvedId;
             currentTraineeName = traineeName;
             
             document.getElementById('modalTraineeName').textContent = traineeName;
@@ -7051,42 +7169,56 @@
 
         // Function to confirm completion
         function confirmCompletion() {
-            if (currentTraineeId) {
-                // Here you can add AJAX call to save completion status to database
-                console.log(`Completing trainee: ${currentTraineeName} (ID: ${currentTraineeId})`);
-                
-                // TODO: Add your backend API call here
-                // Example:
-                // fetch('/api/complete-trainee/', {
-                //     method: 'POST',
-                //     headers: {
-                //         'Content-Type': 'application/json',
-                //         'X-CSRFToken': getCookie('csrftoken')
-                //     },
-                //     body: JSON.stringify({
-                //         trainee_id: currentTraineeId
-                //     })
-                // })
-                // .then(response => response.json())
-                // .then(data => {
-                //     if (data.success) {
-                //         showSuccessModal(currentTraineeName);
-                //     }
-                // });
-                
-                // Update the row's status badge
-                const row = document.querySelector(`tr[data-trainee-id="${currentTraineeId}"]`);
-                if (row) {
-                    const statusBadge = row.querySelector('.status-badge');
-                    if (statusBadge) {
-                        statusBadge.textContent = 'COMPLETED';
-                        statusBadge.className = 'status-badge completed';
+            if (currentTraineeId && currentApprovedId) {
+                const csrftoken = getCookie('csrftoken');
+                // Persist completion on the server
+                fetch('{% url "update_status" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: new URLSearchParams({
+                        'applicant_id': currentApprovedId,
+                        'status': 'finished'
+                    })
+                })
+                .then(() => {
+                    // Disable all checkboxes for this trainee row and update UI state
+                    const row = document.querySelector(`tr[data-trainee-id="${currentTraineeId}"]`);
+                    if (row) {
+                        // Mark the row as completed
+                        row.classList.add('completed-row');
+                        
+                        // Update the row's status badge using existing 'finished' styles
+                        const statusBadge = row.querySelector('.status-badge');
+                        if (statusBadge) {
+                            statusBadge.textContent = 'Finished';
+                            statusBadge.className = 'status-badge finished';
+                        }
+                        
+                        // Disable competency checkboxes
+                        row.querySelectorAll('.competency-checkbox').forEach(cb => {
+                            cb.disabled = true;
+                        });
+                        
+                        // Hide/disable the Complete button
+                        const completeBtn = row.querySelector('.complete-btn');
+                        if (completeBtn) {
+                            completeBtn.classList.remove('show');
+                            completeBtn.disabled = true;
+                            completeBtn.style.display = 'none';
+                        }
                     }
-                }
-                
-                // Close confirmation modal and show success modal
-                closeCompletionModal();
-                showSuccessModal(currentTraineeName);
+                    
+                    // Close confirmation modal and show success modal
+                    closeCompletionModal();
+                    showSuccessModal(currentTraineeName);
+                })
+                .catch((error) => {
+                    console.error('Error marking completion:', error);
+                    closeCompletionModal();
+                });
             }
         }
 
@@ -7107,8 +7239,9 @@
             document.querySelectorAll('.complete-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const traineeId = this.getAttribute('data-trainee-id');
+                    const approvedId = this.getAttribute('data-approved-id');
                     const traineeName = this.getAttribute('data-trainee-name');
-                    openCompletionModal(traineeId, traineeName);
+                    openCompletionModal(traineeId, approvedId, traineeName);
                 });
             });
 

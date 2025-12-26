@@ -309,7 +309,7 @@
                                     <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
                                         <i class="fas fa-briefcase text-blue-800 text-sm"></i>
                                     </div>
-                                    <span class="font-medium">Job Placement Assistance</span>
+                                    <span class="font-medium">Job Recommendation</span>
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -449,7 +449,7 @@
                             <!-- Login Link -->
                             <p class="text-center text-gray-600 text-sm sm:text-base">
                                 Already have an account? 
-                                <a href="{% url 'Login' %}" class="text-blue-600 hover:text-blue-800 font-bold transition-colors relative group">
+                                <a href="{% url 'LoginSelect' %}" class="text-blue-600 hover:text-blue-800 font-bold transition-colors relative group">
                                     Sign In
                                     <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
                                 </a>
@@ -538,7 +538,7 @@
             // Alt + L to go to login
             if (e.altKey && e.key === 'l') {
                 e.preventDefault();
-                window.location.href = "{% url 'Login' %}";
+                window.location.href = "{% url 'LoginSelect' %}";
             }
         });
     </script>

@@ -16,6 +16,12 @@ def download_bulk_documents_excel(request):
     """
     Generate Excel file with selected document data using the 2024.xlsx template format.
     Accepts a list of selected document IDs (both LMSTC-* and LP-*) and filters.
+    
+    Fixes applied:
+    - QuerySet properly converted to list to avoid evaluation issues
+    - Documents are no longer skipped when filters are empty or when approval records are missing
+    - Better learner_profile lookup - tries multiple methods to find associated profile
+    - All selected documents are included in export, even if some data is missing
     """
     import json
     from .models import LMSTC_Documents, Learner_Profile, ApprovedApplicant, BatchCycle
@@ -125,18 +131,56 @@ def download_bulk_documents_excel(request):
             # Update title in Row 2 for each trimester
             trimester_label = '1ST' if trimester_num == 1 else '2ND' if trimester_num == 2 else '3RD'
             ws['A2'] = f'{trimester_label} TRIMESTER {current_year}'
+            
+            # Override header labels to start with applicant personal info, then region/provider info, then program info
+            # Note: Template rows 1-7 are header structure; we update row 5 labels commonly used for column headers
+            try:
+                ws.cell(5, 1, 'Family/ Last Name')
+                ws.cell(5, 2, 'First Name')
+                ws.cell(5, 3, 'Middle Name')
+                ws.cell(5, 4, 'ULI')
+                ws.cell(5, 5, 'Contact Number')
+                ws.cell(5, 6, 'E-mail Address')
+                ws.cell(5, 7, 'Region')
+                ws.cell(5, 8, 'Province')
+                ws.cell(5, 9, 'Congressional District')
+                ws.cell(5, 10, 'Municipality/ City')
+                ws.cell(5, 11, 'Name of Provider')
+                ws.cell(5, 12, 'Complete Address of Provider/Training Venue')
+                ws.cell(5, 13, 'Type of Provider')
+                ws.cell(5, 14, 'Classification of Provider')
+                ws.cell(5, 15, 'Industry Sector of Qualification')
+                ws.cell(5, 16, 'TVET Program Registration Status')
+                ws.cell(5, 17, 'Qualification/ Program Title')
+                ws.cell(5, 18, 'CoPR Number')
+                ws.cell(5, 19, 'Training Calendar Code')
+                ws.cell(5, 20, 'Delivery Mode')
+            except Exception:
+                # If header row indices differ in template, ignore label override rather than failing
+                pass
         
-        # Fetch selected LMSTC documents
-        lmstc_docs = LMSTC_Documents.objects.select_related(
-            'learner_profile', 'applicant', 'uploaded_by'
-        ).filter(id__in=lmstc_ids, status='active') if lmstc_ids else []
+        # Fetch selected LMSTC documents - ensure we get a list
+        lmstc_docs = []
+        if lmstc_ids:
+            lmstc_docs = list(LMSTC_Documents.objects.select_related(
+                'learner_profile', 'applicant', 'uploaded_by', 'learner_profile__user'
+            ).filter(id__in=lmstc_ids, status='active'))
         
-        # Fetch selected Learner Profiles
-        learner_profiles = Learner_Profile.objects.select_related('user').filter(
+        # Fetch selected Learner Profiles - ensure we get a list
+        learner_profiles = []
+        if learner_profile_ids:
+            learner_profiles = list(Learner_Profile.objects.select_related('user').filter(
             id__in=learner_profile_ids
-        ) if learner_profile_ids else []
+            ))
+            logger.info(f'Queried for learner profile IDs: {learner_profile_ids}')
+            logger.info(f'Found learner profiles: {[lp.id for lp in learner_profiles]}')
         
         logger.info(f'Found {len(lmstc_docs)} LMSTC documents and {len(learner_profiles)} learner profiles')
+        
+        if len(learner_profiles) == 0 and learner_profile_ids:
+            logger.warning(f'No learner profiles found for IDs: {learner_profile_ids}')
+        if len(lmstc_docs) == 0 and lmstc_ids:
+            logger.warning(f'No LMSTC documents found for IDs: {lmstc_ids}')
         
         # Apply filters from the filter parameters
         filter_batch = filters.get('batch', '')
@@ -151,52 +195,80 @@ def download_bulk_documents_excel(request):
         # Process LMSTC Documents
         for doc in lmstc_docs:
             learner = doc.learner_profile
+            
+            # Try to get learner_profile if not directly linked
+            if not learner and doc.applicant:
+                try:
+                    learner = Learner_Profile.objects.filter(user=doc.applicant).first()
+                except Exception:
+                    pass
+            
             trimester = 1  # Default to 1st trimester
             approved_app = None
             
             # Try to get ApprovedApplicant for BatchCycle info
-            if doc.applicant:
+            applicant_user = doc.applicant
+            if not applicant_user and learner and getattr(learner, 'user', None):
+                applicant_user = learner.user
+            
+            if applicant_user:
                 try:
-                    approved_app = ApprovedApplicant.objects.select_related('program').get(
-                        applicant=doc.applicant, 
-                        status='active'
-                    )
-                    
-                    # Apply BatchCycle filters
-                    if filter_batch and approved_app.batch_number != filter_batch:
-                        logger.info(f'Skipping doc {doc.id} - batch mismatch')
-                        continue
-                    if filter_year and approved_app.enrollment_year != int(filter_year):
-                        logger.info(f'Skipping doc {doc.id} - year mismatch')
-                        continue
-                    if filter_program and approved_app.program_id != int(filter_program):
-                        logger.info(f'Skipping doc {doc.id} - program mismatch')
-                        continue
-                    
-                    # Determine trimester from enrollment_semester
-                    if approved_app.enrollment_semester:
-                        try:
-                            trimester = int(approved_app.enrollment_semester)
-                            if trimester not in [1, 2, 3]:
+                    approved_app = ApprovedApplicant.objects.select_related('program').filter(
+                        applicant=applicant_user
+                    ).order_by('-approved_at').first()
+                    if not approved_app:
+                        # Fallback to walk-in approval
+                        from .models import ApprovedWalkIn
+                        walkin_app = ApprovedWalkIn.objects.filter(applicant=applicant_user).order_by('-approved_at').first()
+                        if walkin_app:
+                            # Apply filters only if they are explicitly set (not empty strings)
+                            if filter_batch and str(walkin_app.batch_number) != str(filter_batch):
+                                logger.info(f'Skipping doc {doc.id} - walk-in batch mismatch: {walkin_app.batch_number} != {filter_batch}')
+                                continue
+                            if filter_year and walkin_app.enrollment_year and str(walkin_app.enrollment_year) != str(filter_year):
+                                logger.info(f'Skipping doc {doc.id} - walk-in year mismatch: {walkin_app.enrollment_year} != {filter_year}')
+                                continue
+                            # Derive trimester from nothing (default 1)
+                            approved_app = None
+                    else:
+                        # Apply BatchCycle filters only if they are explicitly set
+                        if filter_batch and str(approved_app.batch_number) != str(filter_batch):
+                            logger.info(f'Skipping doc {doc.id} - batch mismatch: {approved_app.batch_number} != {filter_batch}')
+                            continue
+                        if filter_year and approved_app.enrollment_year and str(approved_app.enrollment_year) != str(filter_year):
+                            logger.info(f'Skipping doc {doc.id} - year mismatch: {approved_app.enrollment_year} != {filter_year}')
+                            continue
+                        if filter_program and approved_app.program_id and str(approved_app.program_id) != str(filter_program):
+                            logger.info(f'Skipping doc {doc.id} - program mismatch: {approved_app.program_id} != {filter_program}')
+                            continue
+                        # Determine trimester from enrollment_semester
+                        if approved_app.enrollment_semester:
+                            try:
+                                trimester = int(approved_app.enrollment_semester)
+                                if trimester not in [1, 2, 3]:
+                                    trimester = 1
+                            except (ValueError, TypeError):
                                 trimester = 1
-                        except (ValueError, TypeError):
-                            trimester = 1
-                            
-                except ApprovedApplicant.DoesNotExist:
-                    # If filters are applied and no ApprovedApplicant, skip this record
-                    if filter_batch or filter_year or filter_program:
-                        logger.info(f'Skipping doc {doc.id} - no ApprovedApplicant found')
-                        continue
-            else:
-                # No applicant - use batch from doc for trimester
+                except Exception as e:
+                    logger.warning(f'Error getting approval record for doc {doc.id}: {e}')
+                    # Don't skip - continue with default values
+            
+            # If no applicant, try to use batch from doc for trimester
+            if not applicant_user or not approved_app:
                 if doc.batch:
                     try:
-                        batch_num = int(doc.batch.split('_')[1]) if '_' in doc.batch else int(doc.batch)
+                        batch_str = str(doc.batch)
+                        if batch_str.startswith('batch_'):
+                            batch_num = int(batch_str.replace('batch_', ''))
+                        else:
+                            batch_num = int(batch_str)
                         if batch_num in [1, 2, 3]:
                             trimester = batch_num
                     except (ValueError, IndexError):
                         pass
             
+            # Always add the record - don't skip documents just because they don't have approval records
+            # The user selected these documents, so they should be included
             records_by_trimester[trimester].append({
                 'learner_profile': learner,
                 'approved_applicant': approved_app,
@@ -211,42 +283,47 @@ def download_bulk_documents_excel(request):
             # Try to find ApprovedApplicant for this learner
             if learner.user:
                 try:
-                    approved_app = ApprovedApplicant.objects.select_related('program').get(
-                        applicant=learner.user,
-                        status='active'
-                    )
-                    
-                    # Apply BatchCycle filters
-                    if filter_batch and approved_app.batch_number != filter_batch:
-                        logger.info(f'Skipping learner {learner.id} - batch mismatch')
-                        continue
-                    if filter_year and approved_app.enrollment_year != int(filter_year):
-                        logger.info(f'Skipping learner {learner.id} - year mismatch')
-                        continue
-                    if filter_program and approved_app.program_id != int(filter_program):
-                        logger.info(f'Skipping learner {learner.id} - program mismatch')
-                        continue
-                    
-                    # Determine trimester
-                    if approved_app.enrollment_semester:
-                        try:
-                            trimester = int(approved_app.enrollment_semester)
-                            if trimester not in [1, 2, 3]:
+                    approved_app = ApprovedApplicant.objects.select_related('program').filter(
+                        applicant=learner.user
+                    ).order_by('-approved_at').first()
+                    if not approved_app:
+                        from .models import ApprovedWalkIn
+                        walkin_app = ApprovedWalkIn.objects.filter(applicant=learner.user).order_by('-approved_at').first()
+                        if walkin_app:
+                            # Apply filters only if explicitly set
+                            if filter_batch and str(walkin_app.batch_number) != str(filter_batch):
+                                logger.info(f'Skipping learner {learner.id} - walk-in batch mismatch')
+                                continue
+                            if filter_year and walkin_app.enrollment_year and str(walkin_app.enrollment_year) != str(filter_year):
+                                logger.info(f'Skipping learner {learner.id} - walk-in year mismatch')
+                                continue
+                            # trimester remains default
+                    else:
+                        # Apply BatchCycle filters only if explicitly set
+                        if filter_batch and str(approved_app.batch_number) != str(filter_batch):
+                            logger.info(f'Skipping learner {learner.id} - batch mismatch')
+                            continue
+                        if filter_year and approved_app.enrollment_year and str(approved_app.enrollment_year) != str(filter_year):
+                            logger.info(f'Skipping learner {learner.id} - year mismatch')
+                            continue
+                        if filter_program and approved_app.program_id and str(approved_app.program_id) != str(filter_program):
+                            logger.info(f'Skipping learner {learner.id} - program mismatch')
+                            continue
+                        
+                        # Determine trimester
+                        if approved_app.enrollment_semester:
+                            try:
+                                trimester = int(approved_app.enrollment_semester)
+                                if trimester not in [1, 2, 3]:
+                                    trimester = 1
+                            except (ValueError, TypeError):
                                 trimester = 1
-                        except (ValueError, TypeError):
-                            trimester = 1
                             
-                except ApprovedApplicant.DoesNotExist:
-                    # If filters are applied and no ApprovedApplicant, skip
-                    if filter_batch or filter_year or filter_program:
-                        logger.info(f'Skipping learner {learner.id} - no ApprovedApplicant found')
-                        continue
-            else:
-                # No user - skip if filters are applied
-                if filter_batch or filter_year or filter_program:
-                    logger.info(f'Skipping learner {learner.id} - no user and filters applied')
-                    continue
+                except Exception as e:
+                    logger.warning(f'Error getting approval record for learner {learner.id}: {e}')
+                    # Don't skip - continue with default values
             
+            # Always add the record - user selected these profiles, so they should be included
             records_by_trimester[trimester].append({
                 'learner_profile': learner,
                 'approved_applicant': approved_app,
@@ -267,36 +344,43 @@ def download_bulk_documents_excel(request):
                     approved_app = record['approved_applicant']
                     doc = record.get('document')
                     
+                    # If no learner but we have a document with applicant, try to get learner_profile one more time
+                    if not learner and doc and doc.applicant:
+                        try:
+                            learner = Learner_Profile.objects.filter(user=doc.applicant).first()
+                        except Exception:
+                            pass
+                    
                     # Use Learner_Profile data (should always be available now)
                     if learner:
-                        # TVET Provider Info (columns a-h)
-                        ws.cell(data_row, 1, learner.region_name or learner.region or 'Region IV-A')  # Region
-                        ws.cell(data_row, 2, learner.province_name or learner.province or 'Quezon')  # Province
-                        ws.cell(data_row, 3, learner.district or '2nd District')  # District
-                        ws.cell(data_row, 4, learner.city_name or learner.city or 'Lucena City')  # City
-                        ws.cell(data_row, 5, 'Dalubhasaan ng Lungsod ng Lucena')  # Provider
-                        ws.cell(data_row, 6, 'Maharlika Hi-way, Brgy. Isabang Lucena City')  # Address
-                        ws.cell(data_row, 7, 'Public')  # Type
-                        ws.cell(data_row, 8, 'N/A')  # Classification
-                        
-                        # Program Info (columns i-n)
-                        ws.cell(data_row, 9, 'N/A')  # Industry Sector
-                        ws.cell(data_row, 10, 'N/A')  # Program Status
+                        # Trainee Personal Info (now columns a-f)
+                        ws.cell(data_row, 1, (learner.last_name or 'N/A'))  # Family/ Last Name
+                        ws.cell(data_row, 2, (learner.first_name or 'N/A'))  # First Name
+                        ws.cell(data_row, 3, (learner.middle_name or ''))  # Middle Name
+                        ws.cell(data_row, 4, 'N/A')  # ULI
+                        ws.cell(data_row, 5, (learner.contact_number or 'N/A'))  # Contact Number
+                        ws.cell(data_row, 6, (learner.email or 'N/A'))  # E-mail Address
+
+                        # TVET Provider / Location Info (now columns g-n)
+                        ws.cell(data_row, 7, learner.region_name or learner.region or 'Region IV-A')  # Region
+                        ws.cell(data_row, 8, learner.province_name or learner.province or 'Quezon')  # Province
+                        ws.cell(data_row, 9, learner.district or '2nd District')  # Congressional District
+                        ws.cell(data_row, 10, learner.city_name or learner.city or 'Lucena City')  # Municipality/City
+                        ws.cell(data_row, 11, 'Dalubhasaan ng Lungsod ng Lucena')  # Name of Provider
+                        ws.cell(data_row, 12, 'Maharlika Hi-way, Brgy. Isabang Lucena City')  # Complete Address
+                        ws.cell(data_row, 13, 'Public')  # Type of Provider
+                        ws.cell(data_row, 14, 'N/A')  # Classification of Provider
+
+                        # Program Info (now columns o-t)
+                        ws.cell(data_row, 15, 'N/A')  # Industry Sector
+                        ws.cell(data_row, 16, 'N/A')  # Program Status
                         if approved_app and approved_app.program:
-                            ws.cell(data_row, 11, approved_app.program.program_name)  # Program
+                            ws.cell(data_row, 17, approved_app.program.program_name)  # Program
                         else:
-                            ws.cell(data_row, 11, learner.course_or_qualification or 'N/A')  # Program
-                        ws.cell(data_row, 12, 'N/A')  # CoPR
-                        ws.cell(data_row, 13, 'N/A')  # Training Calendar
-                        ws.cell(data_row, 14, 'Face-to-face')  # Delivery Mode
-                        
-                        # Trainee Info (columns o-s)
-                        ws.cell(data_row, 15, learner.last_name or 'N/A')  # Last Name
-                        ws.cell(data_row, 16, learner.first_name or 'N/A')  # First Name
-                        ws.cell(data_row, 17, learner.middle_name or '')  # Middle Name
-                        ws.cell(data_row, 18, 'N/A')  # ULI
-                        ws.cell(data_row, 19, learner.contact_number or 'N/A')  # Contact
-                        ws.cell(data_row, 20, learner.email or 'N/A')  # Email
+                            ws.cell(data_row, 17, learner.course_or_qualification or 'N/A')  # Program
+                        ws.cell(data_row, 18, 'N/A')  # CoPR
+                        ws.cell(data_row, 19, 'N/A')  # Training Calendar
+                        ws.cell(data_row, 20, 'Face-to-face')  # Delivery Mode
                         
                         # Address breakdown (columns t-x)
                         ws.cell(data_row, 21, learner.street or 'N/A')  # Street
@@ -377,46 +461,46 @@ def download_bulk_documents_excel(request):
                         ws.cell(data_row, 54, learner.date_hired if learner.date_hired else 'N/A')  # Date Hired
                     else:
                         # NO Learner_Profile - This is a bulk uploaded document with metadata only
-                        # Fill in default provider info and document metadata
-                        ws.cell(data_row, 1, 'Region IV-A')
-                        ws.cell(data_row, 2, 'Quezon')
-                        ws.cell(data_row, 3, '2nd District')
-                        ws.cell(data_row, 4, 'Lucena City')
-                        ws.cell(data_row, 5, 'Dalubhasaan ng Lungsod ng Lucena')
-                        ws.cell(data_row, 6, 'Maharlika Hi-way, Brgy. Isabang Lucena City')
-                        ws.cell(data_row, 7, 'Public')
-                        ws.cell(data_row, 8, 'N/A')
-                        
-                        # Program Info
-                        ws.cell(data_row, 9, 'N/A')  # Industry Sector
-                        ws.cell(data_row, 10, 'N/A')  # Program Status
-                        if approved_app and approved_app.program:
-                            ws.cell(data_row, 11, approved_app.program.program_name)
-                        elif doc.program:
-                            ws.cell(data_row, 11, doc.program.program_name)
-                        else:
-                            ws.cell(data_row, 11, doc.get_document_type_display())
-                        ws.cell(data_row, 12, 'N/A')  # CoPR
-                        ws.cell(data_row, 13, 'N/A')  # Training Calendar
-                        ws.cell(data_row, 14, 'Face-to-face')  # Delivery Mode
-                        
-                        # Trainee Info - use document name and uploaded_by as fallback
+                        # Trainee Personal Info first
                         doc_name_parts = doc.document_name.replace('.pdf', '').replace('.xlsx', '').replace('.docx', '').split()
                         if doc.applicant:
-                            ws.cell(data_row, 15, doc.applicant.last_name or 'N/A')
-                            ws.cell(data_row, 16, doc.applicant.first_name or 'N/A')
-                            ws.cell(data_row, 20, doc.applicant.email or 'N/A')
+                            ws.cell(data_row, 1, doc.applicant.last_name or 'N/A')
+                            ws.cell(data_row, 2, doc.applicant.first_name or 'N/A')
+                            ws.cell(data_row, 6, doc.applicant.email or 'N/A')
                         elif len(doc_name_parts) >= 2:
                             # Try to extract name from filename
-                            ws.cell(data_row, 15, doc_name_parts[0])  # Assume first word is last name
-                            ws.cell(data_row, 16, doc_name_parts[1])  # Assume second word is first name
+                            ws.cell(data_row, 1, doc_name_parts[0])  # Assume first word is last name
+                            ws.cell(data_row, 2, doc_name_parts[1])  # Assume second word is first name
                         else:
-                            ws.cell(data_row, 15, f'Document {doc.id}')
-                            ws.cell(data_row, 16, 'Bulk Upload')
-                        
-                        ws.cell(data_row, 17, '')  # Middle Name
-                        ws.cell(data_row, 18, 'N/A')  # ULI
-                        ws.cell(data_row, 19, 'N/A')  # Contact
+                            ws.cell(data_row, 1, f'Document {doc.id}')
+                            ws.cell(data_row, 2, 'Bulk Upload')
+
+                        ws.cell(data_row, 3, '')  # Middle Name
+                        ws.cell(data_row, 4, 'N/A')  # ULI
+                        ws.cell(data_row, 5, 'N/A')  # Contact
+
+                        # Provider / Location Info next
+                        ws.cell(data_row, 7, 'Region IV-A')
+                        ws.cell(data_row, 8, 'Quezon')
+                        ws.cell(data_row, 9, '2nd District')
+                        ws.cell(data_row, 10, 'Lucena City')
+                        ws.cell(data_row, 11, 'Dalubhasaan ng Lungsod ng Lucena')
+                        ws.cell(data_row, 12, 'Maharlika Hi-way, Brgy. Isabang Lucena City')
+                        ws.cell(data_row, 13, 'Public')
+                        ws.cell(data_row, 14, 'N/A')
+
+                        # Program Info
+                        ws.cell(data_row, 15, 'N/A')  # Industry Sector
+                        ws.cell(data_row, 16, 'N/A')  # Program Status
+                        if approved_app and approved_app.program:
+                            ws.cell(data_row, 17, approved_app.program.program_name)
+                        elif doc.program:
+                            ws.cell(data_row, 17, doc.program.program_name)
+                        else:
+                            ws.cell(data_row, 17, doc.get_document_type_display())
+                        ws.cell(data_row, 18, 'N/A')  # CoPR
+                        ws.cell(data_row, 19, 'N/A')  # Training Calendar
+                        ws.cell(data_row, 20, 'Face-to-face')  # Delivery Mode
                         
                         # Log that this record has no learner data (shouldn't happen with new logic)
                         if doc:

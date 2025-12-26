@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from .models import ApprovedApplicant, Learner_Profile
-# import pandas as pd  # Temporarily commented out due to missing dependency
+from openpyxl import load_workbook  # Use openpyxl to avoid heavy pandas dependency
 import json
 import os
 
@@ -19,13 +19,38 @@ def process_excel_ocr(request):
         file = request.FILES['file']
         if not file.name.endswith(('.xlsx', '.xls')):
             return JsonResponse({'success': False, 'message': 'Please upload an Excel file'})
-        
-        # Excel processing temporarily disabled due to missing pandas dependency
-        return JsonResponse({
-            'success': False,
-            'message': 'Excel processing is temporarily unavailable. Please install pandas dependency first.'
-        })
-        
+
+        # Read Excel file using openpyxl
+        try:
+            wb = load_workbook(filename=file, data_only=True)
+            ws = wb.active
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Failed to read Excel file: {str(e)}'
+            })
+
+        # Assume first row is header
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return JsonResponse({'success': False, 'message': 'Excel file is empty'})
+
+        header = [str(h).strip() if h is not None else '' for h in rows[0]]
+        data = []
+        for row in rows[1:]:
+            if row is None:
+                continue
+            record = {}
+            for idx, value in enumerate(row):
+                col_name = header[idx] if idx < len(header) else f'Column{idx+1}'
+                if col_name:
+                    record[col_name] = '' if value is None else value
+            # Skip completely empty rows
+            if any(str(v).strip() for v in record.values()):
+                data.append(record)
+
+        columns = header
+
         return JsonResponse({
             'success': True,
             'extracted_data': data,
@@ -44,18 +69,41 @@ def process_excel_ocr(request):
 def process_default_excel(request):
     """Process the default 2024.xlsx file"""
     try:
-        # Path to the default Excel file
-        file_path = os.path.join(settings.BASE_DIR, 'DLL_LMSTC', 'Applicant', 'static', 'data', '2024.xlsx')
+        # Path to the default Excel file (located in Applicant/static/data/2024.xlsx)
+        file_path = os.path.join(settings.BASE_DIR, 'Applicant', 'static', 'data', '2024.xlsx')
         
         if not os.path.exists(file_path):
             return JsonResponse({'success': False, 'message': '2024.xlsx file not found'})
-        
-        # Excel processing temporarily disabled due to missing pandas dependency
-        return JsonResponse({
-            'success': False,
-            'message': 'Excel processing is temporarily unavailable. Please install pandas dependency first.'
-        })
-        
+
+        # Read Excel file using openpyxl
+        try:
+            wb = load_workbook(filename=file_path, data_only=True)
+            ws = wb.active
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Failed to read 2024.xlsx: {str(e)}'
+            })
+
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return JsonResponse({'success': False, 'message': '2024.xlsx is empty'})
+
+        header = [str(h).strip() if h is not None else '' for h in rows[0]]
+        data = []
+        for row in rows[1:]:
+            if row is None:
+                continue
+            record = {}
+            for idx, value in enumerate(row):
+                col_name = header[idx] if idx < len(header) else f'Column{idx+1}'
+                if col_name:
+                    record[col_name] = '' if value is None else value
+            if any(str(v).strip() for v in record.values()):
+                data.append(record)
+
+        columns = header
+
         return JsonResponse({
             'success': True,
             'extracted_data': data,

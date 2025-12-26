@@ -8,8 +8,9 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from django.db import models
+from django.db.models.functions import ExtractMonth
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
@@ -21,7 +22,7 @@ from .models import Programs
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import login as auth_login
 from django.contrib import messages
-from .models import JobPost, ProgramApplication, ApprovedApplicant, Notification, Task, ApplicantPasser, WalkInApplication, ApprovedWalkIn, DMSReview, DMSApproval, Event, Training, ArchivedTraining, ProgramImage, SupportTicket, TicketResponse, BatchCycle, BatchCycle
+from .models import JobPost, ProgramApplication, ApprovedApplicant, Notification, Task, ApplicantPasser, WalkInApplication, ApprovedWalkIn, DMSReview, DMSApproval, Event, Training, ArchivedTraining, ProgramImage, SupportTicket, TicketResponse, BatchCycle, BatchCycle, SavedJobMatch, TrainerProgramSemesterSetting, TrainerProfile, StaffMember
 from .models import Learner_Profile, ClientClassification, DisabilityType, DisabilityCause, EducationalAttainment
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.mail import send_mail
@@ -40,9 +41,12 @@ import string
 import random
 # import pandas as pd  # Temporarily commented out due to missing dependency
 import os
-from django.conf import settings
 from .philjobnet_scraper import scrape_philjobnet_jobs
 import logging
+from django.utils import timezone
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+import re
 
 
 #newly
@@ -69,9 +73,13 @@ def About(request):
   # Get all unique trainor names from Programs
   programs = Programs.objects.exclude(program_trainor__isnull=True).exclude(program_trainor='')
   trainors = programs.values_list('program_trainor', flat=True).distinct()
+  trainor_profiles = TrainerProfile.objects.select_related('user').all()
+  staff_list = StaffMember.objects.all()
   
   context = {
-      'trainors': trainors
+      'trainors': trainors,
+      'trainor_profiles': trainor_profiles,
+      'staff_list': staff_list
   }
   
   template = loader.get_template('About.html')
@@ -98,9 +106,11 @@ def About_user(request):
     # Retrieve all programs if the user is authenticated
     programs = Programs.objects.all()
     
-    # Get all unique trainor names from Programs
+    # Get all unique trainor names and profiles
     trainor_programs = Programs.objects.exclude(program_trainor__isnull=True).exclude(program_trainor='')
     trainors = trainor_programs.values_list('program_trainor', flat=True).distinct()
+    trainor_profiles = TrainerProfile.objects.select_related('user').all()
+    staff_list = StaffMember.objects.all()
     
     # Check if user has a Learner_Profile
     has_learner_profile = Learner_Profile.objects.filter(user=request.user).exists()
@@ -121,6 +131,8 @@ def About_user(request):
         'Programss': programs,
         'has_learner_profile': has_learner_profile,
         'trainors': trainors,
+        'trainor_profiles': trainor_profiles,
+        'staff_list': staff_list,
         'user_profile_picture': user_profile_picture
     })
     
@@ -302,12 +314,16 @@ def Register(request):
 
 
 def Login_Nextpage(request):
-    username = request.session.get("username", "Guest")  # Get username from session
-    return render(request, "Dashboard.html", {"username": username})
+  username = request.session.get("username", "Guest")  # Get username from session
+  return render(request, "Dashboard.html", {"username": username})
 
 #Example
 def Option(request):
   template = loader.get_template('OptionRegister.html')
+  return HttpResponse(template.render())
+
+def LoginSelect(request):
+  template = loader.get_template('LoginSelect.html')
   return HttpResponse(template.render())
 
 
@@ -343,7 +359,15 @@ def Login(request):
             elif user.is_staff:
                 return redirect("Dashboard_trainor")
             else:
-                # ✅ Check if user is an approved applicant
+                # ✅ Special handling for walk-in applicants:
+                # If the user has any WalkInApplication and no learner profile yet,
+                # redirect them to the multi-step Learner's Profile Form.
+                has_walkin_application = WalkInApplication.objects.filter(applicant=user).exists()
+                has_learner_profile = Learner_Profile.objects.filter(user=user).exists()
+                if has_walkin_application and not has_learner_profile:
+                    return redirect("learner_form")
+
+                # ✅ Default behavior for regular applicants
                 is_approved = ApprovedApplicant.objects.filter(applicant=user).exists()
 
                 if is_approved:
@@ -355,6 +379,28 @@ def Login(request):
             return redirect("Login")
 
     return render(request, "Login.html")
+
+
+def CoordinatorLogin(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None and (user.is_superuser or user.is_staff):
+            login(request, user)
+            messages.success(request, "Welcome to the coordinator portal")
+
+            if user.is_superuser:
+                return redirect("Dashboard_admin")
+            else:
+                return redirect("Dashboard_trainor")
+        else:
+            messages.error(request, "Invalid coordinator credentials.")
+            return redirect("CoordinatorLogin")
+
+    return render(request, "CoordinatorLogin.html")
 
 
 @login_required
@@ -458,7 +504,14 @@ def Dashboard(request):
     all_disability_types = DisabilityType.objects.all()
     all_disability_causes = DisabilityCause.objects.all()
     
-    trainings = Training.objects.all()
+    # Filter trainings by user's approved programs
+    # Training model uses program_name (CharField) which should match Programs.program_name
+    trainings = Training.objects.none()  # Default to empty
+    if approved_programs.exists():
+        # Get program names from approved programs
+        approved_program_names = approved_programs.values_list('program__program_name', flat=True)
+        # Filter trainings where program_name matches any of the user's approved programs
+        trainings = Training.objects.filter(program_name__in=approved_program_names).order_by('start_date', 'task_time')
     
     # Get competencies data from approved programs
     program_competencies = {
@@ -467,21 +520,40 @@ def Dashboard(request):
         'core': []
     }
     
-    # Get competencies from the first approved program (if any)
-    if approved_programs.exists():
-        first_approved_program = approved_programs.first()
-        if first_approved_program.program.program_competencies:
-            competencies_data = first_approved_program.program.program_competencies
-            program_competencies['basic'] = competencies_data.get('basic', [])
-            program_competencies['common'] = competencies_data.get('common', [])
-            program_competencies['core'] = competencies_data.get('core', [])
+    # Handle program selection for competencies (via GET parameter or session)
+    selected_program_id = request.GET.get('program_id') or request.session.get('selected_program_id')
+    selected_program = None
     
-    # Get competencies progress from ApplicantCompetencies model
+    if selected_program_id:
+        try:
+            # Verify the program is one of the user's approved programs
+            selected_program = approved_programs.filter(program_id=selected_program_id).first()
+            if selected_program:
+                request.session['selected_program_id'] = int(selected_program_id)
+        except (ValueError, TypeError):
+            pass
+    
+    # If no valid selection, default to first approved program
+    if not selected_program and approved_programs.exists():
+        selected_program = approved_programs.first()
+        if selected_program:
+            request.session['selected_program_id'] = selected_program.program.id
+    
+    # Get competencies from the selected program (if any)
+    if selected_program and selected_program.program.program_competencies:
+        competencies_data = selected_program.program.program_competencies
+        program_competencies['basic'] = competencies_data.get('basic_competencies', competencies_data.get('basic', []))
+        program_competencies['common'] = competencies_data.get('common_competencies', competencies_data.get('common', []))
+        program_competencies['core'] = competencies_data.get('core_competencies', competencies_data.get('core', []))
+    
+    # Get competencies progress from ApplicantCompetencies model for the selected program
     from .models import ApplicantCompetencies
-    competencies_progress = ApplicantCompetencies.objects.filter(
-        applicant=request.user,
-        program__in=[ap.program for ap in approved_programs]
-    ).first()
+    competencies_progress = None
+    if selected_program:
+        competencies_progress = ApplicantCompetencies.objects.filter(
+            applicant=request.user,
+            program=selected_program.program
+        ).first()
     
     # Get user's support tickets
     from .models import SupportTicket
@@ -545,14 +617,55 @@ def Dashboard(request):
         # If there's any error, just use the default
         pass
     
-    # Get program info and trainer name for certification
+    # Get program info and trainer name for certification (use selected program if available)
     program_info = None
     trainer_name = None
-    if approved_programs.exists():
-        # Get the first approved program for certificate display
+    if selected_program:
+        program_info = selected_program.program
+        trainer_name = selected_program.program.program_trainor if selected_program.program else None
+    elif approved_programs.exists():
+        # Fallback to first approved program for certificate display
         first_approved = approved_programs.first()
         program_info = first_approved.program
         trainer_name = first_approved.program.program_trainor if first_approved.program else None
+
+    saved_job_matches = SavedJobMatch.objects.filter(user=request.user).order_by('-match_score', '-saved_at')[:10]
+    
+    # Count new documents uploaded by the applicant's trainer(s)
+    # Get documents uploaded within the last 7 days for the applicant's approved programs
+    new_documents_count = 0
+    if approved_programs.exists():
+        from .models import LMSTC_Documents
+        # Get all programs the applicant is enrolled in
+        enrolled_program_ids = approved_programs.values_list('program_id', flat=True)
+        
+        # Get trainers for these programs (check both program_trainor field and TrainerProfile)
+        trainer_usernames = set()
+        for program_id in enrolled_program_ids:
+            try:
+                program = Programs.objects.get(id=program_id)
+                # Check program_trainor field (legacy)
+                if program.program_trainor:
+                    trainer_usernames.add(program.program_trainor)
+                # Check TrainerProfile ManyToMany relationship
+                trainer_profiles = TrainerProfile.objects.filter(programs=program).select_related('user')
+                for trainer_profile in trainer_profiles:
+                    trainer_usernames.add(trainer_profile.user.username)
+            except Programs.DoesNotExist:
+                continue
+        
+        # Count documents uploaded by these trainers for these programs in the last 7 days
+        if trainer_usernames:
+            seven_days_ago = timezone.now() - timedelta(days=7)
+            trainer_users = Applicant.objects.filter(username__in=trainer_usernames)
+            
+            new_documents_count = LMSTC_Documents.objects.filter(
+                program_id__in=enrolled_program_ids,
+                uploaded_by__in=trainer_users,
+                uploaded_at__gte=seven_days_ago,
+                status='active',
+                document_type__in=['modules_manuals', 'policy_guidelines']  # Only count relevant document types
+            ).count()
     
     context = {
         "user_profile_picture": user_profile_picture,
@@ -588,6 +701,7 @@ def Dashboard(request):
         'common_percentage': common_percentage,
         'core_percentage': core_percentage,
         'overall_percentage': overall_percentage,
+        'selected_program_id': selected_program.program.id if selected_program else None,
         'user_tickets': user_tickets,  # Support tickets
         
         # Field review information
@@ -602,6 +716,10 @@ def Dashboard(request):
         # Certification data
         'program_info': program_info,  # Approved program for certificate
         'trainer_name': trainer_name,  # Trainer name for certificate
+        'saved_job_matches': saved_job_matches,
+        
+        # New documents count for notifications
+        'new_documents_count': new_documents_count,
     }
 
     # Disable caching
@@ -679,6 +797,9 @@ def Dashboard_trainor(request):
     approved_applicants = []
     trainer_programs = []  # All programs assigned to this trainer
     selected_program = None  # Currently selected program
+    # Tickets for the selected program (default: none)
+    program_tickets = SupportTicket.objects.none()
+    applicant_passers = ApplicantPasser.objects.none()
     
     if request.user.is_authenticated:
         try:
@@ -703,11 +824,31 @@ def Dashboard_trainor(request):
                 selected_program = trainer_programs.first()
                 request.session['selected_program_id'] = selected_program.id
             
-            # Get approved applicants for the selected program only
+            # Get approved applicants and program passers for the selected program only
             if selected_program:
                 approved_applicants = ApprovedApplicant.objects.filter(
                     program=selected_program
                 ).select_related('applicant', 'program').order_by('-approved_at')
+                applicant_passers = ApplicantPasser.objects.filter(
+                    program=selected_program
+                ).select_related('applicant', 'program').order_by('-completion_date')
+                # Filter support tickets to only those created by applicants in the selected program
+                # Include both standard approved applicants and approved walk-ins
+                approved_ids = ApprovedApplicant.objects.filter(
+                    program=selected_program
+                ).values_list('applicant_id', flat=True)
+                walkin_ids = ApprovedWalkIn.objects.filter(
+                    program=selected_program
+                ).values_list('applicant_id', flat=True)
+                combined_ids = list(set(list(approved_ids)) | set(list(walkin_ids)))
+                if combined_ids:
+                    program_tickets = (
+                        SupportTicket.objects
+                        .filter(created_by_id__in=combined_ids)
+                        .filter(recipient__in=['trainer', 'both'])
+                        .select_related('created_by')
+                        .order_by('-created_at')
+                    )
         except TrainerProfile.DoesNotExist:
             trainer_profile = None
 
@@ -722,9 +863,6 @@ def Dashboard_trainor(request):
     
     # ✅ GET ALL TRAINERS for the filter dropdown
     all_trainers = Applicant.objects.filter(is_staff=True, trainerprofile__isnull=False).distinct()
-
-    # ✅ GET APPLICANT PASSERS
-    applicant_passers = ApplicantPasser.objects.all().order_by('-completion_date')
 
     # Calculate attendance summary for each student
     for applicant in approved_applicants:
@@ -800,6 +938,19 @@ def Dashboard_trainor(request):
     from .models import ActiveSemesterSettings, BatchCycle
     semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(request.user)
     
+    # Determine semester state for the currently selected program (fallback to trainer-wide)
+    selected_program_semester = semester_settings.active_semester if semester_settings else '1'
+    selected_program_semester_status = semester_settings.semester_status if semester_settings else 'ongoing'
+    if selected_program:
+        program_semester_settings, _ = TrainerProgramSemesterSetting.get_or_create_for_program(
+            request.user,
+            selected_program
+        )
+        selected_program_semester = program_semester_settings.active_semester
+        selected_program_semester_status = program_semester_settings.semester_status
+    else:
+        program_semester_settings = None
+    
     # Get the active batch cycle (managed by admin via Event model)
     batch_cycle = BatchCycle.get_active_cycle()
     
@@ -840,6 +991,7 @@ def Dashboard_trainor(request):
         'trainer_profile': trainer_profile,
         'trainer_profiles': trainer_profiles,
         'approvedapplicant': approved_applicants,
+        'program_tickets': program_tickets,
         'trainings': my_trainings,  # Keep this for backward compatibility
         # ✅ ADD THESE FOR THE CALENDAR
         'all_trainings': all_trainings,  # All training sessions from all trainers
@@ -855,8 +1007,9 @@ def Dashboard_trainor(request):
         'active_batch_display': batch_display_map.get(batch_cycle.current_batch, 'Batch 1'),
         'batch_cycle_state': batch_cycle.cycle_state,
         # ✅ ADD ACTIVE SEMESTER SETTINGS (trainer can manage)
-        'active_semester': semester_settings.active_semester,
-        'active_semester_display': semester_display_map.get(semester_settings.active_semester, '1st Sem'),
+        'active_semester': selected_program_semester,
+        'active_semester_display': semester_display_map.get(selected_program_semester, '1st Sem'),
+        'active_semester_status': selected_program_semester_status,
         # ✅ ADD BATCH CYCLE INFO
         'batch_cycle': batch_cycle,
         # ✅ ADD YEAR RANGE FOR REPORTS DROPDOWN
@@ -870,12 +1023,20 @@ def Dashboard_trainor(request):
 @csrf_exempt
 @login_required
 def save_semester_settings(request):
-    """Save active semester settings for trainer (batch is managed by admin via Event model)"""
+    """Save active semester settings for trainer (batch is managed by admin via Event model)
+    
+    Supports both single-program and multi-program trainers. When program_id is provided,
+    updates settings for that specific program only. Otherwise falls back to legacy behavior.
+    """
     if request.method == 'POST':
         try:
             import json
+            from django.shortcuts import get_object_or_404
+            from .models import ActiveSemesterSettings, BatchCycle, Programs, TrainerProfile, TrainerProgramSemesterSetting
+            
             data = json.loads(request.body)
             semester = data.get('semester', '1')
+            program_id = data.get('program_id')
             
             # Validate semester input
             if semester not in ['1', '2', '3']:
@@ -884,17 +1045,37 @@ def save_semester_settings(request):
                     'error': 'Invalid semester value'
                 })
             
-            # Get or create settings for the trainer
-            from .models import ActiveSemesterSettings, BatchCycle
+            # Validate program access if program_id is provided
+            if program_id:
+                program = get_object_or_404(Programs, id=program_id)
+                # Check if trainer is assigned to this program (support both FK and M2M)
+                if not TrainerProfile.objects.filter(
+                    Q(user=request.user) & 
+                    (Q(program=program) | Q(programs=program))
+                ).exists():
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'You are not assigned to this program'
+                    })
+            
+            # Update per-program semester state when program_id is supplied
+            if program_id and request.user.is_authenticated:
+                program_settings, created_program_setting = TrainerProgramSemesterSetting.get_or_create_for_program(
+                    request.user,
+                    program
+                )
+                program_settings.set_semester(semester)
+            else:
+                created_program_setting = False
+            
+            # Maintain legacy trainer-wide settings for backwards compatibility/UI defaults
             settings, created = ActiveSemesterSettings.objects.get_or_create(
                 trainer=request.user,
                 defaults={'active_semester': semester}
             )
-            
-            # Update if already exists (only semester, batch comes from BatchCycle)
             if not created:
                 settings.active_semester = semester
-                settings.semester_status = 'ongoing'  # Reset status when changing semester
+                settings.semester_status = 'ongoing'
                 settings.save()
             
             # Get current batch from BatchCycle (admin controlled)
@@ -904,7 +1085,10 @@ def save_semester_settings(request):
                 'success': True,
                 'message': 'Semester settings saved successfully',
                 'semester': semester,
-                'active_batch': batch_cycle.current_batch  # Return current batch for display
+                'active_batch': batch_cycle.current_batch,  # Return current batch for display
+                'program_id': program_id,  # Echo back for client-side reference
+                'active_semester_display': dict(ActiveSemesterSettings.SEMESTER_CHOICES).get(semester, '1st Semester'),
+                'program_setting_created': created_program_setting
             })
             
         except Exception as e:
@@ -922,26 +1106,50 @@ def end_semester(request):
     """Handle End Semester action from trainor - mark current semester as completed"""
     if request.method == 'POST':
         try:
-            from .models import ActiveSemesterSettings, BatchCycle
+            import json
+            from django.shortcuts import get_object_or_404
+            from .models import ActiveSemesterSettings, BatchCycle, Programs, TrainerProfile, TrainerProgramSemesterSetting
             
-            # Get the trainer's semester settings
-            settings = ActiveSemesterSettings.get_or_create_for_trainer(request.user)
+            data = json.loads(request.body or '{}')
+            program_id = data.get('program_id')
             
-            # Check if currently on 3rd semester
-            if settings.active_semester != '3':
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Can only end semester when on 3rd semester'
-                })
-            
-            # Mark the semester as completed
-            settings.complete_semester()
+            # Prefer per-program settings when a program is specified
+            if program_id:
+                program = get_object_or_404(Programs, id=program_id)
+                if not TrainerProfile.objects.filter(
+                    Q(user=request.user) & (Q(program=program) | Q(programs=program))
+                ).exists():
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'You are not assigned to this program.'
+                    })
+                
+                settings, _ = TrainerProgramSemesterSetting.get_or_create_for_program(request.user, program)
+                if settings.active_semester != '3':
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Can only end semester when on 3rd semester'
+                    })
+                
+                settings.complete_semester()
+                remark = f"{program.program_name}: 3rd Sem Complete"
+            else:
+                # Legacy single-program behavior
+                settings = ActiveSemesterSettings.get_or_create_for_trainer(request.user)
+                if settings.active_semester != '3':
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Can only end semester when on 3rd semester'
+                    })
+                settings.complete_semester()
+                remark = settings.get_remark()
             
             return JsonResponse({
                 'success': True,
                 'message': 'Semester ended successfully. Marked as complete.',
                 'completed_semester': settings.completed_semester,
-                'remark': settings.get_remark()
+                'remark': remark,
+                'program_id': program_id
             })
             
         except Exception as e:
@@ -974,16 +1182,20 @@ def end_batch(request):
             incomplete_programs = []
             
             for program in programs:
-                # Get trainer for this program
-                trainer_profile = TrainerProfile.objects.filter(program=program).first()
-                if trainer_profile:
-                    # Get semester settings for the trainer
-                    semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(trainer_profile.user)
-                    
-                    # Check if semester is completed
-                    if semester_settings.semester_status != 'completed':
-                        all_complete = False
-                        incomplete_programs.append(program.program_name)
+                # Get trainer(s) for this program (support legacy FK and M2M)
+                trainer_profiles = TrainerProfile.objects.filter(Q(program=program) | Q(programs=program)).distinct()
+                if trainer_profiles.exists():
+                    # Check each trainer's semester status; any ongoing marks program incomplete
+                    for tp in trainer_profiles:
+                        semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(tp.user)
+                        if semester_settings.semester_status != 'completed':
+                            all_complete = False
+                            incomplete_programs.append(program.program_name)
+                            break
+                else:
+                    # No trainer assigned for this program -> consider incomplete
+                    all_complete = False
+                    incomplete_programs.append(program.program_name)
             
             # If not all programs are complete, return error
             if not all_complete:
@@ -998,9 +1210,9 @@ def end_batch(request):
             
             # Reset all trainer semester settings for the next batch cycle
             for program in programs:
-                trainer_profile = TrainerProfile.objects.filter(program=program).first()
-                if trainer_profile:
-                    semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(trainer_profile.user)
+                trainer_profiles = TrainerProfile.objects.filter(Q(program=program) | Q(programs=program)).distinct()
+                for tp in trainer_profiles:
+                    semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(tp.user)
                     semester_settings.active_semester = '1'
                     semester_settings.semester_status = 'ongoing'
                     semester_settings.completed_semester = None
@@ -1139,31 +1351,70 @@ def Dashboard_admin(request, application_id=None):
             is_active=True
         )
     
-    # Filter counts by current batch cycle
-    current_batch = batch_cycle.current_batch
+    # Determine selected batch and year from query params
+    selected_batch_param = (request.GET.get('batch') or '').strip()
+    selected_year_param = (request.GET.get('year') or '').strip()
+
+    # Filter counts by batch (default to current active batch if none selected)
+    current_batch = selected_batch_param if selected_batch_param else batch_cycle.current_batch
+
+    # Parse selected year (optional)
+    selected_year = None
+    if selected_year_param.isdigit():
+        selected_year = int(selected_year_param)
     
-    # Count applicants in current batch (approved applicants + approved walk-ins)
+    # Base querysets for approved applicants and approved walk-ins in selected batch/year
+    approved_qs = ApprovedApplicant.objects.filter(batch_number=current_batch)
+    walkin_approved_qs = ApprovedWalkIn.objects.filter(batch_number=current_batch)
+    if selected_year is not None:
+        approved_qs = approved_qs.filter(enrollment_year=selected_year)
+        walkin_approved_qs = walkin_approved_qs.filter(enrollment_year=selected_year)
+
+    # Monthly application counts for bar chart (12 months)
+    monthly_application_counts = [0] * 12
+    monthly_stats = approved_qs.annotate(month=ExtractMonth('approved_at')).values('month').annotate(total=Count('id'))
+    for row in monthly_stats:
+        month = row['month']
+        if month and 1 <= month <= 12:
+            monthly_application_counts[month - 1] = row['total']
+
+    # Count total applicants (all applications including pending, accepted, declined) + walk-ins
+    # Filter by year if selected
+    program_app_qs = ProgramApplication.objects.all()
+    walkin_app_qs = WalkInApplication.objects.all()
+    if selected_year is not None:
+        program_app_qs = program_app_qs.filter(applied_at__year=selected_year)
+        walkin_app_qs = walkin_app_qs.filter(applied_at__year=selected_year)
+    
     counted_applicant = (
-        ApprovedApplicant.objects.filter(batch_number=current_batch).values('applicant').distinct().count() +
-        ApprovedWalkIn.objects.filter(batch_number=current_batch).values('applicant').distinct().count()
+        program_app_qs.values('applicant').distinct().count() +
+        walkin_app_qs.values('applicant').distinct().count()
     )
     
-    # Count approved applicants in current batch (status='active')
+    # Count all approved applicants in selected batch/year (all statuses: active, finished, dropped)
     counted_approved = (
-        ApprovedApplicant.objects.filter(batch_number=current_batch, status='active').values('applicant').distinct().count() +
-        ApprovedWalkIn.objects.filter(batch_number=current_batch, status='active').values('applicant').distinct().count()
+        approved_qs.values('applicant').distinct().count() +
+        walkin_approved_qs.values('applicant').distinct().count()
     )
     
-    # Count dropouts in current batch (status='dropped')
+    # Count dropouts in selected batch/year (status='dropped')
     counted_dropped = (
-        ApprovedApplicant.objects.filter(batch_number=current_batch, status='dropped').values('applicant').distinct().count() +
-        ApprovedWalkIn.objects.filter(batch_number=current_batch, status='dropped').values('applicant').distinct().count()
+        approved_qs.filter(status='dropped').values('applicant').distinct().count() +
+        walkin_approved_qs.filter(status='dropped').values('applicant').distinct().count()
     )
     
-    # Walk-in application counts (these remain global as they're pending applications)
+    # Walk-in application counts
     counted_walkin_pending = WalkInApplication.objects.filter(status='Pending').count()
-    counted_walkin_approved = ApprovedWalkIn.objects.filter(batch_number=current_batch).values('applicant').distinct().count()
+    counted_walkin_approved = walkin_approved_qs.values('applicant').distinct().count()
     counted_walkin_total = WalkInApplication.objects.values('applicant__username').distinct().count()
+    
+    # Count new/pending applications (for notification indicators)
+    # Count pending program applications
+    new_program_applications = ProgramApplication.objects.filter(status='Pending').count()
+    # Count pending walk-in applications
+    new_walkin_applications = WalkInApplication.objects.filter(status='Pending').count()
+    # Total new applications
+    total_new_applications = new_program_applications + new_walkin_applications
 
     # programs = Programs.objects.annotate(applied_count=Count('applications'))
 
@@ -1172,32 +1423,45 @@ def Dashboard_admin(request, application_id=None):
     #     approved_count=Count('approved_applicants'),
     #     applied_count=Count('applications')
     # )
-    # Filter program statistics by current batch
+    # Filter program statistics by selected batch/year
     combined_programs = []
     for p in programs:
-        # Count applicants in current batch for this program
+        # Base queryset for this program in selected batch/year
+        program_approved_qs = approved_qs.filter(program=p)
+        program_walkin_qs = walkin_approved_qs.filter(program=p)
+        
+        # For applied_count: Count ALL applications per program (all statuses: pending, accepted, declined)
+        # Filter by year if selected
+        program_applications_qs = ProgramApplication.objects.filter(program=p)
+        program_walkin_applications_qs = WalkInApplication.objects.filter(program=p)
+        if selected_year is not None:
+            program_applications_qs = program_applications_qs.filter(applied_at__year=selected_year)
+            program_walkin_applications_qs = program_walkin_applications_qs.filter(applied_at__year=selected_year)
+        
+        # Count distinct applicants who applied to this program (all statuses)
         batch_applicants = (
-            ApprovedApplicant.objects.filter(program=p, batch_number=current_batch).count() +
-            ApprovedWalkIn.objects.filter(program=p, batch_number=current_batch).count()
+            program_applications_qs.values('applicant').distinct().count() +
+            program_walkin_applications_qs.values('applicant').distinct().count()
         )
         
-        # Count approved (active) applicants in current batch for this program
+        # For approved_count: Count ALL approved applicants per program (all statuses: active, finished, dropped)
+        # This should match counted_approved logic which counts all approved applicants regardless of status
         batch_approved = (
-            ApprovedApplicant.objects.filter(program=p, batch_number=current_batch, status='active').count() +
-            ApprovedWalkIn.objects.filter(program=p, batch_number=current_batch, status='active').count()
+            program_approved_qs.values('applicant').distinct().count() +
+            program_walkin_qs.values('applicant').distinct().count()
         )
         
-        # Count finished applicants in current batch for this program
+        # Count finished applicants in selected batch/year for this program
         batch_passed = (
-            ApprovedApplicant.objects.filter(program=p, batch_number=current_batch, status='finished').count() +
-            ApprovedWalkIn.objects.filter(program=p, batch_number=current_batch, status='finished').count()
+            program_approved_qs.filter(status='finished').count() +
+            program_walkin_qs.filter(status='finished').count()
         )
         
         combined_programs.append({
             'program_name': p.program_name,
-            'applied_count': batch_applicants,  # Total in current batch
-            'approved_count': batch_approved,   # Active in current batch
-            'passed_count': batch_passed,       # Finished in current batch
+            'applied_count': batch_applicants,  # All applicants who applied (all statuses)
+            'approved_count': batch_approved,   # All approved applicants (all statuses: active, finished, dropped)
+            'passed_count': batch_passed,       # Finished in selected batch/year
         })
 
     applicant = ProgramApplication.objects.all().order_by('applied_at')
@@ -1251,14 +1515,10 @@ def Dashboard_admin(request, application_id=None):
     # Get walk-in applications separately
     walkin_applications = WalkInApplication.objects.select_related('applicant', 'program').order_by('-applied_at')
     
-    # Filter approved applicants by current batch
-    approved_applicants = ApprovedApplicant.objects.filter(
-        batch_number=current_batch
-    ).select_related('applicant', 'program').order_by('-approved_at')
+    # Filter approved applicants by selected batch/year
+    approved_applicants = approved_qs.select_related('applicant', 'program').order_by('-approved_at')
     
-    approved_walkins = ApprovedWalkIn.objects.filter(
-        batch_number=current_batch
-    ).select_related('applicant', 'program').order_by('-approved_at')
+    approved_walkins = walkin_approved_qs.select_related('applicant', 'program').order_by('-approved_at')
 
     # Group approved applicants by program ID
     program_approvals = defaultdict(list)
@@ -1310,10 +1570,10 @@ def Dashboard_admin(request, application_id=None):
     # Query all events from the database
     events = Event.objects.all().order_by('-start_date')
     
-    # Get LMSTC Documents for Document Search (Applicant Profiles)
+    # Get LMSTC Documents for Document Search (all types including modules/manuals and policies)
     from .models import LMSTC_Documents
     lmstc_documents = LMSTC_Documents.objects.filter(
-        document_type='applicant_profile'
+        status='active'
     ).select_related('applicant', 'program', 'uploaded_by', 'learner_profile').order_by('-uploaded_at')
     
     # Get all Learner_Profiles for Document Search
@@ -1332,6 +1592,16 @@ def Dashboard_admin(request, application_id=None):
     resolved_tickets_count = all_tickets.filter(status='resolved').count()
     high_priority_tickets_count = all_tickets.filter(priority='high').count()
     
+    # Count new tickets (open status indicates new/unresolved tickets)
+    new_tickets_count = open_tickets_count
+    
+    # Count new documents (documents uploaded within the last 7 days)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    new_documents_count = LMSTC_Documents.objects.filter(
+        uploaded_at__gte=seven_days_ago,
+        status='active'
+    ).count()
+    
     # Get program monitoring data with trainer semester information
     from .models import ActiveSemesterSettings
     
@@ -1346,29 +1616,71 @@ def Dashboard_admin(request, application_id=None):
     current_year = datetime.now().year
     # Get the earliest entry date from learner profiles
     earliest_profile = Learner_Profile.objects.order_by('entry_date').first()
-    if earliest_profile and earliest_profile.entry_date:
-        start_year = earliest_profile.entry_date.year
+    earliest_year_from_profiles = earliest_profile.entry_date.year if earliest_profile and earliest_profile.entry_date else None
+    
+    # Also check LMSTC_Documents for earliest uploaded_at year
+    earliest_doc = LMSTC_Documents.objects.filter(uploaded_at__isnull=False).order_by('uploaded_at').first()
+    earliest_year_from_docs = earliest_doc.uploaded_at.year if earliest_doc and earliest_doc.uploaded_at else None
+    
+    # Get the earliest year from both sources
+    earliest_years = [y for y in [earliest_year_from_profiles, earliest_year_from_docs] if y is not None]
+    if earliest_years:
+        start_year = min(earliest_years)
     else:
         start_year = current_year - 5  # Default to 5 years ago if no data
-    years_range = range(start_year, current_year + 2)  # From earliest to next year
+    
+    # Ensure 2024 is always included (for imported 2024.xlsx data)
+    if start_year > 2024:
+        start_year = 2024
+    
+    # Create range from earliest year to next year (to include current year + 1)
+    years_range = list(range(start_year, current_year + 2))  # From earliest to next year
+    
+    # Ensure 2024 is always in the range
+    if 2024 not in years_range:
+        years_range.append(2024)
+        years_range.sort()
     
     # Check if all programs are complete
     all_programs_complete = True
     programs_with_trainers = 0
     
     for program in programs:
-        # Get the trainer for this program
-        trainer_profile = TrainerProfile.objects.filter(program=program).first()
-        
-        if trainer_profile:
+        # Get trainers assigned via the new ManyToMany field
+        trainer_qs = TrainerProfile.objects.filter(programs=program).select_related('user')
+        # Fallback to legacy single program field for backward compatibility
+        if not trainer_qs.exists():
+            trainer_qs = TrainerProfile.objects.filter(program=program).select_related('user')
+
+        if trainer_qs.exists():
             programs_with_trainers += 1
-            # Get semester settings for the trainer
-            semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(trainer_profile.user)
+            # Use the first trainer as the primary reference for semester settings
+            primary_trainer = trainer_qs.first()
+            
+            # ✅ FIX: Use program-specific semester settings instead of trainer-wide settings
+            # This allows each program to have its own semester state when a trainer has multiple programs
+            from .models import TrainerProgramSemesterSetting
+            program_semester_setting, _ = TrainerProgramSemesterSetting.get_or_create_for_program(
+                primary_trainer.user,
+                program
+            )
+            
+            # Fallback to trainer-wide settings if program-specific setting doesn't exist (for backward compatibility)
+            # But prefer program-specific settings
+            semester_settings = program_semester_setting
             
             # Check if this program is completed
             if semester_settings.semester_status != 'completed':
                 all_programs_complete = False
-            
+
+            # If multiple trainers are assigned, show a comma-separated list; otherwise show the single trainer
+            if trainer_qs.count() > 1:
+                trainer_name_display = ', '.join([
+                    (tp.user.get_full_name() or tp.user.username) for tp in trainer_qs
+                ])
+            else:
+                trainer_name_display = primary_trainer.user.get_full_name() or primary_trainer.user.username
+
             program_monitoring.append({
                 'program_name': program.program_name,
                 'program_id': program.id,
@@ -1376,7 +1688,7 @@ def Dashboard_admin(request, application_id=None):
                 'semester': semester_settings.active_semester,
                 'semester_display': dict(ActiveSemesterSettings.SEMESTER_CHOICES).get(semester_settings.active_semester, '1st Semester'),
                 'remark': semester_settings.get_remark(),
-                'trainer_name': trainer_profile.user.get_full_name() or trainer_profile.user.username,
+                'trainer_name': trainer_name_display,
                 'semester_status': semester_settings.semester_status,
             })
         else:
@@ -1430,11 +1742,18 @@ def Dashboard_admin(request, application_id=None):
         'counted_walkin_pending': counted_walkin_pending,
         'counted_walkin_approved': counted_walkin_approved,
         'counted_walkin_total': counted_walkin_total,
+        # New application counts for indicators
+        'new_program_applications': new_program_applications,
+        'new_walkin_applications': new_walkin_applications,
+        'total_new_applications': total_new_applications,
         # 'approve': approve,
         'approved_applicants': approved_applicants,
         'program_approvals': dict(program_approvals),  # 
         'combined_programs': combined_programs,
         'trainers': trainers,
+        'dashboard_selected_batch': current_batch,
+        'dashboard_selected_year': selected_year,
+        'monthly_application_counts': monthly_application_counts,
         # Document search filter data
         'programs': programs,  # For program filter dropdown
         'trainors': trainers,  # For trainor filter dropdown
@@ -1462,6 +1781,9 @@ def Dashboard_admin(request, application_id=None):
         'open_tickets_count': open_tickets_count,
         'resolved_tickets_count': resolved_tickets_count,
         'high_priority_tickets_count': high_priority_tickets_count,
+        # New items counts for indicators
+        'new_tickets_count': new_tickets_count,
+        'new_documents_count': new_documents_count,
         # Batch cycles for Document Search filter
         'batch_cycles': batch_cycles,
         # Years range for Applicant Profiles filter
@@ -1479,59 +1801,216 @@ def Dashboard_admin(request, application_id=None):
 
 
 def forgot_password(request):
+    """
+    Multi-step password reset for regular accounts (username/password-based):
+      Step 1: Ask for username and verify it exists and has a usable password
+      Step 2: Ask for an active Gmail address, send a 6-digit verification code
+      Step 3: Verify the code
+      Step 4: Ask for a new password and reset it
+
+    Session keys used:
+      reset_user_id, reset_username, reset_gmail, reset_code, reset_code_created, reset_code_verified
+    """
+    # Determine current step
     if request.method == 'POST':
-        email = request.POST.get('email')
-        
-        try:
-            user = Applicant.objects.get(email=email)
-            
-            # Generate password reset token
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            
-            # Create reset link
-            reset_link = request.build_absolute_uri(
-                reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        step = request.POST.get('step', '1')
+    else:
+        step = request.GET.get('step', '1')
+
+    # Normalize step to int with fallback
+    try:
+        step = int(step)
+    except (TypeError, ValueError):
+        step = 1
+
+    # Constants
+    CODE_EXPIRY_SECONDS = 600  # 10 minutes
+
+    if request.method == 'POST':
+        # STEP 1: Verify username
+        if step == 1:
+            username = (request.POST.get('username') or '').strip()
+            if not username:
+                messages.error(request, 'Please enter your username.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            # Case-insensitive username lookup
+            user = Applicant.objects.filter(username__iexact=username).first()
+            if not user:
+                messages.error(request, 'Username not found. Please check and try again.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            # Only allow regular accounts (with usable password)
+            if not user.has_usable_password():
+                messages.error(request, 'This account is linked to a social login and does not have a password. Please sign in with Google or contact support.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            # Store minimal info in session for subsequent steps
+            request.session['reset_user_id'] = user.id
+            request.session['reset_username'] = user.username
+            request.session['reset_code_verified'] = False
+            # Proceed to Step 2
+            return render(request, 'forgot_password.html', {
+                'step': 2,
+                'username': user.username,
+            })
+
+        # STEP 2: Collect Gmail and send a verification code
+        elif step == 2:
+            reset_user_id = request.session.get('reset_user_id')
+            if not reset_user_id:
+                # Session lost or expired; restart flow
+                messages.warning(request, 'Your session has expired. Please start over.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            # Allow using previously provided gmail for resend
+            gmail = (request.POST.get('gmail') or request.session.get('reset_gmail') or '').strip()
+            # Validate gmail address
+            if not gmail:
+                messages.error(request, 'Please enter your Gmail address.')
+                return render(request, 'forgot_password.html', {'step': 2, 'username': request.session.get('reset_username')})
+
+            if not re.match(r'^[A-Za-z0-9._%+-]+@gmail\.com$', gmail):
+                messages.error(request, 'Please enter a valid @gmail.com address.')
+                return render(request, 'forgot_password.html', {'step': 2, 'username': request.session.get('reset_username')})
+
+            # Generate 6-digit code
+            code = ''.join(random.choices('0123456789', k=6))
+            request.session['reset_gmail'] = gmail
+            request.session['reset_code'] = code
+            request.session['reset_code_created'] = timezone.now().timestamp()
+
+            # Email the verification code
+            subject = 'DLL LMSTC Password Reset Verification Code'
+            message = (
+                f"Hello {request.session.get('reset_username')},\n\n"
+                f"Your verification code is: {code}\n\n"
+                f"This code will expire in 10 minutes. If you did not request this, you can ignore this message.\n\n"
+                f"Best regards,\nDLL LMSTC Team"
             )
-            
-            # Email content
-            subject = 'Password Reset Request - DLL LMSTC'
-            message = f'''
-Hello {user.first_name or user.username},
-
-You have requested to reset your password for your DLL LMSTC account.
-
-Click the link below to reset your password:
-{reset_link}
-
-This link will expire in 1 hour for security reasons.
-
-If you did not request this password reset, please ignore this email.
-
-Best regards,
-DLL LMSTC Team
-            '''
-            
-            # Send email
             try:
                 send_mail(
                     subject,
                     message,
                     settings.EMAIL_HOST_USER,
-                    [email],
+                    [gmail],
                     fail_silently=False,
                 )
-                messages.success(request, f'Password reset link has been sent to {email}. Please check your inbox and spam folder.')
-            except Exception as e:
-                messages.error(request, 'Failed to send email. Please try again later or contact support.')
-                
-        except Applicant.DoesNotExist:
-            # Don't reveal if email exists or not for security
-            messages.success(request, f'If an account with email {email} exists, a password reset link has been sent.')
-            
-        return redirect('forgot_password')
-    
-    return render(request, 'forgot_password.html')
+                messages.success(request, f'A verification code was sent to {gmail}.')
+            except Exception:
+                messages.error(request, 'Failed to send verification code. Please try again later or contact support.')
+                return render(request, 'forgot_password.html', {'step': 2, 'username': request.session.get('reset_username')})
+
+            # Proceed to Step 3
+            return render(request, 'forgot_password.html', {
+                'step': 3,
+                'username': request.session.get('reset_username'),
+                'gmail': gmail,
+            })
+
+        # STEP 3: Verify code
+        elif step == 3:
+            reset_user_id = request.session.get('reset_user_id')
+            if not reset_user_id:
+                messages.warning(request, 'Your session has expired. Please start over.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            code_entered = (request.POST.get('code') or '').strip()
+            stored_code = request.session.get('reset_code')
+            created_ts = request.session.get('reset_code_created')
+
+            if not code_entered:
+                messages.error(request, 'Please enter the verification code sent to your Gmail.')
+                return render(request, 'forgot_password.html', {'step': 3, 'username': request.session.get('reset_username'), 'gmail': request.session.get('reset_gmail')})
+
+            # Expiry check
+            now_ts = timezone.now().timestamp()
+            if not created_ts or (now_ts - float(created_ts)) > CODE_EXPIRY_SECONDS:
+                messages.error(request, 'Verification code has expired. Please request a new code.')
+                return render(request, 'forgot_password.html', {'step': 2, 'username': request.session.get('reset_username')})
+
+            if code_entered != stored_code:
+                messages.error(request, 'Invalid verification code. Please try again.')
+                return render(request, 'forgot_password.html', {'step': 3, 'username': request.session.get('reset_username'), 'gmail': request.session.get('reset_gmail')})
+
+            # Mark verified and proceed to Step 4
+            request.session['reset_code_verified'] = True
+            messages.success(request, 'Verification successful. You can now set a new password.')
+            return render(request, 'forgot_password.html', {
+                'step': 4,
+                'username': request.session.get('reset_username'),
+            })
+
+        # STEP 4: Set new password
+        elif step == 4:
+            reset_user_id = request.session.get('reset_user_id')
+            if not reset_user_id or not request.session.get('reset_code_verified'):
+                messages.warning(request, 'Your session has expired or is invalid. Please start over.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            new_password = request.POST.get('new_password') or ''
+            confirm_password = request.POST.get('confirm_password') or ''
+
+            if new_password != confirm_password:
+                messages.error(request, 'Passwords do not match.')
+                return render(request, 'forgot_password.html', {'step': 4, 'username': request.session.get('reset_username')})
+
+            # Optionally enforce Django's password validators
+            try:
+                user = Applicant.objects.get(pk=reset_user_id)
+            except Applicant.DoesNotExist:
+                messages.error(request, 'Account not found. Please start over.')
+                return render(request, 'forgot_password.html', {'step': 1})
+
+            try:
+                validate_password(new_password, user)
+            except ValidationError as ve:
+                # Join all validator messages
+                messages.error(request, ' '.join(ve.messages))
+                return render(request, 'forgot_password.html', {'step': 4, 'username': request.session.get('reset_username')})
+
+            # Save new password
+            user.set_password(new_password)
+            user.save()
+
+            # Cleanup session state
+            for key in ['reset_user_id', 'reset_username', 'reset_gmail', 'reset_code', 'reset_code_created', 'reset_code_verified']:
+                if key in request.session:
+                    del request.session[key]
+
+            messages.success(request, 'Your password has been reset successfully. You can now log in with your new password.')
+            return redirect('Login')
+
+        # Unknown step -> restart
+        messages.warning(request, 'Invalid step. Please start over.')
+        return render(request, 'forgot_password.html', {'step': 1})
+
+    # GET -> Render the appropriate step based on query param and session state
+    reset_user_id = request.session.get('reset_user_id')
+    reset_username = request.session.get('reset_username')
+    reset_gmail = request.session.get('reset_gmail')
+    reset_verified = request.session.get('reset_code_verified')
+
+    if step == 2 and reset_user_id:
+        return render(request, 'forgot_password.html', {
+            'step': 2,
+            'username': reset_username,
+            'gmail': reset_gmail,
+        })
+    if step == 3 and reset_user_id and reset_gmail:
+        return render(request, 'forgot_password.html', {
+            'step': 3,
+            'username': reset_username,
+            'gmail': reset_gmail,
+        })
+    if step == 4 and reset_user_id and reset_verified:
+        return render(request, 'forgot_password.html', {
+            'step': 4,
+            'username': reset_username,
+        })
+
+    # default to step 1
+    return render(request, 'forgot_password.html', {'step': 1})
 
 def password_reset_confirm(request, uidb64, token):
     try:
@@ -2070,6 +2549,7 @@ def create_program_completion_notification(applicant, program_name):
 @login_required
 def approve_application(request, application_id):
     from datetime import datetime
+    from django.utils import timezone
     application = get_object_or_404(ProgramApplication, id=application_id)
 
     # Get the current batch cycle
@@ -2079,14 +2559,48 @@ def approve_application(request, application_id):
     # Determine application type based on the class
     app_type = 'online' if application.__class__.__name__ == 'ProgramApplication' else 'walkin'
     
+    # Check if there's a corresponding WalkInApplication for the same applicant and program
+    # If found, update its status to 'Approved' to keep them synchronized
+    try:
+        walkin_app = WalkInApplication.objects.filter(
+            applicant=application.applicant,
+            program=application.program,
+            status='Pending'
+        ).first()
+        
+        if walkin_app:
+            walkin_app.status = 'Approved'
+            walkin_app.processed_at = timezone.now()
+            walkin_app.processed_by = request.user
+            walkin_app.save()
+            
+            # Also create ApprovedWalkIn record if it doesn't exist
+            if not ApprovedWalkIn.objects.filter(
+                applicant=walkin_app.applicant,
+                program=walkin_app.program
+            ).exists():
+                ApprovedWalkIn.objects.create(
+                    applicant=walkin_app.applicant,
+                    program=walkin_app.program,
+                    walkin_application=walkin_app,
+                    batch_number=batch_cycle.current_batch,
+                    enrollment_year=current_year
+                )
+    except Exception as e:
+        # Log error but don't fail the approval process
+        print(f"Error syncing walk-in application status: {str(e)}")
+    
     # Get the trainer's current semester for this program
     current_semester = batch_cycle.current_semester  # Default fallback
     try:
-        trainer_profile = TrainerProfile.objects.filter(program=application.program).first()
-        if trainer_profile:
-            semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(trainer_profile.user)
+        from django.db.models import Q
+        trainer_qs = TrainerProfile.objects.filter(
+            Q(programs=application.program) | Q(program=application.program)
+        ).select_related('user')
+        if trainer_qs.exists():
+            semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(trainer_qs.first().user)
             current_semester = semester_settings.active_semester
-    except Exception as e:
+    except Exception:
         # Use batch cycle default if any error occurs
         pass
 
@@ -2358,8 +2872,23 @@ def learner_profile_form(request):
             profile_instance.parent_guardian = request.POST.get('parent_guardian', '').upper()
             profile_instance.permanent_address = request.POST.get('permanent_address', '').upper()
             
-            # Handle course info
-            profile_instance.course_or_qualification = request.POST.get('course_or_qualification', '').upper()
+            # Handle course info - force from approved program if available
+            approved_program_name = ''
+            try:
+                if request.user.is_authenticated:
+                    reg = ApprovedApplicant.objects.filter(applicant=request.user, status='active').order_by('-approved_at').first()
+                    walk = ApprovedWalkIn.objects.filter(applicant=request.user, status='active').order_by('-approved_at').first()
+                    candidates = []
+                    if reg and reg.program:
+                        candidates.append((reg.approved_at, reg.program.program_name))
+                    if walk and walk.program:
+                        candidates.append((walk.approved_at, walk.program.program_name))
+                    if candidates:
+                        approved_program_name = max(candidates, key=lambda x: x[0])[1]
+            except Exception:
+                approved_program_name = ''
+            # Save only the approved program name; leave blank if none
+            profile_instance.course_or_qualification = approved_program_name.upper() if approved_program_name else ''
             profile_instance.scholarship_package = request.POST.get('scholarship_package', '').upper()
             
             # Handle educational attainment
@@ -2428,88 +2957,170 @@ def learner_profile_form(request):
             pass
     
     # GET request - show empty form
+    # Build educational options from DB or provide sensible defaults
+    try:
+        db_edu = list(EducationalAttainment.objects.values_list('name', flat=True))
+    except Exception:
+        db_edu = []
+    default_edu = [
+        'No Formal Education',
+        'Kindergarten',
+        'Elementary',
+        'Junior High School',
+        'Senior High School',
+        'ALS Graduate',
+        'TVET/Vocational',
+        'College Undergraduate',
+        'College Graduate',
+        'Postgraduate (Master’s/Doctorate)'
+    ]
+    educational_options = db_edu if db_edu else default_edu
+
+    # Prefill course as a single read-only name from latest approved program (include walk-ins)
+    approved_program_name = ''
+    try:
+        if request.user.is_authenticated:
+            reg = ApprovedApplicant.objects.select_related('program').filter(applicant=request.user, status='active').order_by('-approved_at').first()
+            walk = ApprovedWalkIn.objects.select_related('program').filter(applicant=request.user, status='active').order_by('-approved_at').first()
+            candidates = []
+            if reg and reg.program:
+                candidates.append((reg.approved_at, reg.program.program_name))
+            if walk and walk.program:
+                candidates.append((walk.approved_at, walk.program.program_name))
+            if candidates:
+                approved_program_name = max(candidates, key=lambda x: x[0])[1]
+    except Exception:
+        approved_program_name = ''
+
     context = {
         'classifications': ClientClassification.objects.all(),
         'disability_types': DisabilityType.objects.all(),
         'disability_causes': DisabilityCause.objects.all(),
+        'educational_options': educational_options,
+        'approved_program_name': approved_program_name,
     }
     return render(request, 'registration_f1.html', context)
 
 
-def walkin_step1_registration(request):
-    """Handle walk-in step 1 registration - create user and apply to program"""
-    if request.method == 'POST':
-        try:
-            # Get basic info from step 1
-            first_name = request.POST.get('first_name', '').strip()
-            last_name = request.POST.get('last_name', '').strip()
-            middle_name = request.POST.get('middle_name', '').strip()
-            program_id = request.POST.get('selected_program')
-            
-            if not first_name or not last_name or not program_id:
-                return JsonResponse({
-                    'success': False,
-                    'error': "First name, last name, and program selection are required."
-                })
-            
-            # Generate username (fullname with no spaces)
-            username = f"{first_name.lower()}{middle_name.lower()}{last_name.lower()}".replace(' ', '')
-            
-            # Check if username already exists, add number if needed
-            base_username = username
-            counter = 1
-            while Applicant.objects.filter(username=username).exists():
-                username = f"{base_username}{counter}"
-                counter += 1
-            
-            # Create basic user account
-            user = Applicant.objects.create_user(
-                username=username,
-                email=f"{username}@walkin.local",
-                password='DLLlmstc',
-                first_name=first_name,
-                last_name=last_name
-            )
-            
-            # Get the program and create application using apply_program logic
-            program = get_object_or_404(Programs, id=program_id)
-            
-            # Create program application
-            application = ProgramApplication.objects.create(applicant=user, program=program)
-            
-            # Create walk-in application for tracking
-            from .models import WalkInApplication
-            from django.utils import timezone
-            from django.db import models
-            today = timezone.now().date()
-            last_queue = WalkInApplication.objects.filter(
-                applied_at__date=today
-            ).aggregate(models.Max('queue_number'))['queue_number__max']
-            next_queue = (last_queue or 0) + 1
-            
-            WalkInApplication.objects.create(
-                applicant=user,
-                program=program,
-                status='Pending',
-                queue_number=next_queue,
-                processed_by=request.user if request.user.is_authenticated else None
-            )
-            
-            # Return success with redirect URL to form.html
-            return JsonResponse({
-                'success': True,
-                'username': username,
-                'password': 'DLLlmstc',
-                'redirect_url': f'/learner_form/?walkin=true&username={username}'
-            })
-            
-        except Exception as e:
+@staff_member_required
+@login_required
+@csrf_exempt
+def create_walkin_account(request):
+    """
+    API used by the admin dashboard Walk-in modal (Step 1).
+    Creates a basic Applicant account from a full name and returns credentials.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body or '{}')
+        full_name = data.get('full_name', '').strip()
+
+        if not full_name:
+            return JsonResponse({'success': False, 'message': 'Full name is required.'}, status=400)
+
+        # Naive split of full name into parts
+        parts = full_name.split()
+        first_name = parts[0]
+        last_name = parts[-1] if len(parts) > 1 else ''
+        middle_name = ' '.join(parts[1:-1]) if len(parts) > 2 else ''
+
+        # Generate base username from all parts, lowercase, no spaces
+        base_username = ''.join(p.lower() for p in parts) or 'walkinuser'
+        username = base_username
+        counter = 1
+        while Applicant.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        # Create the Applicant user with default password
+        default_password = 'lmstc'
+        user = Applicant.objects.create_user(
+            username=username,
+            email=f"{username}@walkin.local",
+            password=default_password,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'applicant_id': user.id,
+            'username': username,
+            'password': default_password,
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@staff_member_required
+@login_required
+@csrf_exempt
+def apply_walkin_program(request):
+    """
+    API used by the admin dashboard Walk-in modal (Step 2).
+    Attaches a selected program to an existing walk-in applicant, creating both
+    ProgramApplication and WalkInApplication and returning queue information.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body or '{}')
+        applicant_id = data.get('applicant_id')
+        program_id = data.get('program_id')
+
+        if not applicant_id or not program_id:
             return JsonResponse({
                 'success': False,
-                'error': str(e)
-            })
-    
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+                'message': 'Applicant ID and program ID are required.'
+            }, status=400)
+
+        applicant = get_object_or_404(Applicant, id=applicant_id)
+        program = get_object_or_404(Programs, id=program_id)
+
+        # Create regular program application (to appear in main applicant table)
+        application, _created = ProgramApplication.objects.get_or_create(
+            applicant=applicant,
+            program=program,
+            defaults={'status': 'Pending'}
+        )
+
+        # Create or update WalkInApplication with next queue number for today
+        from django.utils import timezone
+        from django.db import models
+        today = timezone.now().date()
+        last_queue = WalkInApplication.objects.filter(
+            applied_at__date=today
+        ).aggregate(models.Max('queue_number'))['queue_number__max']
+        next_queue = (last_queue or 0) + 1
+
+        walkin_app, _ = WalkInApplication.objects.get_or_create(
+            applicant=applicant,
+            program=program,
+            defaults={
+                'status': 'Pending',
+                'queue_number': next_queue,
+                'processed_by': request.user,
+            }
+        )
+
+        # If record existed without queue_number, ensure it is set
+        if walkin_app.queue_number is None:
+            walkin_app.queue_number = next_queue
+            walkin_app.processed_by = walkin_app.processed_by or request.user
+            walkin_app.save()
+
+        return JsonResponse({
+            'success': True,
+            'application_id': application.id,
+            'queue_number': walkin_app.queue_number,
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 
 def walkin_registration(request):
@@ -2540,7 +3151,7 @@ def walkin_registration(request):
             user = Applicant.objects.create_user(
                 username=username,
                 email=request.POST.get('email', f"{username}@walkin.local"),
-                password='DLLlmstc',
+                password='lmstc',
                 first_name=first_name,
                 last_name=last_name
             )
@@ -2638,7 +3249,7 @@ def walkin_registration(request):
                 next_queue = (last_queue or 0) + 1
                 
                 # Create walk-in application
-                WalkInApplication.objects.create(
+                walkin_app = WalkInApplication.objects.create(
                     applicant=user,
                     program=program,
                     status='Pending',
@@ -2647,11 +3258,23 @@ def walkin_registration(request):
                 )
                 
                 # Also create regular program application so the name appears in the main table
-                ProgramApplication.objects.create(
+                program_application = ProgramApplication.objects.create(
                     applicant=user,
                     program=program,
                     status='Pending'
                 )
+                
+                # Notify all admin users in-app that a walk-in learner has completed their profile
+                admin_users = User.objects.filter(is_staff=True, is_superuser=True)
+                full_name_display = f"{first_name} {middle_name} {last_name}".strip() or user.username
+                for admin in admin_users:
+                    Notification.objects.create(
+                        recipient=admin,
+                        sender=user,
+                        notification_type='walkin',
+                        title=f"Walk-in Profile Completed: {program.program_name}",
+                        message=f"{full_name_display} has completed the Learner's Profile Form for {program.program_name}."
+                    )
                 
                 # Check if this is an AJAX request
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -2665,7 +3288,7 @@ def walkin_registration(request):
                 # Store credentials in session for display
                 request.session['walkin_credentials'] = {
                     'username': username,
-                    'password': 'DLLlmstc',
+                    'password': 'lmstc',
                     'full_name': f"{first_name} {middle_name} {last_name}".strip()
                 }
                 
@@ -4058,14 +4681,15 @@ def add_program(request):
                 return redirect('Dashboard_admin')
             
             # Parse skills/competencies from JSON
-            program_competencies = []
+            # Default to an object to match expected mapping structure
+            program_competencies = {}
             if program_competencies_json:
                 try:
                     import json
                     program_competencies = json.loads(program_competencies_json)
                 except json.JSONDecodeError:
-                    # If JSON parsing fails, treat as empty list
-                    program_competencies = []
+                    # If JSON parsing fails, treat as empty mapping
+                    program_competencies = {}
             
             # Create the program
             program = Programs.objects.create(
@@ -4112,13 +4736,14 @@ def edit_program(request, program_id):
                 return redirect('Dashboard_admin')
             
             # Parse skills/competencies from JSON
-            program_competencies = []
+            # Default to an object to match expected mapping structure
+            program_competencies = {}
             if program_competencies_json:
                 try:
                     import json
                     program_competencies = json.loads(program_competencies_json)
                 except json.JSONDecodeError:
-                    program_competencies = []
+                    program_competencies = {}
             
             # Update program fields
             program.program_name = program_name
@@ -4176,20 +4801,61 @@ def approve_walkin(request, application_id):
     """Approve a walk-in application"""
     if request.method == 'POST':
         try:
+            from datetime import datetime
             # Get the walk-in application
             walkin_app = get_object_or_404(WalkInApplication, id=application_id)
             
             # Update status to Approved
             walkin_app.status = 'Approved'
             walkin_app.processed_at = timezone.now()
+            walkin_app.processed_by = request.user
             walkin_app.save()
             
-            # Create ApprovedWalkIn record
-            ApprovedWalkIn.objects.create(
+            # Check if there's a corresponding ProgramApplication for the same applicant and program
+            # If found, update its status to 'Accepted' to keep them synchronized
+            try:
+                program_app = ProgramApplication.objects.filter(
+                    applicant=walkin_app.applicant,
+                    program=walkin_app.program,
+                    status='Pending'
+                ).first()
+                
+                if program_app:
+                    program_app.status = 'Accepted'
+                    program_app.save()
+            except Exception as e:
+                # Log error but don't fail the approval process
+                print(f"Error syncing program application status: {str(e)}")
+            
+            # Get the current batch cycle
+            batch_cycle = BatchCycle.get_active_cycle()
+            current_year = datetime.now().year
+            
+            # Create ApprovedWalkIn record if it doesn't exist
+            if not ApprovedWalkIn.objects.filter(
                 applicant=walkin_app.applicant,
-                program=walkin_app.program,
-                walkin_application=walkin_app
-            )
+                program=walkin_app.program
+            ).exists():
+                ApprovedWalkIn.objects.create(
+                    applicant=walkin_app.applicant,
+                    program=walkin_app.program,
+                    walkin_application=walkin_app,
+                    batch_number=batch_cycle.current_batch,
+                    enrollment_year=current_year
+                )
+            
+            # Also create ApprovedApplicant record for consistency
+            if not ApprovedApplicant.objects.filter(
+                applicant=walkin_app.applicant,
+                program=walkin_app.program
+            ).exists():
+                ApprovedApplicant.objects.create(
+                    applicant=walkin_app.applicant,
+                    program=walkin_app.program,
+                    application_type='walkin',
+                    batch_number=batch_cycle.current_batch,
+                    enrollment_year=current_year
+                )
             
             return JsonResponse({
                 'success': True,
@@ -4475,12 +5141,57 @@ def process_bulk_approval(request):
                     
                     if original_app:
                         if dms_approval.application_type == 'program':
-                            # Use existing approve_application logic
+                            # Check if there's a corresponding WalkInApplication for the same applicant and program
+                            # If found, update its status to 'Approved' to keep them synchronized
+                            try:
+                                walkin_app = WalkInApplication.objects.filter(
+                                    applicant=original_app.applicant,
+                                    program=original_app.program,
+                                    status='Pending'
+                                ).first()
+                                
+                                if walkin_app:
+                                    walkin_app.status = 'Approved'
+                                    walkin_app.processed_at = timezone.now()
+                                    walkin_app.processed_by = request.user
+                                    walkin_app.save()
+                                    
+                                    # Also create ApprovedWalkIn record if it doesn't exist
+                                    if not ApprovedWalkIn.objects.filter(
+                                        applicant=walkin_app.applicant,
+                                        program=walkin_app.program
+                                    ).exists():
+                                        ApprovedWalkIn.objects.create(
+                                            applicant=walkin_app.applicant,
+                                            program=walkin_app.program,
+                                            walkin_application=walkin_app,
+                                            batch_number=batch_cycle.current_batch,
+                                            enrollment_year=current_year
+                                        )
+                            except Exception as e:
+                                # Log error but don't fail the approval process
+                                print(f"Error syncing walk-in application status in bulk approval: {str(e)}")
+                            
+                            # Determine current semester from assigned trainer for this program
+                            current_semester = batch_cycle.current_semester
+                            try:
+                                from django.db.models import Q
+                                trainer_qs = TrainerProfile.objects.filter(
+                                    Q(programs=original_app.program) | Q(program=original_app.program)
+                                ).select_related('user')
+                                if trainer_qs.exists():
+                                    semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(trainer_qs.first().user)
+                                    current_semester = semester_settings.active_semester
+                            except Exception:
+                                pass
+
+                            # Create approved applicant with semester recorded
                             ApprovedApplicant.objects.create(
                                 applicant=original_app.applicant,
                                 program=original_app.program,
                                 batch_number=batch_cycle.current_batch,
-                                enrollment_year=current_year
+                                enrollment_year=current_year,
+                                enrollment_semester=current_semester
                             )
                             
                             # Create notification
@@ -4555,28 +5266,55 @@ def decline_walkin(request, application_id):
         try:
             # Get the walk-in application
             walkin_app = get_object_or_404(WalkInApplication, id=application_id)
-            
-            # Get decline reason from request
-            decline_reason = request.POST.get('reason', 'No reason provided')
+
+            # Support both JSON (AJAX) and regular form POST payloads
+            decline_reason = 'No reason provided'
+            if request.content_type == 'application/json':
+                try:
+                    data = json.loads(request.body or '{}')
+                    decline_reason = data.get('reason') or decline_reason
+                except Exception:
+                    pass
+            else:
+                decline_reason = request.POST.get('decline_reason') or request.POST.get('reason', decline_reason)
             
             # Update status to Declined
             walkin_app.status = 'Declined'
             walkin_app.decline_reason = decline_reason
             walkin_app.processed_at = timezone.now()
             walkin_app.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Walk-in application for {walkin_app.applicant.get_full_name()} has been declined.'
-            })
+
+            # Create notification for the applicant similar to regular application decline
+            Notification.objects.create(
+                recipient=walkin_app.applicant,
+                sender=request.user if request.user.is_authenticated else None,
+                notification_type='rejection',
+                title=f"Walk-in Application Status: {walkin_app.program.program_name}",
+                message=f"Your walk-in application for {walkin_app.program.program_name} was declined. Reason: {decline_reason}"
+            )
+
+            # Respond appropriately based on request type
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Walk-in application for {walkin_app.applicant.get_full_name()} has been declined.'
+                })
+
+            messages.info(request, f"Walk-in application for {walkin_app.applicant.get_full_name()} has been declined.")
+            return redirect('Dashboard_admin')
             
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'message': f'Error declining walk-in application: {str(e)}'
-            })
+            if request.content_type == 'application/json':
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Error declining walk-in application: {str(e)}'
+                })
+            messages.error(request, f"Error declining walk-in application: {str(e)}")
+            return redirect('Dashboard_admin')
     
-    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    if request.content_type == 'application/json':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    return redirect('Dashboard_admin')
 
 
 
@@ -5484,7 +6222,11 @@ def get_ticket_details(request, ticket_id):
         })
     
     try:
-        ticket = get_object_or_404(SupportTicket, ticket_id=ticket_id, created_by=request.user)
+        # Admin/staff can view all tickets, regular users can only view their own
+        if request.user.is_staff or request.user.is_superuser:
+            ticket = get_object_or_404(SupportTicket, ticket_id=ticket_id)
+        else:
+            ticket = get_object_or_404(SupportTicket, ticket_id=ticket_id, created_by=request.user)
         
         # Get responses for this ticket
         responses = TicketResponse.objects.filter(ticket=ticket).order_by('created_at')
@@ -5499,6 +6241,11 @@ def get_ticket_details(request, ticket_id):
                 'attachment': response.attachment.url if response.attachment else None
             })
         
+        # Get created_by name
+        created_by_name = ticket.created_by.get_full_name() if ticket.created_by else 'N/A'
+        if not created_by_name or created_by_name.strip() == '':
+            created_by_name = ticket.created_by.username if ticket.created_by else 'N/A'
+        
         ticket_data = {
             'ticket_id': ticket.ticket_id,
             'subject': ticket.subject,
@@ -5508,6 +6255,7 @@ def get_ticket_details(request, ticket_id):
             'recipient': ticket.get_recipient_display(),
             'status': ticket.get_status_display(),
             'created_at': ticket.created_at.strftime('%Y-%m-%d %H:%M'),
+            'created_by': created_by_name,
             'attachment': ticket.attachment.url if ticket.attachment else None,
             'responses': responses_data,
             'admin_response': ticket.admin_response,

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESDA Learners Profile Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border: 2px solid #000;
+        }
+        
+        /* Header Section */
+        .header {
+            display: flex;
+            border-bottom: 2px solid #000;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo-section {
+            min-width: 100px;
+            width: 100px;
+            height: 100px;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+        }
+        
+        .logo-section img {
+            max-width: 90px;
+            max-height: 90px;
+        }
+        
+        .logo-placeholder {
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .header-text {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .header-text h2 {
+            color: #0066cc;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .header-text p {
+            color: #0066cc;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        
+        .form-info {
+            text-align: right;
+            min-width: 100px;
+        }
+        
+        .form-info div {
+            font-size: 11px;
+            margin: 3px 0;
+        }
+        
+        /* Form Title */
+        .form-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #0066cc;
+            margin: 20px 0;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        
+        /* ID Picture Box */
+        .id-picture-box {
+            float: right;
+            width: 120px;
+            height: 140px;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0 15px 15px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        
+        .id-picture-box span {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Section Styles */
+        .section {
+            clear: both;
+            margin: 15px 0;
+            border: 1px solid #000;
+        }
+        
+        .section-header {
+            background-color: #e6e6e6;
+            padding: 8px 10px;
+            font-weight: bold;
+            font-size: 12px;
+            border-bottom: 1px solid #000;
+            color: #0066cc;
+        }
+        
+        .section-content {
+            padding: 15px;
+        }
+        
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .form-row.two-col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .form-row.four-col {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-size: 10px;
+            margin-bottom: 3px;
+            font-weight: normal;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            padding: 6px;
+            border: 1px solid #000;
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 40px;
+        }
+        
+        /* Checkbox and Radio Styles */
+        .checkbox-group,
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .checkbox-group.full-width,
+        .radio-group.full-width {
+            grid-template-columns: 1fr;
+        }
+        
+        .checkbox-item,
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+        }
+        
+        .checkbox-item input[type="checkbox"],
+        .radio-item input[type="radio"] {
+            cursor: pointer;
+        }
+        
+        /* Table Styles */
+        .classification-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        
+        .classification-table th,
+        .classification-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            font-size: 11px;
+            text-align: left;
+        }
+        
+        .classification-table th {
+            background-color: #e6e6e6;
+            font-weight: bold;
+        }
+        
+        .classification-table input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        
+        /* Utility Classes */
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER SECTION -->
+        <div class="header">
+            <div class="logo-section">
+                <!-- ADD TESDA LOGO HERE: Replace the div below with <img src="your_logo_path.png" alt="TESDA Logo"> -->
+                <!-- <div class="logo-placeholder">Logo Area</div> -->
+                <img src="D:\Download\tesda.png" alt="tesda">
+            </div>
+            
+            <div class="header-text">
+                <h2>Technical Education and Skills Development Authority</h2>
+                <p>Pangalawaan sa Edukasyong Teknikal at Pagpapaunlad ng Kasanayan</p>
+            </div>
+            
+            <div class="form-info">
+                <div><strong>MIS 03 - 01</strong></div>
+                <div><strong>NCR 2020</strong></div>
+            </div>
+        </div>
+        
+        <!-- FORM TITLE -->
+        <div class="form-title">LEARNERS PROFILE FORM</div>
+        
+        <!-- ID PICTURE BOX -->
+        <div class="id-picture-box">
+            <span>ID Picture</span>
+        </div>
+        
+        <!-- SECTION 1: T2MIS AUTO GENERATED -->
+        <div class="section">
+            <div class="section-header">1. T2MIS Auto Generated</div>
+            <div class="section-content">
+                <div class="form-row two-col">
+                    <div class="input-group">
+                        <label for="uli">1.1. Unique Learner Identifier (ULI) Number:</label>
+                        <input type="text" id="uli" name="uli" style="letter-spacing: 2px;">
+                    </div>
+                    <div class="input-group">
+                        <label for="entry_date">1.2. Entry Date:</label>
+                        <input type="date" id="entry_date" name="entry_date">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 2: LEARNER/MANPOWER PROFILE -->
+        <div class="section">
+            <div class="section-header">2. Learner/Manpower Profile</div>
+            <div class="section-content">
+                <!-- Name -->
+                <div class="form-group">
+                    <label>2.1. Name:</label>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Last Name, Extension Name (Jr., Sr.)</label>
+                            <input type="text" name="last_name">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">First Name</label>
+                            <input type="text" name="first_name">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Middle Name</label>
+                            <input type="text" name="middle_name">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Complete Permanent Mailing Address -->
+                <div class="form-group">
+                    <label>2.2. Complete Permanent Mailing Address:</label>
+                    <div class="input-group" style="margin-bottom: 10px;">
+                        <label style="font-weight: normal; font-size: 10px;">House No., Street, Subdivision/Purok</label>
+                        <input type="text" name="address_1">
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Barangay</label>
+                            <input type="text" name="barangay">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">District</label>
+                            <input type="text" name="district">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">City/Municipality</label>
+                            <input type="text" name="city_municipality">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Province</label>
+                            <input type="text" name="province">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Region</label>
+                            <input type="text" name="region">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Information -->
+                <div class="form-row">
+                    <div class="input-group">
+                        <label style="font-weight: normal; font-size: 10px;">Email Address/Facebook Account:</label>
+                        <input type="email" name="email">
+                    </div>
+                    <div class="input-group">
+                        <label style="font-weight: normal; font-size: 10px;">Contact No:</label>
+                        <input type="text" name="contact_no">
+                    </div>
+                    <div class="input-group">
+                        <label style="font-weight: normal; font-size: 10px;">Nationality:</label>
+                        <input type="text" name="nationality">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 3: PERSONAL INFORMATION -->
+        <div class="section">
+            <div class="section-header">3. Personal Information</div>
+            <div class="section-content">
+                <div class="form-row">
+                    <!-- Sex -->
+                    <div class="input-group">
+                        <label>3.1. Sex:</label>
+                        <div class="radio-group full-width">
+                            <div class="radio-item">
+                                <input type="radio" id="male" name="sex" value="male">
+                                <label for="male" style="margin: 0; font-weight: normal;">Male</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="female" name="sex" value="female">
+                                <label for="female" style="margin: 0; font-weight: normal;">Female</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Civil Status -->
+                    <div class="input-group">
+                        <label>3.2. Civil Status:</label>
+                        <div class="radio-group full-width">
+                            <div class="radio-item">
+                                <input type="radio" id="single" name="civil_status" value="single">
+                                <label for="single" style="margin: 0; font-weight: normal;">Single</label>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" id="married" name="civil_status" value="married">
+                                <label for="married" style="margin: 0; font-weight: normal;">Married</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Employment Status -->
+                    <div class="input-group">
+                        <label>3.3. Employment Status (before the training):</label>
+                        <div class="checkbox-group full-width">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="employed" name="employment_status" value="employed">
+                                <label for="employed" style="margin: 0; font-weight: normal;">Employed - Monthly Income:</label>
+                            </div>
+                            <div style="margin-left: 25px;">
+                                <input type="text" name="monthly_income" style="width: 150px;">
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="unemployed" name="employment_status" value="unemployed">
+                                <label for="unemployed" style="margin: 0; font-weight: normal;">Unemployed</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="date_hired" name="employment_status" value="date_hired">
+                                <label for="date_hired" style="margin: 0; font-weight: normal;">Date Hired:</label>
+                            </div>
+                            <div style="margin-left: 25px;">
+                                <input type="date" name="date_hired_input" style="width: 150px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Birthdate -->
+                <div class="form-group">
+                    <label>3.4. Birthdate:</label>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Month of Birth</label>
+                            <input type="number" name="month_birth" min="1" max="12" placeholder="MM">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Day of Birth</label>
+                            <input type="number" name="day_birth" min="1" max="31" placeholder="DD">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Year of Birth</label>
+                            <input type="number" name="year_birth" placeholder="YYYY">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Birthplace -->
+                <div class="form-group">
+                    <label>3.5. Birthplace:</label>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">City/Municipality</label>
+                            <input type="text" name="birthplace_city">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Province</label>
+                            <input type="text" name="birthplace_province">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Region</label>
+                            <input type="text" name="birthplace_region">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Educational Attainment -->
+                <div class="form-group">
+                    <label>3.6. Educational Attainment Before the Training (Trainee):</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="no_grade">
+                            <label style="font-weight: normal;">No Grade Completed</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="preschool">
+                            <label style="font-weight: normal;">Pre-School (Nursery/Kinder/Prep)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="elem_undergrad">
+                            <label style="font-weight: normal;">Elementary Undergraduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="postsec_undergrad">
+                            <label style="font-weight: normal;">Post Secondary Undergraduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="elem_grad">
+                            <label style="font-weight: normal;">Elementary Graduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="postsec_grad">
+                            <label style="font-weight: normal;">Post Secondary Graduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="hs_undergrad">
+                            <label style="font-weight: normal;">High School Undergraduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="hs_grad">
+                            <label style="font-weight: normal;">High School Graduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="college_undergrad">
+                            <label style="font-weight: normal;">College Undergraduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="college_grad">
+                            <label style="font-weight: normal;">College Graduate or Higher</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="juniorhigh_grad">
+                            <label style="font-weight: normal;">Junior High Graduate</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="education" value="seniorhigh_grad">
+                            <label style="font-weight: normal;">Senior High Graduate</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Parent/Guardian -->
+                <div class="form-group">
+                    <label>3.7. Parent/Guardian:</label>
+                    <div class="form-row two-col">
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Name</label>
+                            <input type="text" name="guardian_name">
+                        </div>
+                        <div class="input-group">
+                            <label style="font-weight: normal; font-size: 10px;">Complete Permanent Mailing Address</label>
+                            <input type="text" name="guardian_address">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 4: LEARNER/TRAINEE/STUDENT (CLIENTS) CLASSIFICATION -->
+        <div class="section">
+            <div class="section-header">4. Learner/Trainee/Student (Clients) Classification:</div>
+            <div class="section-content">
+                <table class="classification-table">
+                    <tbody>
+                        <tr>
+                            <td colspan="3" style="background-color: #e6e6e6; font-weight: bold;">Classification Categories</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="4ps_beneficiary">
+                                <label>4Ps Beneficiary</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="agrarian_reform">
+                                <label>Agrarian Reform Beneficiary</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="balik_probinsya">
+                                <label>Balik Probinsya</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="displaced_workers">
+                                <label>Displaced Workers</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="drug_dependents">
+                                <label>Drug Dependents Surrenderees/Surrenderers</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="family_afp_pnp">
+                                <label>Family Members of AFP and PNP Killed-in-Action</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="family_afp_pnp_wounded">
+                                <label>Family Members of AFP and PNP Wounded-in-Action</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="farmers_fishermen">
+                                <label>Farmers and Fishermen</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="indigenous_people">
+                                <label>Indigenous People & Cultural Communities</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="industry_workers">
+                                <label>Industry Workers</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="inmates_detainees">
+                                <label>Inmates and Detainees</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="milf_beneficiary">
+                                <label>MILF Beneficiary</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="out_school_youth">
+                                <label>Out-of-School-Youth</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="ofw_dependents">
+                                <label>Overseas Filipino Workers (OFW) Dependents</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="rcef_resp">
+                                <label>RCEF-RESP</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="rebel">
+                                <label>Rebel Returnees/Decommissioned</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="repatriated_ofw">
+                                <label>Repatriated Overseas Filipino Workers (OFW)</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="student">
+                                <label>Student</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="tesda_alumni">
+                                <label>TESDA Alumni</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="tvet_trainers">
+                                <label>TVET Trainers</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="uniformed_personnel">
+                                <label>Uniformed Personnel</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="classification" value="victims_natural_disasters">
+                                <label>Victim of Natural Disasters and Calamities</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="wounded_afp_pnp">
+                                <label>Wounded-in-Action AFP & PNP Personnel</label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="classification" value="others">
+                                <label>Others:</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3">
+                                <input type="text" name="others_classification" style="width: 100%;">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- SECTION 5: TYPE OF DISABILITY -->
+        <div class="section">
+            <div class="section-header">5. Type of Disability (for Persons with Disability Only): To be filled up by the LMSTC personnel</div>
+            <div class="section-content">
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="mental_intellectual">
+                        <label style="font-weight: normal;">Mental/Intellectual</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="visual">
+                        <label style="font-weight: normal;">Visual Disability</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="hearing">
+                        <label style="font-weight: normal;">Hearing Disability</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="speech">
+                        <label style="font-weight: normal;">Speech Impairment</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="psycho_social">
+                        <label style="font-weight: normal;">Psycho-social Disability</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="orthopedic">
+                        <label style="font-weight: normal;">Orthopedic (Musculoskeletal) Disability</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="learning">
+                        <label style="font-weight: normal;">Learning Disability</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="multiple">
+                        <label style="font-weight: normal;">Multiple Disabilities, specify:</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_type" value="chronic_illness">
+                        <label style="font-weight: normal;">Disability Due to Chronic Illness</label>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <input type="text" name="multiple_disabilities_specify" placeholder="Specify multiple disabilities">
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 6: CAUSES OF DISABILITY -->
+        <div class="section">
+            <div class="section-header">6. Causes of Disability (for Persons with Disability Only): To be filled up by the LMSTC personnel</div>
+            <div class="section-content">
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_cause" value="congenital">
+                        <label style="font-weight: normal;">Congenital/Inborn</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_cause" value="illness">
+                        <label style="font-weight: normal;">Illness</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="disability_cause" value="injury">
+                        <label style="font-weight: normal;">Injury</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 7: NAME OF COURSE/QUALIFICATION -->
+        <div class="section">
+            <div class="section-header">7. Name of Course/Qualification</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <input type="text" name="course_name" style="width: 100%; padding: 10px; border: 1px solid #000;">
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 8: SCHOLARSHIP PACKAGE -->
+        <div class="section">
+            <div class="section-header">8. If Scholar, What Type of Scholarship Package (TWSP, PESFA, STEP, others)?</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <input type="text" name="scholarship_package" style="width: 100%; padding: 10px; border: 1px solid #000;">
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 9: PRIVACY DISCLAIMER -->
+        <div class="section">
+            <div class="section-header">9. Privacy Disclaimer</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <p style="font-size: 11px; line-height: 1.6; margin-bottom: 15px; font-style: italic;">
+                        I hereby allow TESDA to use/post my contact details, name, email, cellphone/landline nos. and other information I provided which may be used for processing of my scholarship application, for employment opportunities and for the survey of TESDA programs.
+                    </p>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <div class="checkbox-item" style="justify-content: center; gap: 20px;">
+                            <div>
+                                <input type="radio" id="agree" name="privacy_consent" value="agree">
+                                <label for="agree" style="font-weight: normal; margin: 0;">Agree</label>
+                            </div>
+                            <div>
+                                <input type="radio" id="disagree" name="privacy_consent" value="disagree">
+                                <label for="disagree" style="font-weight: normal; margin: 0;">Disagree</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION 10: APPLICANT'S SIGNATURE -->
+        <div class="section">
+            <div class="section-header">10. Applicant's Signature</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <p style="font-size: 11px; text-align: center; font-style: italic; margin-bottom: 25px;">
+                        This is to certify that the information stated above is true and correct.
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 40px;">
+                        <!-- Applicant Signature Section -->
+                        <div>
+                            <div style="border-bottom: 1px solid #000; height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px;">
+                                <span style="font-size: 11px; color: #999;">Signature here</span>
+                            </div>
+                            <div style="text-align: center; font-size: 10px; font-weight: bold;">APPLICANT'S SIGNATURE OVER PRINTED NAME</div>
+                        </div>
+                        
+                        <!-- Date Section -->
+                        <div>
+                            <div style="border-bottom: 1px solid #000; height: 80px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 10px;">
+                                <span style="font-size: 11px; color: #999;">Date here</span>
+                            </div>
+                            <div style="text-align: center; font-size: 10px; font-weight: bold;">DATE ACCOMPLISHED</div>
+                        </div>
+                        
+                        <!-- Photo/Thumbmark Section -->
+                        <div>
+                            <div style="border: 2px solid #000; height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; background-color: #f9f9f9;">
+                                <span style="font-size: 10px; text-align: center; color: #999;">1x1 picture taken within the last 6 months</span>
+                            </div>
+                            <div style="text-align: center; font-size: 10px; font-weight: bold;">1x1 Picture or Right Thumbmark</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Noted By Section -->
+                <div class="form-group" style="margin-top: 50px; border-top: 1px solid #000; padding-top: 20px;">
+                    <p style="font-size: 11px; margin-bottom: 20px;">Noted by:</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 20px;">
+                        <!-- Registrar/Administrator Section -->
+                        <div>
+                            <div style="border-bottom: 1px solid #000; height: 70px; margin-bottom: 10px;"></div>
+                            <div style="text-align: center; font-size: 9px;">
+                                <strong>REGISTRAR/SCHOOL ADMINISTRATOR</strong>
+                                <div style="font-size: 8px;">(Signature Over Printed Name)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Received Section -->
+                        <div>
+                            <div style="border-bottom: 1px solid #000; height: 70px; margin-bottom: 10px;"></div>
+                            <div style="text-align: center; font-size: 9px;">
+                                <strong>DATE RECEIVED</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Thumbmark Section -->
+                        <div>
+                            <div style="border: 2px solid #000; height: 70px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; background-color: #f9f9f9;">
+                                <span style="font-size: 10px; color: #999;">Thumbmark</span>
+                            </div>
+                            <div style="text-align: center; font-size: 9px;">
+                                <strong>Right Thumbmark</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

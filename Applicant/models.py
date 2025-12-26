@@ -239,6 +239,24 @@ class Notification(models.Model):
         return f"{self.title} - {self.recipient.username}"
 
 
+class SavedJobMatch(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='saved_job_matches'
+    )
+    job_title = models.CharField(max_length=255)
+    job_url = models.URLField()
+    job_company = models.CharField(max_length=255, blank=True)
+    match_score = models.DecimalField(max_digits=5, decimal_places=2)
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'job_url')
+        ordering = ['-match_score', '-saved_at']
+
+    def __str__(self):
+        return f"{self.job_title} ({self.match_score}%)"
 
 
 class ClientClassification(models.Model):
@@ -346,12 +364,21 @@ class TrainerProfile(models.Model):
     programs = models.ManyToManyField(Programs, related_name='trainers', blank=True)  # Support multiple programs
     # Keep the old 'program' field for backward compatibility during migration
     program = models.ForeignKey(Programs, on_delete=models.SET_NULL, null=True, blank=True, related_name='legacy_trainers')
+    photo = models.ImageField(upload_to='trainer_photos/', null=True, blank=True)
 
     def __str__(self):
         program_names = ', '.join([p.program_name for p in self.programs.all()])
         return f"{self.user} - {program_names if program_names else 'No Programs'}"
     
 
+
+class StaffMember(models.Model):
+    full_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, blank=True)
+    photo = models.ImageField(upload_to='staff_photos/', null=True, blank=True)
+
+    def __str__(self):
+        return self.full_name
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -1050,6 +1077,80 @@ class ActiveSemesterSettings(models.Model):
         return "Ongoing"
 
 
+class TrainerProgramSemesterSetting(models.Model):
+    """Stores per-program semester state for trainers handling multiple programs."""
+
+    trainer = models.ForeignKey(
+        Applicant,
+        on_delete=models.CASCADE,
+        related_name='program_semester_settings',
+        limit_choices_to={'is_staff': True}
+    )
+    program = models.ForeignKey(
+        Programs,
+        on_delete=models.CASCADE,
+        related_name='trainer_semester_settings'
+    )
+    active_semester = models.CharField(
+        max_length=10,
+        choices=ActiveSemesterSettings.SEMESTER_CHOICES,
+        default='1'
+    )
+    semester_status = models.CharField(
+        max_length=20,
+        choices=ActiveSemesterSettings.STATUS_CHOICES,
+        default='ongoing'
+    )
+    completed_semester = models.CharField(
+        max_length=10,
+        choices=ActiveSemesterSettings.SEMESTER_CHOICES,
+        null=True,
+        blank=True
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('trainer', 'program')
+        verbose_name = 'Trainer Program Semester Setting'
+        verbose_name_plural = 'Trainer Program Semester Settings'
+
+    def __str__(self):
+        return f"{self.trainer.username} - {self.program.program_name} (Sem {self.active_semester})"
+
+    @classmethod
+    def get_or_create_for_program(cls, trainer, program):
+        """Fetch helper that mirrors the base ActiveSemesterSettings interface."""
+        return cls.objects.get_or_create(
+            trainer=trainer,
+            program=program,
+            defaults={'active_semester': '1'}
+        )
+
+    def set_semester(self, semester_value):
+        """Update semester and reset completion flags."""
+        self.active_semester = semester_value
+        self.semester_status = 'ongoing'
+        self.completed_semester = None
+        self.completed_at = None
+        self.save()
+
+    def complete_semester(self):
+        """Mark the program-specific semester as completed."""
+        from django.utils import timezone
+        self.semester_status = 'completed'
+        self.completed_semester = self.active_semester
+        self.completed_at = timezone.now()
+        self.save()
+    
+    def get_remark(self):
+        """Get the remark for this trainer's program status"""
+        if self.semester_status == 'completed':
+            semester_map = {'1': '1st', '2': '2nd', '3': '3rd'}
+            return f"{semester_map.get(self.completed_semester, '')} Sem Complete"
+        return "Ongoing"
+
+
 # LMSTC Documents Model for Bulk Operations
 class LMSTC_Documents(models.Model):
     DOCUMENT_TYPE_CHOICES = [
@@ -1074,7 +1175,7 @@ class LMSTC_Documents(models.Model):
     # Document information
     document_name = models.CharField(max_length=255)
     document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPE_CHOICES)
-    document_file = models.FileField(upload_to='lmstc_documents/')
+    document_file = models.FileField(upload_to='lmstc_documents/', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     
     # Categorization

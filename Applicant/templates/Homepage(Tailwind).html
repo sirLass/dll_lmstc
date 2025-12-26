@@ -201,8 +201,11 @@
         }
         
         .enrollment-text {
-            animation: slideRight 20s linear infinite;
-            white-space: nowrap;
+            animation: none;
+            white-space: normal;
+            display: block;
+            width: 100%;
+            text-align: center;
         }
         
         .enrollment-banner:hover .enrollment-text {
@@ -257,7 +260,7 @@
                     <a href="{% url 'Program' %}" class="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
                         <i class="fas fa-rocket mr-2"></i>Apply Now
                     </a>
-                    <a href="{% url 'Login' %}" class="border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg">
+                    <a href="{% url 'LoginSelect' %}" class="border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md hover:shadow-lg">
                         <i class="fas fa-sign-in-alt mr-2"></i>Log In
                     </a>
                 </div>
@@ -294,7 +297,7 @@
                         <a href="{% url 'Program' %}" class="block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold px-6 py-3 rounded-full transition-all duration-300 shadow-lg text-center">
                             <i class="fas fa-rocket mr-2"></i>Apply Now
                         </a>
-                        <a href="{% url 'Login' %}" class="block border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md text-center">
+                        <a href="{% url 'LoginSelect' %}" class="block border-2 border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-md text-center">
                             <i class="fas fa-sign-in-alt mr-2"></i>Log In
                         </a>
                     </div>
@@ -306,19 +309,9 @@
     {% if enrollment_info.is_active and enrollment_info.event %}
     <div class="enrollment-banner fixed top-20 left-0 w-full z-40 py-3 cursor-pointer shadow-lg" onclick="openEnrollmentCountdown()">
         <div class="overflow-hidden">
-            <div class="enrollment-text inline-block">
+            <div class="enrollment-text block w-full text-center">
                 <span class="text-white font-bold text-lg px-8">
                     <i class="fas fa-bullhorn mr-3 animate-pulse"></i>
-                    🎓 ENROLLMENT NOW OPEN! 
-                    <span class="mx-4">|</span>
-                    📅 Starts: {{ enrollment_info.event.start_date }} 
-                    <span class="mx-4">|</span>
-                    ⏰ Ends: {{ enrollment_info.event.end_date }}
-                    <span class="mx-4">|</span>
-                    🎯 {{ enrollment_info.batch_display }}
-                    <span class="mx-4">|</span>
-                    👉 Click here for countdown timer!
-                    <span class="mx-8">•</span>
                     🎓 ENROLLMENT NOW OPEN! 
                     <span class="mx-4">|</span>
                     📅 Starts: {{ enrollment_info.event.start_date }} 

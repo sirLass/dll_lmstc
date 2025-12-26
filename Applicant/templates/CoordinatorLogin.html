@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinator Login - DLL LMSTC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 flex items-center justify-center px-4 py-8">
+    <div class="max-w-5xl w-full relative">
+        <!-- Background decoration -->
+        <div class="absolute -top-10 -left-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-16 -right-8 w-56 h-56 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row rounded-3xl bg-slate-900/80 border border-slate-700 shadow-2xl overflow-hidden">
+            <!-- Left: Login form -->
+            <div class="w-full lg:w-1/2 p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+                <div class="mb-6 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <img src="{% static 'Images/lmstclogo.png' %}" alt="LMSTC Logo" class="h-10 w-10 object-contain">
+                        <div>
+                            <p class="text-xs text-slate-400 uppercase tracking-wide">DLL - LMSTC</p>
+                            <p class="text-sm font-semibold text-slate-100">Coordinator Portal</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'LoginSelect' %}" class="text-xs sm:text-sm text-slate-300 hover:text-white font-medium underline-offset-4 hover:underline">
+                        Switch Login Type
+                    </a>
+                </div>
+
+                <div class="mb-6">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome, Coordinator</h1>
+                    <p class="text-slate-300 text-sm sm:text-base">
+                        Sign in with your staff credentials to manage applicants, programs, and training activities.
+                    </p>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-4 space-y-2">
+                        {% for message in messages %}
+                            <div class="text-sm px-3 py-2 rounded-lg border
+                                        {% if message.tags == 'success' %} bg-emerald-500/10 border-emerald-400 text-emerald-200
+                                        {% elif message.tags == 'error' %} bg-rose-500/10 border-rose-400 text-rose-200
+                                        {% else %} bg-slate-700/60 border-slate-500 text-slate-100{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{% url 'CoordinatorLogin' %}" class="space-y-5">
+                    {% csrf_token %}
+
+                    <!-- Username -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-200 mb-1" for="username">
+                            Username
+                        </label>
+                        <input id="username" name="username" type="text" required
+                               class="w-full px-3 py-2.5 rounded-xl bg-slate-800/80 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+                               placeholder="Enter your username">
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-200 mb-1" for="password">
+                            Password
+                        </label>
+                        <input id="password" name="password" type="password" required
+                               class="w-full px-3 py-2.5 rounded-xl bg-slate-800/80 border border-slate-600 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+                               placeholder="Enter your password">
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs sm:text-sm text-slate-400">
+                        <p>Only authorized staff and coordinators may sign in here.</p>
+                    </div>
+
+                    <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-semibold text-sm shadow-lg hover:from-indigo-600 hover:to-blue-600 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14" />
+                        </svg>
+                        Sign In to Dashboard
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right: Info panel -->
+            <div class="hidden lg:flex w-full lg:w-1/2 bg-gradient-to-br from-indigo-600 via-blue-600 to-slate-900 flex-col justify-between p-8 text-white relative overflow-hidden">
+                <div class="absolute inset-0 opacity-20">
+                    <div class="absolute -top-10 right-10 w-32 h-32 border border-white/40 rounded-full"></div>
+                    <div class="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                </div>
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-bold mb-4">LMSTC Coordinator Portal</h2>
+                    <p class="text-sm text-blue-50/90 mb-6 max-w-md">
+                        Access real-time insights on applications, training batches, and learner progress. Coordinate with trainers and manage program intakes efficiently.
+                    </p>
+                    <ul class="space-y-3 text-sm text-blue-50/95">
+                        <li class="flex items-start space-x-2">
+                            <span class="mt-0.5 text-emerald-300">●</span>
+                            <span>Review and approve applicant submissions.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="mt-0.5 text-emerald-300">●</span>
+                            <span>Monitor enrollment events and batch schedules.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="mt-0.5 text-emerald-300">●</span>
+                            <span>Coordinate with trainers and manage program offerings.</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="relative z-10 text-xs text-blue-100/80 mt-6">
+                    <p>For account or access issues, please contact the system administrator.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

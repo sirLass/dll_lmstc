@@ -288,16 +288,10 @@
                         {% with classes=profile.client_classification.all %}
                             {% if classes %}
                                 {% for c in classes %}
-                                    {% cycle '<tr>' '' '' %}
+                                    {% if forloop.first or forloop.counter0|divisibleby:"3" %}<tr>{% endif %}
                                     <td>✓ {{ c.name }}</td>
-                                    {% cycle '' '' '</tr>' %}
+                                    {% if forloop.counter|divisibleby:"3" or forloop.last %}</tr>{% endif %}
                                 {% endfor %}
-                                {% if classes|length|divisibleby:3|not %}
-                                    {% with remainder=classes|length|add:"-1"|add:"-1" %}
-                                        {% if remainder == 1 %}<td></td><td></td></tr>{% endif %}
-                                        {% if remainder == 2 %}<td></td></tr>{% endif %}
-                                    {% endwith %}
-                                {% endif %}
                             {% else %}
                                 <tr><td colspan="3">None specified</td></tr>
                             {% endif %}

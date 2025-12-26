@@ -1,0 +1,481 @@
+================================================================================
+                    DLL LMSTC PROJECT FLOW DOCUMENTATION
+================================================================================
+
+This document outlines the complete flow of the DLL LMSTC (Learning Management 
+System and Training Center) project, organized by user roles.
+
+================================================================================
+                            USER SIDE (APPLICANT)
+================================================================================
+
+1. LANDING & AUTHENTICATION
+   ──────────────────────────────────────────────────────────────────────────
+   → User accesses the landing page (Home page)
+   → User can browse:
+      - About page (information about the center)
+      - Programs page (view available training programs)
+      - Contact page
+   → User clicks "Register" or "Login"
+   → If new user: Registration process
+      - Fill registration form
+      - Create account with username/email and password
+   → If existing user: Login process
+      - Enter credentials
+      - System authenticates user
+      - Redirect based on user status
+
+2. POST-LOGIN REDIRECTION
+   ──────────────────────────────────────────────────────────────────────────
+   → If user has WalkInApplication but no Learner Profile:
+      - Redirected to Learner Profile Form (multi-step form)
+   → If user is approved applicant:
+      - Redirected to Dashboard
+   → If user is not approved:
+      - Redirected to Homepage_user (public user view)
+
+3. PROGRAM APPLICATION PROCESS
+   ──────────────────────────────────────────────────────────────────────────
+   → User browses available programs
+   → User clicks on a program to view details (Prog_Info_user)
+   → User clicks "Apply" button
+   → System checks:
+      - If user already applied to this program → Show info message
+      - If user has less than 2 approved programs → Allow application
+      - If user has 2 approved programs → Block application
+   → Application submitted:
+      - Creates ProgramApplication record with status "Pending"
+      - Sends notification to admins
+      - Creates notification for applicant
+      - If first application: Redirect to Learner Profile Form
+      - Otherwise: Redirect to Dashboard
+
+4. LEARNER PROFILE FORM (Multi-Step)
+   ──────────────────────────────────────────────────────────────────────────
+   → Step 1: Personal Information
+      - First name, Last name, Middle name
+      - Date of birth, Gender, Civil status
+      - Contact information (email, phone, address)
+      - Upload ID picture
+      - Upload signature
+   → Step 2: Learner/Manpower Profile
+      - Educational attainment
+      - Employment status
+      - Client classification
+      - Disability information (if applicable)
+      - Other personal details
+   → Form submission:
+      - Creates Learner_Profile record
+      - Links profile to user account
+      - Notifies admins of profile completion
+
+5. DASHBOARD ACCESS (For Approved Applicants)
+   ──────────────────────────────────────────────────────────────────────────
+   → User logs in and accesses Dashboard
+   → Dashboard shows:
+      - Overview section:
+         * Application status (Pending/Approved)
+         * Program cards for approved programs
+         * Can apply for 2nd program if only 1 approved
+         * Application modal if just applied
+      - Profile section:
+         * View learner profile information
+         * Edit profile if needed
+         * Notification badge if fields need correction
+      - Class Schedule section:
+         * View training sessions for approved programs
+         * Filter by program (if multiple programs)
+         * See training dates, times, rooms, categories
+      - Competencies section:
+         * View program competencies (Basic, Common, Core)
+         * Filter by program (if multiple programs)
+         * See competency progress
+         * Export competency report
+      - Modules & Guidelines section:
+         * View training modules and manuals
+         * View policy and guidelines
+         * Filter by program (if multiple programs)
+         * Download documents
+         * Refresh to get latest documents
+      - Job Recommendations section:
+         * Only visible after completing a program (passer status)
+         * Shows job matches based on program competencies
+         * Skill-based job matching
+      - Ticket section:
+         * Create support tickets
+         * View ticket status
+         * Communicate with support
+      - Documents section:
+         * View uploaded documents
+         * Manage personal documents
+
+6. APPLICATION STATUS TRACKING
+   ──────────────────────────────────────────────────────────────────────────
+   → User can see application status:
+      - "Pending" - Under review by admin
+      - "Approved" - Application approved, can start training
+      - "Declined" - Application rejected with reason
+      - "Incomplete" - Missing required information/documents
+   → If marked incomplete:
+      - User receives notification
+      - User can update marked fields
+      - User can resubmit for review
+
+7. TRAINING PARTICIPATION
+   ──────────────────────────────────────────────────────────────────────────
+   → Once approved:
+      - User appears in trainer's masterlist
+      - User can view class schedule
+      - User attends training sessions
+      - Trainer takes attendance
+      - User can view attendance status
+   → User completes training tasks
+   → Trainer tracks competency completion
+   → User views competency progress in dashboard
+
+8. PROGRAM COMPLETION
+   ──────────────────────────────────────────────────────────────────────────
+   → After completing all competencies:
+      - Trainer marks student as "Passer"
+      - User gains "Passer" status
+      - Job Recommendations section becomes available
+      - User can view/download certificate
+   → User can apply for 2nd program (if not already applied)
+
+9. NOTIFICATIONS
+   ──────────────────────────────────────────────────────────────────────────
+   → User receives notifications for:
+      - Application status updates
+      - New documents uploaded by trainer
+      - Profile correction requests
+      - Training schedule updates
+      - Support ticket responses
+
+================================================================================
+                            TRAINOR SIDE
+================================================================================
+
+1. LOGIN & DASHBOARD ACCESS
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer logs in with staff credentials
+   → Redirected to Dashboard_trainor
+   → Dashboard shows:
+      - Masterlist of approved students
+      - Training sessions calendar
+      - Attendance summary
+      - Task management
+      - Competency tracking
+
+2. MASTERLIST MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer views masterlist:
+      - Shows all approved applicants for assigned programs
+      - Displays student information (name, program, batch)
+      - Shows attendance summary (present/absent counts)
+      - Shows total training sessions
+   → Trainer waits for masterlist to be complete:
+      - Admin approves applicants
+      - Students appear in masterlist automatically
+      - Trainer can see when new students are added
+
+3. TRAINING SESSION CREATION
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer creates training sessions:
+      - Select program
+      - Set start date and end date (for multi-day)
+      - Set start time and end time
+      - Select room/lab
+      - Choose category (Activity, Examination, Workshop, Seminar)
+      - Add description
+   → Training sessions appear in calendar
+   → Students can view sessions in their schedule
+
+4. ATTENDANCE MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer opens attendance modal for a training session
+   → Trainer sees list of students from masterlist
+   → Trainer marks attendance:
+      - Present
+      - Missed
+   → For multi-day training:
+      - Trainer selects specific date
+      - Takes attendance for that date
+   → Attendance saved:
+      - Creates/updates Attendance records
+      - Updates attendance counts in masterlist
+      - Students can view their attendance status
+
+5. TASK MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer adds tasks for students:
+      - Task name
+      - Task description
+      - Due date
+      - Link to training session
+   → Students can view tasks in their dashboard
+   → Trainer tracks task completion
+   → Students mark tasks as complete
+
+6. COMPETENCY TRACKING
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer views competency list for program
+   → Trainer marks competencies as:
+      - Not Started
+      - In Progress
+      - Completed
+   → Competency states saved per student
+   → Students can view their competency progress
+   → Trainer can see overall progress
+
+7. DOCUMENT UPLOAD (MODULES & GUIDELINES)
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer uploads documents:
+      - Modules & Manuals
+      - Policy & Guidelines
+   → Trainer selects:
+      - Document type
+      - Program assignment
+      - Batch (if applicable)
+      - Description
+   → Documents become visible to students
+   → Students receive notification of new documents
+
+8. SEMESTER MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer sets semester settings:
+      - Current semester (1st, 2nd, 3rd)
+      - Enrollment year
+   → Trainer ends semester when complete:
+      - Marks semester as "completed"
+      - All trainings in semester are archived
+      - System prepares for next semester
+   → Trainer waits for admin to end batch:
+      - Admin ends batch when all programs complete
+      - Batch cycle progresses (Batch 1 → 2 → 3 → 1)
+
+9. STUDENT STATUS UPDATES
+   ──────────────────────────────────────────────────────────────────────────
+   → Trainer can update student status:
+      - Mark as "Passer" when program completed
+      - Update other status fields
+   → When student becomes passer:
+      - Job Recommendations become available
+      - Certificate can be generated
+
+================================================================================
+                            ADMIN SIDE
+================================================================================
+
+1. LOGIN & DASHBOARD ACCESS
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin logs in with superuser credentials
+   → Redirected to Dashboard_admin
+   → Dashboard shows:
+      - Application management
+      - Program management
+      - Trainer management
+      - Document management
+      - Batch cycle management
+      - Statistics and reports
+
+2. APPLICATION REVIEW PROCESS
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin views pending applications:
+      - Online applications (ProgramApplication)
+      - Walk-in applications (WalkInApplication)
+   → Admin reviews application:
+      - Checks learner profile completeness
+      - Verifies required documents:
+         * ID picture
+         * Signature
+         * Learner profile form
+         * Other required documents
+      - Reviews application details
+   → DMS (Document Management System) Review:
+      - System creates DMSReview record
+      - Checks document completeness automatically
+      - Marks as "Incomplete" or "Ready for Approval"
+   → Admin can:
+      - Approve application → Creates ApprovedApplicant record
+      - Decline application → Sets status to "Declined" with reason
+      - Mark as incomplete → Notifies applicant to update fields
+      - Bulk review multiple applications
+
+3. APPLICATION APPROVAL
+   ──────────────────────────────────────────────────────────────────────────
+   → When admin approves:
+      - Creates ApprovedApplicant record
+      - Assigns to current batch and enrollment year
+      - Links to trainer based on program assignment
+      - Sends notification to applicant
+      - Applicant can now access full dashboard
+      - Applicant appears in trainer's masterlist
+
+4. APPLICATION DECLINE/INCOMPLETE
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin declines application:
+      - Sets status to "Declined"
+      - Adds decline reason
+      - Notifies applicant
+      - Applicant can see reason in dashboard
+   → Admin marks as incomplete:
+      - Marks specific fields that need correction
+      - Sets status to "Incomplete"
+      - Notifies applicant
+      - Applicant can update and resubmit
+
+5. PROGRAM MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin can:
+      - Add new programs
+      - Edit existing programs
+      - Delete programs
+      - Set program details:
+         * Program name
+         * Description
+         * Competencies (Basic, Common, Core)
+         * Job opportunities
+         * Trainer assignment
+
+6. TRAINER MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin can:
+      - Register new trainers
+      - Assign programs to trainers
+      - Unassign programs from trainers
+      - View trainer profiles
+      - Delete trainer accounts
+   → Trainer registration:
+      - Enter full name, email, password
+      - Select expertise (programs)
+      - Creates staff user account
+      - Creates TrainerProfile
+      - Links programs to trainer
+
+7. DOCUMENT MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin can:
+      - Upload documents (LMSTC Documents)
+      - Search documents
+      - Archive documents
+      - Restore archived documents
+      - Delete documents
+      - Bulk operations
+      - View document audit logs
+   → Document types:
+      - Modules & Manuals
+      - Policy & Guidelines
+      - Other document categories
+   → Documents can be:
+      - Assigned to specific programs
+      - Assigned to batches
+      - Visible to all or specific groups
+
+8. BATCH CYCLE MANAGEMENT
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin manages batch cycles:
+      - Current batch (1, 2, or 3)
+      - Current semester (1, 2, or 3)
+      - Enrollment year
+   → Admin can:
+      - Check enrollment events
+      - Activate next batch
+      - End batch (when all programs complete)
+   → Batch progression:
+      - Batch 1 → Batch 2 → Batch 3 → Batch 1 (cycle)
+      - Admin can only end batch when all trainers completed their semesters
+   → Enrollment periods:
+      - System checks for enrollment events
+      - Activates enrollment automatically
+      - Applications assigned to current batch
+
+9. BULK OPERATIONS
+   ──────────────────────────────────────────────────────────────────────────
+   → Admin can perform bulk actions:
+      - Bulk review applications
+      - Bulk approval
+      - Bulk document operations
+      - Export data to Excel
+   → Bulk review:
+      - Select multiple applications
+      - Review all at once
+      - Mark as complete/incomplete
+      - Approve ready applications
+
+10. REPORTS & EXPORTS
+    ─────────────────────────────────────────────────────────────────────────
+    → Admin can generate reports:
+       - Applicants list (Excel export)
+       - Documents list (Excel export)
+       - Attendance reports
+       - Competency reports
+    → Admin can view statistics:
+       - Total applicants
+       - Approved applicants
+       - Pending applications
+       - Program enrollment numbers
+
+11. WALK-IN APPLICATION MANAGEMENT
+    ─────────────────────────────────────────────────────────────────────────
+    → Admin can:
+       - Create walk-in applicant accounts
+       - Process walk-in applications
+       - Approve/decline walk-in applications
+    → Walk-in flow:
+       - Admin creates account for walk-in
+       - Walk-in applicant logs in
+       - Completes learner profile form
+       - Applies for program
+       - Admin reviews and approves
+
+================================================================================
+                        CROSS-ROLE INTERACTIONS
+================================================================================
+
+1. APPLICATION → APPROVAL → TRAINING FLOW
+   ──────────────────────────────────────────────────────────────────────────
+   User applies → Admin reviews → Admin approves → User in masterlist → 
+   Trainer creates training → User attends → Trainer tracks progress → 
+   User completes → Trainer marks passer → User gets job recommendations
+
+2. DOCUMENT FLOW
+   ──────────────────────────────────────────────────────────────────────────
+   Trainer/Admin uploads → Document assigned to program → 
+   Approved students see document → Students download → 
+   Students use in training
+
+3. NOTIFICATION FLOW
+   ──────────────────────────────────────────────────────────────────────────
+   Action occurs (application, approval, document upload) → 
+   System creates notification → User sees notification → 
+   User clicks notification → Redirected to relevant section
+
+4. BATCH CYCLE FLOW
+   ──────────────────────────────────────────────────────────────────────────
+   Enrollment period opens → Users apply → Admin reviews → 
+   Admin approves → Students assigned to batch → 
+   Trainer conducts training → Trainer ends semester → 
+   All trainers complete → Admin ends batch → Next batch starts
+
+================================================================================
+                            KEY FEATURES
+================================================================================
+
+✓ Multi-program support (users can apply for up to 2 programs)
+✓ Batch cycle management (3 batches rotating)
+✓ Semester system (1st, 2nd, 3rd semesters)
+✓ Document management system (DMS)
+✓ Attendance tracking (single and multi-day training)
+✓ Competency tracking (Basic, Common, Core)
+✓ Task management
+✓ Job matching based on competencies
+✓ Notification system
+✓ Support ticket system
+✓ Excel import/export
+✓ Bulk operations
+✓ Walk-in application support
+✓ Program-specific document filtering
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================

@@ -1,0 +1,875 @@
+<!-- Reusable Warning Confirmation Modal -->
+{% comment %}
+Usage:
+{% include 'warning_modal.html' with modal_id='trainerRemoveModal' modal_title='Remove Trainer' ... %}
+{% endcomment %}
+
+{% if alert_bg_color == 'red' or not alert_bg_color %}
+    {% with alert_bg='bg-red-50' alert_border='border-red-200' alert_text='text-red-800' alert_text_secondary='text-red-600' %}
+        {% if confirm_button_color == 'red' or not confirm_button_color %}
+            {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+            {% endwith %}
+        {% else %}
+            {% if confirm_button_color == 'blue' %}
+                {% with confirm_bg='bg-blue-500' confirm_hover='hover:bg-blue-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                {% endwith %}
+            {% else %}
+                {% if confirm_button_color == 'green' %}
+                    {% with confirm_bg='bg-green-500' confirm_hover='hover:bg-green-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    {% endwith %}
+                {% else %}
+                    {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    {% endwith %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endwith %}
+{% else %}
+    {% if alert_bg_color == 'yellow' %}
+        {% with alert_bg='bg-yellow-50' alert_border='border-yellow-200' alert_text='text-yellow-800' alert_text_secondary='text-yellow-600' %}
+            {% if confirm_button_color == 'red' or not confirm_button_color %}
+                {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                {% endwith %}
+            {% else %}
+                {% if confirm_button_color == 'blue' %}
+                    {% with confirm_bg='bg-blue-500' confirm_hover='hover:bg-blue-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    {% endwith %}
+                {% else %}
+                    {% if confirm_button_color == 'green' %}
+                        {% with confirm_bg='bg-green-500' confirm_hover='hover:bg-green-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                        {% endwith %}
+                    {% else %}
+                        {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                        {% endwith %}
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endwith %}
+    {% else %}
+        {% if alert_bg_color == 'blue' %}
+            {% with alert_bg='bg-blue-50' alert_border='border-blue-200' alert_text='text-blue-800' alert_text_secondary='text-blue-600' %}
+                {% if confirm_button_color == 'red' or not confirm_button_color %}
+                    {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    {% endwith %}
+                {% else %}
+                    {% if confirm_button_color == 'blue' %}
+                        {% with confirm_bg='bg-blue-500' confirm_hover='hover:bg-blue-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                        {% endwith %}
+                    {% else %}
+                        {% if confirm_button_color == 'green' %}
+                            {% with confirm_bg='bg-green-500' confirm_hover='hover:bg-green-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                            {% endwith %}
+                        {% else %}
+                            {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                            {% endwith %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            {% with alert_bg='bg-red-50' alert_border='border-red-200' alert_text='text-red-800' alert_text_secondary='text-red-600' %}
+                {% if confirm_button_color == 'red' or not confirm_button_color %}
+                    {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                    {% endwith %}
+                {% else %}
+                    {% if confirm_button_color == 'blue' %}
+                        {% with confirm_bg='bg-blue-500' confirm_hover='hover:bg-blue-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                        {% endwith %}
+                    {% else %}
+                        {% if confirm_button_color == 'green' %}
+                            {% with confirm_bg='bg-green-500' confirm_hover='hover:bg-green-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                            {% endwith %}
+                        {% else %}
+                            {% with confirm_bg='bg-red-500' confirm_hover='hover:bg-red-600' %}
+<div id="{{ modal_id|default:'warningModal' }}" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 class="text-2xl font-bold {{ title_color|default:'text-red-600' }}">{{ modal_title|default:"Warning" }}</h3>
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-4xl {{ icon_color|default:'text-red-500' }}"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-lg font-medium text-gray-900">{{ question|default:"Are you sure?" }}</h4>
+                        <p class="text-sm text-gray-500">{{ warning_text|default:"This action cannot be undone." }}</p>
+                    </div>
+                </div>
+                
+                {% if detail_message %}
+                <div class="{{ alert_bg }} {{ alert_border }} rounded-md p-4 mb-4">
+                    <p class="text-sm {{ alert_text }}">
+                        {{ detail_message|safe }}
+                    </p>
+                    {% if additional_warning %}
+                    <p class="text-sm {{ alert_text_secondary }} mt-2">
+                        {{ additional_warning }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
+                <button onclick="{{ close_function|default:'closeWarningModal()' }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-times mr-2"></i>{{ cancel_text|default:"No, Cancel" }}
+                </button>
+                <button onclick="{{ confirm_function|default:'confirmAction()' }}" id="{{ confirm_button_id|default:'confirmBtn' }}" class="{{ confirm_bg }} {{ confirm_hover }} text-white px-6 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>{{ confirm_text|default:"Yes, Confirm" }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+                            {% endwith %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endwith %}
+        {% endif %}
+    {% endif %}
+{% endif %}

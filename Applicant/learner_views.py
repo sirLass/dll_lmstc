@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from .models import Learner_Profile
+from .models import Learner_Profile, ApplicantPasser
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -12,6 +12,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from io import BytesIO
 from datetime import datetime
 import os
+from django.conf import settings
 
 
 @login_required
@@ -47,16 +48,85 @@ def get_learner_profile(request, profile_id):
         
         address = ", ".join(address_parts) if address_parts else "N/A"
         
+        # Get classifications
+        classifications = [c.name for c in profile.classifications.all()] if hasattr(profile, 'classifications') else []
+        
+        # Get disability types
+        disability_types = [d.name for d in profile.disability_types.all()] if hasattr(profile, 'disability_types') else []
+        
+        # Get batch information from approved and passed programs
+        batch_info = []
+        if profile.user:
+            # Get approved programs (in progress)
+            approved_programs = profile.user.approved_programs.all()
+            for approved in approved_programs:
+                batch_str = f"Batch {approved.batch_number}" if approved.batch_number else "No batch"
+                if approved.enrollment_year:
+                    batch_str += f" ({approved.enrollment_year})"
+                batch_info.append({
+                    'program': approved.program.program_name if approved.program else 'N/A',
+                    'batch': batch_str,
+                    'status': 'In Progress'
+                })
+            
+            # Get passed programs (completed)
+            passed_programs = profile.user.passed_programs.all()
+            for passed in passed_programs:
+                # Try to get batch info from related approved program if available
+                related_approved = profile.user.approved_programs.filter(program__program_name=passed.program_name).first()
+                batch_str = "No batch"
+                if related_approved:
+                    batch_str = f"Batch {related_approved.batch_number}" if related_approved.batch_number else "No batch"
+                    if related_approved.enrollment_year:
+                        batch_str += f" ({related_approved.enrollment_year})"
+                batch_info.append({
+                    'program': passed.program_name,
+                    'batch': batch_str,
+                    'status': 'Completed'
+                })
+        
         profile_data = {
             'id': profile.id,
             'full_name': f"{profile.first_name} {profile.middle_name or ''} {profile.last_name}".strip(),
-            'email': profile.email,
-            'contact_number': profile.contact_number,
+            'first_name': profile.first_name or 'N/A',
+            'middle_name': profile.middle_name or 'N/A',
+            'last_name': profile.last_name or 'N/A',
+            'email': profile.email or 'N/A',
+            'contact_number': profile.contact_number or 'N/A',
             'entry_date': profile.entry_date.strftime('%B %d, %Y') if profile.entry_date else None,
-            'course_or_qualification': profile.course_or_qualification,
+            'birthdate': profile.birthdate.strftime('%B %d, %Y') if profile.birthdate else None,
+            'age': profile.age or 'N/A',
+            'sex': profile.sex or 'N/A',
+            'civil_status': profile.civil_status or 'N/A',
+            'nationality': profile.nationality or 'N/A',
+            'birthplace_region': profile.birthplace_regionb_name or 'N/A',
+            'birthplace_province': profile.birthplace_provinceb_name or 'N/A',
+            'birthplace_city': profile.birthplace_cityb_name or 'N/A',
             'address': address,
+            'street': profile.street or 'N/A',
+            'barangay': profile.barangay_name or 'N/A',
+            'city': profile.city_name or 'N/A',
+            'province': profile.province_name or 'N/A',
+            'region': profile.region_name or 'N/A',
+            'district': profile.district or 'N/A',
+            'permanent_address': profile.permanent_address or 'N/A',
+            'educational_attainment': profile.educational_attainment or 'N/A',
+            'employment_status': profile.employment_status or 'N/A',
+            'monthly_income': profile.monthly_income or 'N/A',
+            'date_hired': profile.date_hired.strftime('%B %d, %Y') if profile.date_hired else None,
+            'company_name': profile.company_name or 'N/A',
+            'parent_guardian': profile.parent_guardian or 'N/A',
+            'classifications': classifications,
+            'other_classification': profile.other_classification or 'N/A',
+            'disability_types': disability_types,
+            'course_or_qualification': profile.course_or_qualification or 'N/A',
+            'scholarship_package': profile.scholarship_package or 'N/A',
             'programs': completed_programs,
+            'batch_info': batch_info,
+            'applicant_name': profile.applicant_name or 'N/A',
+            'date_accomplished': profile.date_accomplished.strftime('%B %d, %Y') if profile.date_accomplished else None,
             'id_picture': profile.id_picture.url if profile.id_picture else None,
+            'username': profile.user.username if profile.user else 'N/A',
         }
         
         return JsonResponse({
@@ -534,4 +604,123 @@ def registration_form_pdf(request, profile_id):
         return JsonResponse({
             'success': False,
             'error': f'Error preparing registration form PDF: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def download_certificate_pdf(request):
+    """Generate and download a simple Certificate of Completion PDF for users who passed a program."""
+    try:
+        # Ensure the user is a passer
+        passer = ApplicantPasser.objects.filter(applicant=request.user).select_related('program').first()
+        if not passer:
+            return JsonResponse({
+                'success': False,
+                'error': 'Certificate is available only after you complete a program.'
+            }, status=403)
+
+        # Get user's profile
+        profile = get_object_or_404(Learner_Profile, user=request.user)
+
+        # Prepare PDF
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=0.75*inch,
+            leftMargin=0.75*inch,
+            topMargin=0.75*inch,
+            bottomMargin=0.75*inch
+        )
+
+        elements = []
+
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CertTitle', parent=styles['Heading1'], fontSize=22, alignment=TA_CENTER,
+            textColor=colors.HexColor('#1e3a8a'), spaceAfter=14
+        )
+        subtitle_style = ParagraphStyle(
+            'CertSub', parent=styles['Normal'], fontSize=11, alignment=TA_CENTER,
+            textColor=colors.HexColor('#6b7280'), spaceAfter=10
+        )
+        name_style = ParagraphStyle(
+            'NameStyle', parent=styles['Heading1'], fontSize=20, alignment=TA_CENTER,
+            textColor=colors.HexColor('#0f172a'), spaceAfter=8
+        )
+        body_style = ParagraphStyle(
+            'BodyStyle', parent=styles['Normal'], fontSize=12, alignment=TA_CENTER,
+            textColor=colors.HexColor('#374151'), leading=16, spaceAfter=12
+        )
+        foot_label_style = ParagraphStyle(
+            'FootLbl', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER,
+            textColor=colors.HexColor('#6b7280')
+        )
+        foot_value_style = ParagraphStyle(
+            'FootVal', parent=styles['Heading3'], fontSize=11, alignment=TA_CENTER,
+            textColor=colors.HexColor('#1f2937')
+        )
+
+        # Header
+        elements.append(Paragraph('Lucena Manpower Skill Training Center', title_style))
+        elements.append(Paragraph('Dalubhasaan ng Lungsod ng Lucena', subtitle_style))
+        elements.append(Spacer(1, 14))
+
+        # Certificate Title
+        elements.append(Paragraph('Certificate of Completion', title_style))
+        elements.append(Spacer(1, 6))
+
+        # Body
+        elements.append(Paragraph('This is to certify that', body_style))
+        full_name = f"{profile.first_name} {profile.middle_name or ''} {profile.last_name}".strip()
+        elements.append(Paragraph(full_name, name_style))
+        elements.append(Spacer(1, 6))
+        elements.append(Paragraph('has successfully completed the requirements for', body_style))
+        program_name = passer.program.program_name if passer.program else passer.program_name
+        elements.append(Paragraph(program_name, ParagraphStyle('Program', parent=body_style, fontSize=13, textColor=colors.HexColor('#1e3a8a'))))
+        elements.append(Spacer(1, 6))
+        elements.append(Paragraph('and has demonstrated proficiency in the required skills and competencies.', body_style))
+        elements.append(Spacer(1, 18))
+
+        # Footer details (3 columns style)
+        issued_date = (profile.date_accomplished.strftime('%B %d, %Y') if getattr(profile, 'date_accomplished', None)
+                       else passer.completion_date.strftime('%B %d, %Y') if passer.completion_date else datetime.now().strftime('%B %d, %Y'))
+
+        footer_table = Table([
+            [
+                Paragraph('<br/><br/><br/>______________________________', foot_label_style),
+                Paragraph('Date Issued:<br/>' + issued_date, foot_value_style),
+                Paragraph('<br/><br/><br/>______________________________', foot_label_style),
+            ],
+            [
+                Paragraph('Trainer/Coordinator', foot_label_style),
+                Paragraph('', foot_label_style),
+                Paragraph('Recipient Signature', foot_label_style),
+            ]
+        ], colWidths=[2.5*inch, 2.0*inch, 2.5*inch])
+        footer_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+
+        elements.append(Spacer(1, 20))
+        elements.append(footer_table)
+
+        # Build and return
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Certificate_{full_name.replace(" ", "_")}.pdf"'
+        response.write(pdf)
+        return response
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error generating certificate: {str(e)}'
         }, status=500)

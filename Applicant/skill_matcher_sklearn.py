@@ -6,6 +6,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import logging
 import numpy as np
+import difflib
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +165,7 @@ class SkillMatcher:
             logger.error(f"Error calculating match percentage: {e}")
             return 0.0
     
-    def match_jobs_with_competencies(self, jobs, user_programs_competencies, min_match_threshold=0.0):
+    def match_jobs_with_competencies(self, jobs, user_programs_competencies, min_match_threshold=0.0, program_names=None):
         """
         Match a list of jobs with user's program competencies
         
@@ -201,6 +203,9 @@ class SkillMatcher:
                 user_competencies_text,
                 job_skills_text
             )
+            program_name_boost = self._calculate_program_name_boost(job.get('title', ''), program_names)
+            if program_name_boost > match_percentage:
+                match_percentage = program_name_boost
             
             # Include all jobs regardless of threshold (user requested to show all)
             if match_percentage >= min_match_threshold:
@@ -239,6 +244,36 @@ class SkillMatcher:
             logger.error(f"Error getting top matching skills: {e}")
             return []
 
+    def _normalize_text(self, text):
+        if not text:
+            return ''
+        return re.sub(r'[^a-z0-9]+', ' ', str(text).lower()).strip()
+
+    def _calculate_program_name_boost(self, job_title, program_names):
+        """Give a small boost when job title closely matches any program name."""
+        if not job_title or not program_names:
+            return 0.0
+        job_norm = self._normalize_text(job_title)
+        if not job_norm:
+            return 0.0
+        job_tokens = set(job_norm.split())
+        best_score = 0.0
+        for program_name in program_names:
+            prog_norm = self._normalize_text(program_name)
+            if not prog_norm:
+                continue
+            prog_tokens = set(prog_norm.split())
+            if job_tokens and prog_tokens:
+                token_overlap = len(job_tokens.intersection(prog_tokens)) / max(len(job_tokens), len(prog_tokens))
+                best_score = max(best_score, token_overlap)
+            seq_score = difflib.SequenceMatcher(None, job_norm, prog_norm).ratio()
+            best_score = max(best_score, seq_score)
+        if best_score >= 0.4:
+            # Convert similarity to a modest percentage boost (min 1%)
+            boost = max(1.0, round(best_score * 25, 2))
+            return boost
+        return 0.0
+
 
 def match_jobs_for_user(user, jobs, min_threshold=0.0):
     """
@@ -264,9 +299,13 @@ def match_jobs_for_user(user, jobs, min_threshold=0.0):
         
         # Collect all program competencies
         user_programs_competencies = []
+        program_names = []
         for passer in passed_programs:
-            if passer.program and passer.program.program_competencies:
-                user_programs_competencies.append(passer.program.program_competencies)
+            if passer.program:
+                if passer.program.program_competencies:
+                    user_programs_competencies.append(passer.program.program_competencies)
+                if passer.program.program_name:
+                    program_names.append(passer.program.program_name)
         
         if not user_programs_competencies:
             # No competencies available, return all jobs with 0% match
@@ -277,7 +316,8 @@ def match_jobs_for_user(user, jobs, min_threshold=0.0):
         matched_jobs = matcher.match_jobs_with_competencies(
             jobs,
             user_programs_competencies,
-            min_threshold
+            min_threshold,
+            program_names=program_names
         )
         
         return matched_jobs

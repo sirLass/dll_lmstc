@@ -26,6 +26,8 @@ urlpatterns = [
     path('Contact_user/', views.Contact_user, name='Contact_user'),
     
     # Authentication
+    path('LoginSelect/', views.LoginSelect, name='LoginSelect'),
+    path('CoordinatorLogin/', views.CoordinatorLogin, name='CoordinatorLogin'),
     path('Login/', views.Login, name='Login'),
     path('Register/', views.Register, name='Register'),
     path('logout_view/', views.logout_view, name='logout_view'),
@@ -56,6 +58,7 @@ urlpatterns = [
     
     # Job Matching with Skill Analysis (NEW)
     path('api/matched-jobs/', job_matching_views.get_matched_jobs, name='get_matched_jobs'),
+    path('api/matched-jobs/cancel/', job_matching_views.cancel_matched_jobs, name='cancel_matched_jobs'),
     path('api/user-competencies/', job_matching_views.get_user_competencies_summary, name='get_user_competencies_summary'),
     path('api/test-skill-match/', job_matching_views.test_skill_match, name='test_skill_match'),
 
@@ -69,7 +72,6 @@ urlpatterns = [
     # Profile Management
     path('learner-form/', views.learner_profile_form, name='learner_form'),
     path('walkin-registration/', views.walkin_registration, name='walkin_registration'),
-    path('walkin-step1-registration/', views.walkin_step1_registration, name='walkin_step1_registration'),
     path('api/profile/<int:profile_id>/', views.get_profile_data, name='get_profile_data'),
     path('profile/<int:pk>/', views.view_profile, name='view_profile'),
     path('profile_views', views.profile_views, name='profile_views'),
@@ -145,10 +147,8 @@ urlpatterns = [
     # Walk-in Application Management
     path('approve-walkin/<int:application_id>/', views.approve_walkin, name='approve_walkin'),
     path('decline-walkin/<int:application_id>/', views.decline_walkin, name='decline_walkin'),
-    # TODO: These views need to be implemented
-    # path('create-walkin-account/', views.create_walkin_account, name='create_walkin_account'),
-    # path('apply-walkin-program/', views.apply_walkin_program, name='apply_walkin_program'),
-    # path('approve-walkin-application/<int:application_id>/', views.approve_walkin_application, name='approve_walkin_application'),
+    path('create-walkin-account/', views.create_walkin_account, name='create_walkin_account'),
+    path('apply-walkin-program/', views.apply_walkin_program, name='apply_walkin_program'),
     
     # OCR Processing URLs
     path('process-excel-ocr/', ocr_views.process_excel_ocr, name='process_excel_ocr'),
@@ -170,6 +170,7 @@ urlpatterns = [
     path('bulk-upload-lmstc-documents/', document_views.bulk_upload_lmstc_documents, name='bulk_upload_lmstc_documents'),
     path('get-lmstc-documents/', document_views.get_lmstc_documents, name='get_lmstc_documents'),
     path('get-bulk-download-documents/', document_views.get_bulk_download_documents, name='get_bulk_download_documents'),
+    path('import-2024-excel-to-documents/', document_views.import_2024_excel_to_documents, name='import_2024_excel_to_documents'),
     
     # Document Operations URLs
     path('archive-document/', document_views.archive_document, name='archive_document'),
@@ -187,7 +188,8 @@ urlpatterns = [
     # Learner Profile URLs
     path('get_learner_profile/<int:profile_id>/', learner_views.get_learner_profile, name='get_learner_profile'),
     path('download_learner_profile/<int:profile_id>/', learner_views.download_learner_profile, name='download_learner_profile'),
-    path('download-profile-pdf/', learner_views.download_profile_pdf, name='download_profile_pdf'),
+    path('download_profile_pdf/', learner_views.download_profile_pdf, name='download_profile_pdf'),
+    path('download-certificate/', learner_views.download_certificate_pdf, name='download_certificate'),
     path('download-registration-form/<int:profile_id>/', learner_views.registration_form_pdf, name='download_registration_form'),
     
     # Event Management URLs

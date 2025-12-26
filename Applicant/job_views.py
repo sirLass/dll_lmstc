@@ -13,22 +13,36 @@ def get_philjobnet_jobs(request):
     API endpoint to fetch job posts from PhilJobNet
     """
     try:
-        # Get limit parameter from request, default to 50
+        # Get pagination and filter parameters
         limit = int(request.GET.get('limit', 50))
-        limit = min(limit, 100)  # Cap at 100 to prevent overload
+        limit = min(max(limit, 1), 100)  # Cap at 100 to prevent overload
+        search_query = request.GET.get('search') or None
+        location_filter = request.GET.get('location') or None
+        max_pages = int(request.GET.get('pages', 5))
+        max_pages = max(1, min(max_pages, 10))
         
-        # Scrape jobs from PhilJobNet
-        jobs = scrape_philjobnet_jobs(limit)
+        # Scrape jobs from PhilJobNet with optional filters
+        jobs = scrape_philjobnet_jobs(
+            limit=limit,
+            search_query=search_query,
+            location_filter=location_filter,
+            max_pages=max_pages
+        )
         
         # Log the scraping result
-        logger.info(f"Successfully scraped {len(jobs)} jobs from PhilJobNet")
+        logger.info(
+            f"Successfully scraped {len(jobs)} jobs from PhilJobNet "
+            f"(search={search_query}, location={location_filter}, pages={max_pages})"
+        )
         
         return JsonResponse({
             'success': True,
             'jobs': jobs,
             'total_count': len(jobs),
             'source': 'PhilJobNet',
-            'scraped_at': str(datetime.now())
+            'scraped_at': str(datetime.now()),
+            'search': search_query,
+            'location': location_filter
         })
         
     except Exception as e:

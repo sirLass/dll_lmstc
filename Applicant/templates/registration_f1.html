@@ -479,6 +479,30 @@
         </div>
     </div>
 
+    <div id="confirm-submit-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeConfirmSubmitModal()" aria-label="Close">
+                &times;
+            </button>
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 8v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 class="modal-title">Confirm Submission</h2>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit your Learner's Profile Form?</p>
+                <p>Please review your information before proceeding.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 mr-3" onclick="closeConfirmSubmitModal()">No</button>
+                <button type="button" class="modal-btn" onclick="confirmFormSubmission()">Yes</button>
+            </div>
+        </div>
+    </div>
+
     <form id="learner-profile-form" method="post" action="{% url 'learner_form' %}" enctype="multipart/form-data">
         {% csrf_token %}
     <div id="message-box" class="hidden fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50">
@@ -941,7 +965,12 @@
         <div class="form-page hidden-page" data-page="4">
             <div class="mb-8">
                 <label for="course-qualification" class="form-label text-lg font-semibold">7. Name of Course/Qualification</label>
-                <input type="text" id="course-qualification" name="course_or_qualification" class="form-input" placeholder="e.g., Computer Programming NC IV" oninput="this.value = this.value.toUpperCase()">
+                <input type="text" id="course-qualification" name="course_or_qualification" class="form-input" value="{{ approved_program_name }}" placeholder="Will be auto-filled after approval" readonly>
+                {% if not approved_program_name %}
+                <p class="text-xs text-gray-500 mt-1">No approved program yet. This will be auto-filled after approval.</p>
+                {% else %}
+                <p class="text-xs text-gray-500 mt-1">Auto-filled from your approved program</p>
+                {% endif %}
             </div>
 
             <div class="mb-8">
@@ -951,7 +980,12 @@
 
             <div class="mb-8">
                 <label for="educational-attainment" class="form-label text-lg font-semibold">Educational Attainment</label>
-                <input type="text" id="educational-attainment" name="educational_attainment" class="form-input" placeholder="e.g., High School Graduate" oninput="this.value = this.value.toUpperCase()">
+                <select id="educational-attainment" name="educational_attainment" class="form-select" required>
+                    <option value="" disabled selected>Select education attained</option>
+                    {% for opt in educational_options %}
+                        <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div class="mb-8">
@@ -975,7 +1009,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                     <div>
                         <label for="applicant-printed-name" class="form-label">Applicant’s Printed Name:</label>
-                        <input type="text" id="applicant-printed-name" name="applicant_name" class="form-input" placeholder="Enter Printed Name" oninput="this.value = this.value.toUpperCase()" required>
+                        <input type="text" id="applicant-printed-name" name="applicant_name" class="form-input" placeholder="Auto-filled from your name" readonly required>
                     </div>
                     <div>
                         <label for="date-accomplished" class="form-label">Date Accomplished:</label>
@@ -1066,6 +1100,67 @@
             modal.classList.add('hidden');
             // Mark modal as shown in localStorage so it won't appear again
             localStorage.setItem('lmstc_welcome_modal_shown', 'true');
+        }
+
+        function showConfirmSubmitModal() {
+            const modal = document.getElementById('confirm-submit-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeConfirmSubmitModal() {
+            const modal = document.getElementById('confirm-submit-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function confirmFormSubmission() {
+            closeConfirmSubmitModal();
+
+            showMessageBox("Submitting form, please wait...", 'info');
+
+            const form = document.getElementById('learner-profile-form');
+            if (form) {
+                form.submit();
+            } else {
+                showMessageBox("Error: Form not found. Please try again.", 'error');
+            }
+        }
+
+        function updateApplicantPrintedName() {
+            const lastNameInput = document.getElementById('last-name');
+            const firstNameInput = document.getElementById('first-name');
+            const middleNameInput = document.getElementById('middle-name');
+            const extensionNameInput = document.getElementById('extension-name');
+            const printedNameInput = document.getElementById('applicant-printed-name');
+
+            if (!printedNameInput) {
+                return;
+            }
+
+            const lastName = lastNameInput && lastNameInput.value ? lastNameInput.value.trim() : '';
+            const firstName = firstNameInput && firstNameInput.value ? firstNameInput.value.trim() : '';
+            const middleName = middleNameInput && middleNameInput.value ? middleNameInput.value.trim() : '';
+            const extensionName = extensionNameInput && extensionNameInput.value ? extensionNameInput.value.trim() : '';
+
+            let fullName = '';
+
+            if (lastName) {
+                fullName += lastName;
+            }
+            if (firstName) {
+                fullName += fullName ? ', ' + firstName : firstName;
+            }
+            if (middleName) {
+                fullName += fullName ? ' ' + middleName : middleName;
+            }
+            if (extensionName) {
+                fullName += fullName ? ' ' + extensionName : extensionName;
+            }
+
+            printedNameInput.value = fullName;
         }
 
         /**
@@ -2051,24 +2146,34 @@
             document.getElementById('next-button').addEventListener('click', nextPage);
             document.getElementById('prev-button').addEventListener('click', prevPage);
             document.getElementById('submit-button').addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default button behavior
-                
-                // Validate page 4 before submitting
+                e.preventDefault();
+
                 if (!validatePage4()) {
-                    return; // Stop submission if validation fails
+                    return;
                 }
-                
-                // Show loading message
-                showMessageBox("Submitting form, please wait...", 'info');
-                
-                // Get the form element and submit it
-                const form = document.getElementById('learner-profile-form');
-                if (form) {
-                    form.submit();
-                } else {
-                    showMessageBox("Error: Form not found. Please try again.", 'error');
-                }
+
+                showConfirmSubmitModal();
             });
+
+            const lastNameInput = document.getElementById('last-name');
+            const firstNameInput = document.getElementById('first-name');
+            const middleNameInput = document.getElementById('middle-name');
+            const extensionNameInput = document.getElementById('extension-name');
+
+            if (lastNameInput) {
+                lastNameInput.addEventListener('input', updateApplicantPrintedName);
+            }
+            if (firstNameInput) {
+                firstNameInput.addEventListener('input', updateApplicantPrintedName);
+            }
+            if (middleNameInput) {
+                middleNameInput.addEventListener('input', updateApplicantPrintedName);
+            }
+            if (extensionNameInput) {
+                extensionNameInput.addEventListener('input', updateApplicantPrintedName);
+            }
+
+            updateApplicantPrintedName();
 
             // Show the first page on load
             showPage(1);

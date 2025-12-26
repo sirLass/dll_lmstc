@@ -360,7 +360,7 @@
                             {% endif %}
                             <div class="text-left hidden sm:block">
                                 <p class="font-bold text-sm text-blue-800">Hi, {{ user.first_name|default:user.username }}</p>
-                                <p class="text-xs text-gray-600">Student</p>
+                                <p class="text-xs text-gray-600">Applicant</p>
                             </div>
                             <i class="fas fa-chevron-down text-blue-600 text-sm transition-transform duration-300" id="dropdownIcon"></i>
                         </button>
@@ -368,30 +368,12 @@
                         <div id="userDropdownMenu" class="dropdown-menu">
                             <div class="px-4 py-3 border-b border-gray-100">
                                 <p class="text-sm font-medium text-gray-900">{{ user.first_name|default:user.username }}</p>
-                                <p class="text-xs text-gray-500">Student Account</p>
+                                <p class="text-xs text-gray-500">Applicant</p>
                             </div>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-user"></i>
-                                My Profile
+                            <a href="{% url 'logout_view' %}" class="dropdown-item text-red-600 hover:text-red-700 hover:bg-red-50">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Log Out
                             </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-book"></i>
-                                My Courses
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-certificate"></i>
-                                Certificates
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i>
-                                Settings
-                            </a>
-                            <div class="border-t border-gray-100">
-                                <a href="{% url 'logout_view' %}" class="dropdown-item text-red-600 hover:text-red-700 hover:bg-red-50">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Log Out
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -842,7 +824,7 @@
                         <a href="#" class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg">
                             <i class="fab fa-facebook-f text-lg"></i>
                         </a>
-                        <a href="#" class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors shadow-lg">
+                        <!-- <a href="#" class="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors shadow-lg">
                             <i class="fab fa-twitter text-lg"></i>
                         </a>
                         <a href="#" class="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-colors shadow-lg">
@@ -850,7 +832,7 @@
                         </a>
                         <a href="#" class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors shadow-lg">
                             <i class="fab fa-youtube text-lg"></i>
-                        </a>
+                        </a> -->
                     </div>
                 </div>
                                 

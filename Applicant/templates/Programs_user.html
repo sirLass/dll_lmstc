@@ -363,13 +363,13 @@
                     <div class="user-dropdown">
                         <button id="userDropdownBtn" class="flex items-center space-x-3 bg-white/80 backdrop-blur-sm border-2 border-blue-200 rounded-full px-4 py-2 hover:border-blue-400 transition-all duration-300 shadow-md hover:shadow-lg">
                             {% if user_profile_picture %}
-                                <img src="{{ user_profile_picture }}" class="w-10 h-10 rounded-full border-2 border-blue-200 object-cover" alt="User" onerror="this.onerror=null; this.src='{% static 'Images/user.png' %}'" />
+                                <img src="{{ user_profile_picture }}" class="w-10 h-10 rounded-full border-2 border-blue-200 object-cover" alt="User" onerror="this.onerror=null; this.src=&quot;{% static 'Images/user.png' %}&quot;" />
                             {% else %}
                                 <img src="{% static 'Images/user.png' %}" class="w-10 h-10 rounded-full border-2 border-blue-200" alt="User" />
                             {% endif %}
                             <div class="text-left hidden sm:block">
                                 <p class="font-bold text-sm text-blue-800">Hi, {{ user.first_name|default:user.username }}</p>
-                                <p class="text-xs text-gray-600">Student</p>
+                                <p class="text-xs text-gray-600">Applicant</p>
                             </div>
                             <i class="fas fa-chevron-down text-blue-600 text-sm transition-transform duration-300" id="dropdownIcon"></i>
                         </button>
@@ -377,30 +377,12 @@
                         <div id="userDropdownMenu" class="dropdown-menu">
                             <div class="px-4 py-3 border-b border-gray-100">
                                 <p class="text-sm font-medium text-gray-900">{{ user.first_name|default:user.username }}</p>
-                                <p class="text-xs text-gray-500">Student Account</p>
+                                <p class="text-xs text-gray-500">Applicant</p>
                             </div>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-user"></i>
-                                My Profile
+                            <a href="{% url 'logout_view' %}" class="dropdown-item text-red-600 hover:text-red-700 hover:bg-red-50">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Log Out
                             </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-book"></i>
-                                My Courses
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-certificate"></i>
-                                Certificates
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i>
-                                Settings
-                            </a>
-                            <div class="border-t border-gray-100">
-                                <a href="{% url 'logout_view' %}" class="dropdown-item text-red-600 hover:text-red-700 hover:bg-red-50">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Log Out
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -467,7 +449,7 @@
                 <!-- Stats -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-4xl mx-auto px-4">
                     <div class="text-center">
-                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-1 sm:mb-2">{{ Programss|length }}+</div>
+                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-600 mb-1 sm:mb-2">5+</div>
                         <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Programs</div>
                     </div>
                     <div class="text-center">
@@ -479,7 +461,7 @@
                         <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Success Rate</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-1 sm:mb-2">5+</div>
+                        <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-1 sm:mb-2">3+</div>
                         <div class="text-xs sm:text-sm md:text-base text-gray-600 font-medium">Years</div>
                     </div>
                 </div>
@@ -702,7 +684,7 @@
                 this.autoScrollToggle = document.getElementById('autoScrollToggle');
                 
                 this.currentIndex = 0;
-                this.itemWidth = 400; // 380px + 20px gap
+                this.itemWidth = this.getItemWidth(); // dynamically calculated width including gap
                 this.isMobile = window.innerWidth < 768;
                 this.visibleItems = this.getVisibleItems();
                 this.totalItems = this.track.children.length;
@@ -720,10 +702,32 @@
                     return 1;
                 }
                 const containerWidth = document.getElementById('programCarousel').offsetWidth;
-                return Math.floor(containerWidth / this.itemWidth);
+                const itemW = this.getItemWidth();
+                if (!itemW) { return 1; }
+                return Math.max(1, Math.floor(containerWidth / itemW));
+            }
+            
+            getItemWidth() {
+                // Robustly compute the slide step by measuring offset between the first two items.
+                if (!this.track) return 0;
+                const items = this.track.querySelectorAll('.carousel-item');
+                if (!items || items.length === 0) return 0;
+                if (items.length > 1) {
+                    const firstLeft = items[0].getBoundingClientRect().left;
+                    const secondLeft = items[1].getBoundingClientRect().left;
+                    return Math.round(Math.abs(secondLeft - firstLeft));
+                }
+                // Fallback for single item: width + horizontal margins
+                const firstItem = items[0];
+                const rect = firstItem.getBoundingClientRect();
+                const itemStyle = window.getComputedStyle(firstItem);
+                const marginLeft = parseFloat(itemStyle.marginLeft) || 0;
+                const marginRight = parseFloat(itemStyle.marginRight) || 0;
+                return Math.round(rect.width + marginLeft + marginRight);
             }
             
             init() {
+                if (!this.track) return; // Guard: no carousel present
                 this.createIndicators();
                 this.updateCarousel();
                 this.bindEvents();
@@ -736,6 +740,7 @@
                     resizeTimer = setTimeout(() => {
                         const wasMobile = this.isMobile;
                         this.isMobile = window.innerWidth < 768;
+                        this.itemWidth = this.getItemWidth();
                         this.visibleItems = this.getVisibleItems();
                         this.maxIndex = Math.max(0, this.totalItems - this.visibleItems);
                         
@@ -759,6 +764,7 @@
             }
             
             createIndicators() {
+                if (!this.indicators) return;
                 this.indicators.innerHTML = '';
                 // On mobile: create one indicator per card
                 // On desktop: create indicators based on visible items
@@ -776,12 +782,14 @@
             }
             
             updateCarousel() {
+                if (!this.track) return;
                 const translateX = -this.currentIndex * this.itemWidth;
                 this.track.style.transform = `translateX(${translateX}px)`;
                 
                 // Update navigation buttons
-                this.prevBtn.disabled = this.currentIndex === 0;
-                this.nextBtn.disabled = this.currentIndex >= this.maxIndex;
+                const cannotScroll = this.totalItems <= this.visibleItems;
+                if (this.prevBtn) this.prevBtn.disabled = cannotScroll || this.currentIndex === 0;
+                if (this.nextBtn) this.nextBtn.disabled = cannotScroll || this.currentIndex >= this.maxIndex;
                 
                 // Update indicators
                 // On mobile: each dot represents one card (currentIndex = indicator index)
@@ -819,12 +827,12 @@
                 // Completely disable auto-scroll on mobile devices (< 768px) for performance
                 if (window.innerWidth < 768) {
                     this.isAutoScrolling = false;
-                    this.autoScrollToggle.style.display = 'none';
+                    if (this.autoScrollToggle) this.autoScrollToggle.style.display = 'none';
                     return;
                 }
                 
                 // Show auto-scroll toggle on desktop
-                this.autoScrollToggle.style.display = 'block';
+                if (this.autoScrollToggle) this.autoScrollToggle.style.display = 'block';
                 
                 if (this.autoScrollInterval) return;
                 
@@ -833,7 +841,7 @@
                 }, 5000); // Auto-scroll every 5 seconds on desktop
                 
                 this.isAutoScrolling = true;
-                this.autoScrollToggle.innerHTML = '<i class="fas fa-pause mr-2"></i>Pause Auto-scroll';
+                if (this.autoScrollToggle) this.autoScrollToggle.innerHTML = '<i class="fas fa-pause mr-2"></i>Pause Auto-scroll';
             }
             
             stopAutoScroll() {
@@ -843,7 +851,7 @@
                 }
                 
                 this.isAutoScrolling = false;
-                this.autoScrollToggle.innerHTML = '<i class="fas fa-play mr-2"></i>Resume Auto-scroll';
+                if (this.autoScrollToggle) this.autoScrollToggle.innerHTML = '<i class="fas fa-play mr-2"></i>Resume Auto-scroll';
             }
             
             toggleAutoScroll() {
@@ -855,23 +863,29 @@
             }
             
             bindEvents() {
-                    this.prevBtn.addEventListener('click', () => {
-                        this.prevSlide();
-                        if (!this.isMobile) {
-                            this.stopAutoScroll(); // Stop auto-scroll on manual interaction (desktop only)
-                        }
-                    });
+                    if (this.prevBtn) {
+                        this.prevBtn.addEventListener('click', () => {
+                            this.prevSlide();
+                            if (!this.isMobile) {
+                                this.stopAutoScroll(); // Stop auto-scroll on manual interaction (desktop only)
+                            }
+                        });
+                    }
                     
-                    this.nextBtn.addEventListener('click', () => {
-                        this.nextSlide();
-                        if (!this.isMobile) {
-                            this.stopAutoScroll(); // Stop auto-scroll on manual interaction (desktop only)
-                        }
-                    });
+                    if (this.nextBtn) {
+                        this.nextBtn.addEventListener('click', () => {
+                            this.nextSlide();
+                            if (!this.isMobile) {
+                                this.stopAutoScroll(); // Stop auto-scroll on manual interaction (desktop only)
+                            }
+                        });
+                    }
                     
-                    this.autoScrollToggle.addEventListener('click', () => {
-                        this.toggleAutoScroll();
-                    });
+                    if (this.autoScrollToggle) {
+                        this.autoScrollToggle.addEventListener('click', () => {
+                            this.toggleAutoScroll();
+                        });
+                    }
                     
                     // Pause auto-scroll on hover (desktop only)
                     if (!this.isMobile) {
@@ -933,7 +947,6 @@
                 }
             }
 
-        }
         
         // Initialize carousel when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
@@ -1063,19 +1076,21 @@
         const userDropdownMenu = document.getElementById('userDropdownMenu');
         const dropdownIcon = document.getElementById('dropdownIcon');
 
-        userDropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            userDropdownMenu.classList.toggle('show');
-            dropdownIcon.classList.toggle('rotate-180');
-        });
+        if (userDropdownBtn && userDropdownMenu && dropdownIcon) {
+            userDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdownMenu.classList.toggle('show');
+                dropdownIcon.classList.toggle('rotate-180');
+            });
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!userDropdownBtn.contains(e.target) && !userDropdownMenu.contains(e.target)) {
-                userDropdownMenu.classList.remove('show');
-                dropdownIcon.classList.remove('rotate-180');
-            }
-        });
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userDropdownBtn.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                    userDropdownMenu.classList.remove('show');
+                    dropdownIcon.classList.remove('rotate-180');
+                }
+            });
+        }
 
         // Enhanced navbar scroll effect
         window.addEventListener('scroll', () => {
@@ -1087,45 +1102,47 @@
             }
         });
 
-        // Mobile Menu Functionality
+        // Mobile Menu Functionality (guarded – IDs are not present in this template)
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
         const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
         const mobileMenuClose = document.getElementById('mobile-menu-close');
         const menuIcon = document.getElementById('menu-icon');
 
-        function openMobileMenu() {
-            mobileMenu.classList.add('active');
-            mobileMenuOverlay.classList.add('active');
-            menuIcon.classList.remove('fa-bars');
-            menuIcon.classList.add('fa-times');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeMobileMenu() {
-            mobileMenu.classList.remove('active');
-            mobileMenuOverlay.classList.remove('active');
-            menuIcon.classList.remove('fa-times');
-            menuIcon.classList.add('fa-bars');
-            document.body.style.overflow = '';
-        }
-
-        mobileMenuBtn.addEventListener('click', () => {
-            if (mobileMenu.classList.contains('active')) {
-                closeMobileMenu();
-            } else {
-                openMobileMenu();
+        if (mobileMenuBtn && mobileMenu && mobileMenuOverlay && mobileMenuClose && menuIcon) {
+            function openMobileMenu() {
+                mobileMenu.classList.add('active');
+                mobileMenuOverlay.classList.add('active');
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+                document.body.style.overflow = 'hidden';
             }
-        });
 
-        mobileMenuClose.addEventListener('click', closeMobileMenu);
-        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+            function closeMobileMenu() {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+                document.body.style.overflow = '';
+            }
 
-        // Close mobile menu when clicking on menu links
-        const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
-        mobileMenuLinks.forEach(link => {
-            link.addEventListener('click', closeMobileMenu);
-        });
+            mobileMenuBtn.addEventListener('click', () => {
+                if (mobileMenu.classList.contains('active')) {
+                    closeMobileMenu();
+                } else {
+                    openMobileMenu();
+                }
+            });
+
+            mobileMenuClose.addEventListener('click', closeMobileMenu);
+            mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+
+            // Close mobile menu when clicking on menu links
+            const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', closeMobileMenu);
+            });
+        }
     </script>
 </body>
 </html>

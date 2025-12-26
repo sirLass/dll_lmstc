@@ -1258,13 +1258,22 @@
                     <li><a href="#" data-section="schedule"><i class="fas fa-calendar-alt"></i> <span>Class Schedule</span></a></li>
                     <li><a href="#" data-section="grades"><i class="fas fa-chart-line"></i> <span>Competencies</span></a></li>
                     <li>
+                        <a href="#" data-section="modules-guidelines" class="relative">
+                            <i class="fas fa-book"></i> 
+                            <span>Modules & Guidelines</span>
+                            {% if new_documents_count > 0 %}
+                            <span class="absolute left-2 top-2 bg-red-500 rounded-full h-2 w-2 border border-white"></span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li>
                         <a href="#" data-section="jobs" {% if not is_passer %}class="opacity-50 cursor-not-allowed" onclick="event.preventDefault(); alert('Job Recommendations are only available after completing a program.');"{% endif %}>
                             <i class="fas fa-briefcase"></i> 
                             <span>Job Recommendations{% if not is_passer %} <i class="fas fa-lock ml-2"></i>{% endif %}</span>
                         </a>
                     </li>
                     <li><a href="#" data-section="ticket"><i class="fas fa-ticket-alt"></i> <span>Ticket</span></a></li>
-                    <li><a href="#" data-section="document-management"><i class="fas fa-folder-open"></i> <span>Document Management</span></a></li>
+                    <li><a href="#" data-section="document-management"><i class="fas fa-folder-open"></i> <span>Documents</span></a></li>
                     <li><a href="#" data-section="certification"><i class="fas fa-certificate"></i> <span>Certification</span></a></li>
                 </ul>
             </nav>
@@ -1286,8 +1295,11 @@
                 <div class="notification-container">
                     <div class="notification-bell">
                         <i class="fas fa-bell icon" id="bell-btn"></i>
-                        <span id="notification-badge" class="{% if unread_notifications_count == 0 %}hidden{% endif %} absolute bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" style="position: absolute; top: -2px; right: -2px; width: 22px; height: 22px; font-size: 0.75rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                            {{ unread_notifications_count|default:0 }}
+                        {% if unread_notifications_count > 0 or new_documents_count > 0 %}
+                        <span class="absolute top-0 right-0 bg-red-500 rounded-full h-2.5 w-2.5 border-2 border-white z-10"></span>
+                        {% endif %}
+                        <span id="notification-badge" class="{% if unread_notifications_count == 0 and new_documents_count == 0 %}hidden{% endif %} absolute bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold" style="position: absolute; top: -2px; right: -2px; width: 22px; height: 22px; font-size: 0.75rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            {{ unread_notifications_count|add:new_documents_count|default:0 }}
                         </span>
                     </div>
                     
@@ -1318,42 +1330,6 @@
         <!-- Overview Section -->
         <div id="overview-section" class="content-section active">
             <h2 class="text-2xl font-semibold text-gray-800 mb-5">Overview</h2>
-            
-            <!-- Sliding News Section -->
-            {% if is_passer %}
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-6 border border-blue-200 overflow-hidden">
-                <div class="flex items-center mb-2">
-                    <i class="fas fa-newspaper text-blue-600 mr-2"></i>
-                    <h3 class="text-lg font-semibold text-gray-800">Latest Job Updates</h3>
-                </div>
-                <div class="relative overflow-hidden">
-                    <div class="sliding-news whitespace-nowrap">
-                        <span class="inline-block animate-marquee">
-                            🔥 New Software Developer position at TechCorp - ₱45,000/month | 
-                            💼 Automotive Technician needed at AutoFix - ₱30,000/month | 
-                            🎨 Web Designer opportunity at Creative Studio - ₱35,000/month | 
-                            🍽️ Restaurant Manager position available - ₱40,000/month | 
-                            🏗️ Construction Worker roles open - ₱25,000/month | 
-                            💻 Database Administrator at DataTech - ₱50,000/month
-                        </span>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <!-- Locked Latest Job Updates for Non-Passers -->
-            <div class="bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg p-4 mb-6 border border-gray-300">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <i class="fas fa-lock text-gray-400 mr-2"></i>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-600">Latest Job Updates</h3>
-                            <p class="text-sm text-gray-500">Available after program completion</p>
-                        </div>
-                    </div>
-                    <i class="fas fa-briefcase text-gray-300 text-2xl"></i>
-                </div>
-            </div>
-            {% endif %}
             
             <!-- Add Program Button -->
             <div x-data="{ showModal: false, confirmModal: null, limitModal: false }" class="relative mb-6">
@@ -1571,7 +1547,9 @@
                             </div>
                             <div class="flex gap-2">
                                 {% if approg.progress >= 100 %}
-                                <button class="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                                <button class="px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded-lg transition-colors view-certificate-btn"
+                                        data-program-name="{{ approg.program.program_name }}"
+                                        data-trainer-name="{{ approg.program.program_trainor|default:'Training Coordinator' }}">
                                     <i class="fas fa-certificate mr-1"></i>View Certificate
                                 </button>
                                 {% endif %}
@@ -1602,6 +1580,96 @@
 
         <!-- Include Edit Marked Fields Modal -->
         {% include 'edit_fields_modal.html' %}
+
+        <!-- Certificate Preview Modal -->
+        <div id="certificateModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-60 items-center justify-center">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl relative mx-4">
+                <!-- Close Button -->
+                <button id="closeCertificateModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700" aria-label="Close certificate modal">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+
+                <div class="p-4">
+                    <div class="certificate-container w-full rounded-xl overflow-hidden relative p-2" style="background: linear-gradient(90deg, #1e40af 0%, #fbbf24 50%, #1e40af 100%);">
+                        <!-- Modal Overlay Buttons -->
+                        <div class="absolute top-4 right-4 z-20 flex gap-2">
+                            {% if is_passer %}
+                            <a href="{% url 'download_certificate' %}"
+                               class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm"
+                               title="Download your certificate">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </a>
+                            {% else %}
+                            <button class="bg-gray-400 text-white px-3 py-2 rounded-lg shadow-lg cursor-not-allowed opacity-50 flex items-center gap-2 text-sm" disabled title="Download available after you complete a program">
+                                <i class="fas fa-download"></i>
+                                Download
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <div id="modal-certificate-content" class="relative bg-white px-8 md:px-20 py-10 md:py-16 min-h-[560px] rounded-lg no-select">
+                            <!-- Decorative background elements -->
+                            <i class="fas fa-graduation-cap absolute left-0 top-1/2 transform -translate-y-1/2 text-yellow-400 opacity-10 text-9xl select-none pointer-events-none"></i>
+                            <i class="fas fa-star absolute right-0 top-1/2 transform -translate-y-1/2 text-yellow-400 opacity-10 text-9xl select-none pointer-events-none"></i>
+
+                            <!-- Certificate Header -->
+                            <div class="text-center mb-10 relative z-10">
+                                <div class="mx-auto mb-5 w-24 h-24 rounded-full bg-blue-900 flex items-center justify-center">
+                                    <img src="{% static 'Images/icon.png' %}" alt="Logo" class="w-20 h-20 object-contain rounded-full" />
+                                </div>
+                                <h1 class="font-serif text-3xl md:text-4xl font-bold text-blue-900 leading-tight">Lucena Manpower Skill Training Center</h1>
+                                <p class="uppercase tracking-wider text-base text-slate-500 font-semibold mt-1">Dalubhasaan ng Lungsod ng Lucena</p>
+                            </div>
+
+                            <!-- Certificate Title -->
+                            <h2 class="text-center font-serif text-3xl md:text-4xl font-semibold text-yellow-400 my-6 drop-shadow">Certificate of Completion</h2>
+
+                            <!-- Certificate Text -->
+                            <div class="text-center text-lg text-slate-700 my-4">
+                                <p>This is to certify that</p>
+                            </div>
+
+                            <!-- Recipient Name -->
+                            <div class="font-serif text-2xl md:text-3xl font-bold text-blue-900 text-center my-4 py-3 border-b-4 border-yellow-400 w-full">{{ profile.first_name }} {{ profile.middle_name }} {{ profile.last_name }}</div>
+
+                            <!-- Course Details -->
+                            <div class="text-center text-base italic text-slate-500 my-4">
+                                <p>has successfully completed the requirements for</p>
+                                <p id="modal-program-name" class="font-semibold text-lg text-blue-800">
+                                    {% if program_info %}
+                                        {{ program_info.program_name }}
+                                    {% else %}
+                                        {{ profile.course_or_qualification|default:'[Program Name]' }}
+                                    {% endif %}
+                                </p>
+                                <p>and has demonstrated proficiency in the required skills and competencies.</p>
+                                <p class="mt-4">We sincerely thank you for your dedication and commitment in completing this program. We hope you continue to pursue more skills and achieve greater success in your future endeavors.</p>
+                            </div>
+
+                            <!-- Certificate Footer -->
+                            <div class="flex flex-row justify-between items-end mt-10 pt-6 border-t-2 border-slate-200">
+                                <div class="flex-1 text-center">
+                                    <p class="text-sm text-slate-500 font-medium mb-2">
+                                        <span id="modal-trainer-name">{% if trainer_name %}{{ trainer_name }}{% else %}Training Coordinator{% endif %}</span>
+                                        <br><span class="text-xs">{% if program_info %}{{ program_info.program_name }}{% else %}Training Program{% endif %}</span>
+                                    </p>
+                                    <div class="mx-auto w-52 h-0.5 bg-blue-900"></div>
+                                </div>
+                                <div class="flex-1 text-center">
+                                    <p class="text-sm text-slate-500 mb-1">Date Issued:</p>
+                                    <p id="modal-issued-date" class="text-base text-blue-900 font-semibold">{{ profile.date_accomplished|date:'F j, Y'|default:'[Date]' }}</p>
+                                </div>
+                                <div class="flex-1 text-center">
+                                    <div class="mx-auto w-52 h-0.5 bg-blue-900 mb-2"></div>
+                                    <p class="text-sm text-slate-500 font-medium">Training Coordinator</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Profile Section -->
         <div id="profile-section" class="content-section">
@@ -2162,7 +2230,19 @@
 
         <!-- Schedule Section -->
         <div id="schedule-section" class="content-section">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-5">Training Schedule</h2>
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-2xl font-semibold text-gray-800">Training Schedule</h2>
+                {% if approveprog|length > 1 %}
+                <select class="px-3 py-1 border border-gray-300 rounded-lg text-sm" id="schedule-program-selector" onchange="changeScheduleProgram(this.value)">
+                    <option value="all">All Programs</option>
+                    {% for approved in approveprog %}
+                    <option value="{{ approved.program.program_name }}">
+                        {{ approved.program.program_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
             <div class="list-container">
                 <div class="table-container">
                     <table class="data-table">
@@ -2175,9 +2255,9 @@
                                 <th>Location</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="scheduleTableBody">
                             {% for training in trainings %}
-                            <tr>
+                            <tr data-program-name="{{ training.program_name }}">
                                 <td>{{ training.start_date }}</td>
                                 <td>
                                     {{ training.task_time|default:"" }} - {{ training.end_time|default:"" }}
@@ -2187,7 +2267,7 @@
                                 <td>{{ training.room_lab }}</td>
                             </tr>
                             {% empty %}
-                            <tr>
+                            <tr id="empty-schedule-message">
                                 <td colspan="5" class="text-center text-gray-500">No training sessions found.</td>
                             </tr>
                             {% endfor %}
@@ -2230,6 +2310,15 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-semibold text-gray-800">Program Competencies</h3>
                     <div class="flex gap-2">
+                        {% if approveprog|length > 1 %}
+                        <select class="px-3 py-1 border border-gray-300 rounded-lg text-sm" id="program-selector" onchange="changeProgram(this.value)">
+                            {% for approved in approveprog %}
+                            <option value="{{ approved.program.id }}" {% if selected_program_id == approved.program.id %}selected{% endif %}>
+                                {{ approved.program.program_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
                         <select class="px-3 py-1 border border-gray-300 rounded-lg text-sm" id="competency-filter">
                             <option value="all">All Competencies</option>
                             <option value="basic">Basic Competencies</option>
@@ -2355,6 +2444,114 @@
             </div>
         </div>
 
+        <!-- Modules & Guidelines Section -->
+        <div id="modules-guidelines-section" class="content-section">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-800">Modules & Guidelines</h2>
+                    <p class="text-sm text-gray-500 mt-1">View and download training modules and guidelines from your trainer.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if approveprog|length > 1 %}
+                    <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" id="modules-program-selector" onchange="changeModulesProgram(this.value)">
+                        <option value="">All Programs</option>
+                        {% for approved in approveprog %}
+                        <option value="{{ approved.program.id }}" {% if selected_program_id == approved.program.id %}selected{% endif %}>
+                            {{ approved.program.program_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    <button onclick="refreshModulesGuidelines()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Navigation for Modules and Guidelines -->
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="border-b border-gray-200">
+                    <nav class="flex -mb-px">
+                        <button onclick="switchModuleTab('modules')" id="modules-tab-btn" class="tab-button active px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
+                            <i class="fas fa-book mr-2"></i>Modules & Manuals
+                        </button>
+                        <button onclick="switchModuleTab('guidelines')" id="guidelines-tab-btn" class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <i class="fas fa-file-alt mr-2"></i>Policy & Guidelines
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Modules & Manuals Tab -->
+            <div id="modules-tab-content" class="module-tab-content">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Training Modules & Manuals</h3>
+                        <span id="modules-count" class="text-sm text-gray-500">Loading...</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="text-left">Document Name</th>
+                                    <th class="text-left">Description</th>
+                                    <th class="text-left">Uploaded By</th>
+                                    <th class="text-left">Upload Date</th>
+                                    <th class="text-left">File Size</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modulesTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="modules-empty" class="hidden text-center py-12">
+                        <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-gray-600 mb-2">No Modules Available</h4>
+                        <p class="text-gray-500">Your trainer hasn't uploaded any modules or manuals yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Policy & Guidelines Tab -->
+            <div id="guidelines-tab-content" class="module-tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Policy & Guidelines</h3>
+                        <span id="guidelines-count" class="text-sm text-gray-500">Loading...</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="text-left">Document Name</th>
+                                    <th class="text-left">Description</th>
+                                    <th class="text-left">Uploaded By</th>
+                                    <th class="text-left">Upload Date</th>
+                                    <th class="text-left">File Size</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="guidelinesTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="guidelines-empty" class="hidden text-center py-12">
+                        <i class="fas fa-file-alt text-6xl text-gray-300 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-gray-600 mb-2">No Guidelines Available</h4>
+                        <p class="text-gray-500">Your trainer hasn't uploaded any policy or guidelines yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Job Recommendations Section -->
         <div id="jobs-section" class="content-section">
             {% if not is_passer %}
@@ -2384,9 +2581,9 @@
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-semibold text-gray-800">Job Recommendations (All PESO Jobs Ranked)</h2>
                 <div class="flex gap-2">
-                    <button id="debug-open-all-jobs" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors hidden" title="Debug: Open all PESO job links">
-                        <i class="fas fa-external-link-alt"></i>
-                        Debug: Open All Links
+                    <button id="cancel-refresh-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors hidden" title="Cancel current refresh">
+                        <i class="fas fa-ban"></i>
+                        Cancel Refresh
                     </button>
                     <button id="refresh-jobs-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                         <i class="fas fa-sync-alt" id="refresh-icon"></i>
@@ -2412,7 +2609,7 @@
                 <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
                     <div class="flex items-center">
                         <div class="flex-1">
-                            <p class="text-sm text-gray-600">High Matches (≥30%)</p>
+                            <p class="text-sm text-gray-600">High Matches (≥50%)</p>
                             <p class="text-2xl font-bold text-gray-800" id="skill-matches-count">0</p>
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
@@ -2446,6 +2643,47 @@
                 </div>
             </div>
 
+            <!-- Saved High-Match Jobs -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800">Saved High-Match Jobs</h3>
+                        <p class="text-sm text-gray-500">Jobs you scored at least 50% on are stored here for quick access.</p>
+                    </div>
+                    <span class="text-sm text-indigo-600 font-medium mt-2 md:mt-0">
+                        {{ saved_job_matches|length }} saved match{% if saved_job_matches|length != 1 %}es{% endif %}
+                    </span>
+                </div>
+                {% if saved_job_matches %}
+                <div class="divide-y divide-gray-100">
+                    {% for saved_job in saved_job_matches %}
+                    <div class="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-800">{{ saved_job.job_title }}</p>
+                            <p class="text-sm text-gray-500">{{ saved_job.job_company|default:"–" }}</p>
+                            <p class="text-xs text-gray-400">Saved on {{ saved_job.saved_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-semibold">
+                                <i class="fas fa-bolt mr-1"></i>{{ saved_job.match_score|floatformat:0 }}% match
+                            </span>
+                            {% if saved_job.job_url %}
+                            <a href="{{ saved_job.job_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                                <i class="fas fa-external-link-alt mr-2"></i>View Post
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-indigo-700 text-sm">
+                    <p class="font-medium mb-1"><i class="fas fa-info-circle mr-2"></i>No saved jobs yet</p>
+                    <p>Refresh job recommendations and any opportunity with a match score of 50% or higher will be stored here automatically.</p>
+                </div>
+                {% endif %}
+            </div>
+
             <!-- Filter and Search -->
             <div class="bg-white rounded-lg shadow p-4 mb-6">
                 <div class="flex flex-col md:flex-row gap-4">
@@ -2453,13 +2691,44 @@
                         <input type="text" id="job-search" placeholder="Search jobs by title, company, or skills..." 
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
+                        <select id="match-percentage-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Match Ranges</option>
+                            <option value="100-80">Option A: 100% - 80%</option>
+                            <option value="79-60">Option B: 79% - 60%</option>
+                            <option value="59-40">Option C: 59% - 40%</option>
+                            <option value="39-20">Option D: 39% - 20%</option>
+                            <option value="19-1">Option E: 19% - 1%</option>
+                        </select>
                         <select id="location-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">All Locations</option>
-                            <option value="lucena">Lucena City</option>
-                            <option value="quezon">Quezon Province</option>
-                            <option value="calabarzon">CALABARZON</option>
+                            <optgroup label="Philippines - Local">
+                                <option value="ncr">NCR (Metro Manila)</option>
+                                <option value="lucena">Lucena City</option>
+                                <option value="quezon">Quezon Province</option>
+                                <option value="calabarzon">CALABARZON</option>
+                                <option value="cebu">Cebu</option>
+                                <option value="davao">Davao</option>
+                                <option value="philippines">Other Philippines</option>
+                            </optgroup>
+                            <optgroup label="International">
+                                <option value="saudi arabia">Saudi Arabia</option>
+                                <option value="uae">United Arab Emirates</option>
+                                <option value="kuwait">Kuwait</option>
+                                <option value="qatar">Qatar</option>
+                                <option value="singapore">Singapore</option>
+                                <option value="hong kong">Hong Kong</option>
+                                <option value="taiwan">Taiwan</option>
+                                <option value="japan">Japan</option>
+                                <option value="south korea">South Korea</option>
+                                <option value="canada">Canada</option>
+                                <option value="australia">Australia</option>
+                            </optgroup>
                         </select>
+                        <button id="apply-search" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2">
+                            <i class="fas fa-search"></i>
+                            Apply
+                        </button>
                         <button id="clear-filters" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
                             Clear
                         </button>
@@ -2506,11 +2775,18 @@
                 <div class="certificate-container w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden relative p-2" style="background: linear-gradient(90deg, #1e40af 0%, #fbbf24 50%, #1e40af 100%);">
                     <!-- Overlay Buttons (Disabled) -->
                     <div class="absolute top-4 right-4 z-20 flex gap-2">
-                        <button class="bg-gray-400 text-white px-3 py-2 rounded-lg shadow-lg cursor-not-allowed opacity-50 flex items-center gap-2 text-sm" disabled title="Download disabled for security">
+                        {% if is_passer %}
+                        <a href="{% url 'download_certificate' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm" title="Download your certificate">
+                            <i class="fas fa-download"></i>
+                            Download
+                        </a>
+                        {% else %}
+                        <button class="bg-gray-400 text-white px-3 py-2 rounded-lg shadow-lg cursor-not-allowed opacity-50 flex items-center gap-2 text-sm" disabled title="Download available after you complete a program">
                             <i class="fas fa-download"></i>
                             Download
                         </button>
-                        <button class="bg-gray-400 text-white px-3 py-2 rounded-lg shadow-lg cursor-not-allowed opacity-50 flex items-center gap-2 text-sm" disabled title="Print disabled for security">
+                        {% endif %}
+                        <button class="bg-gray-400 text-white px-3 py-2 rounded-lg shadow-lg cursor-not-allowed opacity-50 flex items-center gap-2 text-sm" disabled title="Print disabled">
                             <i class="fas fa-print"></i>
                             Print
                         </button>
@@ -2884,12 +3160,11 @@
                                 </div>
                                 
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Send to</label>
-                                    <select id="ticketRecipient" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="admin">Admin Support</option>
-                                        <option value="trainer">My Trainer</option>
-                                        <option value="both">Both Admin & Trainer</option>
-                                    </select>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Send to</label>
+                                    <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 text-sm">
+                                        My Trainer (tickets go directly to your assigned trainer)
+                                    </div>
+                                    <input type="hidden" id="ticketRecipient" value="trainer">
                                 </div>
                                 
                                 <div class="mb-4">
@@ -3057,9 +3332,15 @@
                                     </div>
                                 </div>
                                 <div class="flex flex-col space-y-2 ml-4">
-                                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                    {% if is_passer %}
+                                    <a href="{% url 'download_certificate' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                        <i class="fas fa-download mr-2"></i>Download
+                                    </a>
+                                    {% else %}
+                                    <button class="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm cursor-not-allowed" disabled title="Available after completion">
                                         <i class="fas fa-download mr-2"></i>Download
                                     </button>
+                                    {% endif %}
                                     <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm">
                                         <i class="fas fa-eye mr-2"></i>View
                                     </button>
@@ -3209,6 +3490,8 @@
             initializeSectionSwitching();
             // Initialize notifications
             initializeNotifications();
+            // Initialize Program Competencies (read-only view for applicants)
+            initializeCompetencies();
             
             // Initialize charts with error handling
             try {
@@ -3256,27 +3539,44 @@
         });
 
         // Section switching functionality
+        // Make showSection globally accessible
+        window.showSection = function(sectionId) {
+            const contentSections = document.querySelectorAll('.content-section');
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
+            
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+            });
+            const targetSection = document.getElementById(sectionId + '-section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            const targetLink = document.querySelector(`.sidebar-nav a[data-section="${sectionId}"]`);
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+            
+            // Load modules when modules-guidelines section is shown
+            if (sectionId === 'modules-guidelines') {
+                if (typeof loadModules === 'function') {
+                    loadModules();
+                }
+            }
+        };
+        
         function initializeSectionSwitching() {
             const sidebarLinks = document.querySelectorAll('.sidebar-nav a[data-section]');
             const contentSections = document.querySelectorAll('.content-section');
-
-            function showSection(sectionId) {
-                contentSections.forEach(section => {
-                    section.classList.remove('active');
-                });
-                document.getElementById(sectionId + '-section').classList.add('active');
-
-                sidebarLinks.forEach(link => {
-                    link.classList.remove('active');
-                });
-                document.querySelector(`.sidebar-nav a[data-section="${sectionId}"]`).classList.add('active');
-            }
 
             sidebarLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     const sectionId = this.dataset.section;
-                    showSection(sectionId);
+                    window.showSection(sectionId);
                 });
             });
         }
@@ -3319,24 +3619,59 @@
                     });
             }
 
-            // Update notification badge
+            // Update notification badge (includes both notifications and new documents)
             function updateNotificationBadge(count) {
-                if (count > 0) {
-                    notificationBadge.textContent = count > 99 ? '99+' : count;
+                const newDocumentsCount = {{ new_documents_count|default:0 }};
+                const totalCount = count + newDocumentsCount;
+                if (totalCount > 0) {
+                    notificationBadge.textContent = totalCount > 99 ? '99+' : totalCount;
                     notificationBadge.classList.remove('hidden');
                 } else {
                     notificationBadge.classList.add('hidden');
                 }
             }
+            
+            // Initialize notification badge with new documents count on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                const newDocumentsCount = {{ new_documents_count|default:0 }};
+                const unreadCount = {{ unread_notifications_count|default:0 }};
+                const totalCount = unreadCount + newDocumentsCount;
+                if (totalCount > 0) {
+                    updateNotificationBadge(unreadCount);
+                }
+            });
 
             // Render notifications
             function renderNotifications(notifications) {
-                if (notifications.length === 0) {
+                const newDocumentsCount = {{ new_documents_count|default:0 }};
+                let notificationsHTML = '';
+                
+                // Add new documents notification if there are new documents
+                if (newDocumentsCount > 0) {
+                    notificationsHTML += `
+                        <div class="notification-item new-documents-notification" style="cursor: pointer;" data-section="modules-guidelines">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-sm text-blue-600 flex items-center">
+                                        <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                                        New Documents Uploaded
+                                    </h4>
+                                    <p class="text-xs text-gray-600 mt-1">Your trainer has uploaded ${newDocumentsCount} new document${newDocumentsCount !== 1 ? 's' : ''} (modules/guidelines). Click to view.</p>
+                                    <p class="text-xs text-gray-400 mt-1">Just now</p>
+                                </div>
+                                <div class="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (notifications.length === 0 && newDocumentsCount === 0) {
                     notificationsList.innerHTML = '<div class="p-4 text-center text-gray-500">No notifications</div>';
                     return;
                 }
 
-                const notificationsHTML = notifications.map(notification => {
+                // Add regular notifications to the HTML
+                notificationsHTML += notifications.map(notification => {
                     // Check if this is a correction notification
                     const isCorrectionNotif = 
                         notification.title.toLowerCase().includes('correct') ||
@@ -3374,8 +3709,21 @@
 
                 // Add click handlers for individual notifications
                 // Feature: Auto-navigate to Profile section when clicking correction notifications
+                // Feature: Auto-navigate to Modules & Guidelines when clicking new documents notification
                 document.querySelectorAll('.notification-item').forEach(item => {
                     item.addEventListener('click', function() {
+                        // Check if this is the new documents notification
+                        if (this.classList.contains('new-documents-notification')) {
+                            const sectionId = this.dataset.section;
+                            // Close notification box
+                            notificationBox.classList.add('hidden');
+                            // Navigate to Modules & Guidelines section
+                            if (sectionId && typeof window.showSection === 'function') {
+                                window.showSection(sectionId);
+                            }
+                            return;
+                        }
+                        
                         const notificationId = this.dataset.notificationId;
                         const notificationTitle = this.dataset.notificationTitle || '';
                         const notificationMessage = this.dataset.notificationMessage || '';
@@ -3391,7 +3739,9 @@
                             notificationMessage.toLowerCase().includes('update your information');
                         
                         // Mark notification as read
-                        markNotificationAsRead(notificationId);
+                        if (notificationId) {
+                            markNotificationAsRead(notificationId);
+                        }
                         
                         // If it's a correction notification, automatically navigate to Profile section
                         if (isCorrectionNotification) {
@@ -3399,7 +3749,9 @@
                             notificationBox.classList.add('hidden');
                             
                             // Navigate to Profile section
-                            showSection('profile');
+                            if (typeof window.showSection === 'function') {
+                                window.showSection('profile');
+                            }
                             
                             // Scroll to top of profile section for better UX
                             setTimeout(() => {
@@ -3507,6 +3859,254 @@
             }
             // Trim any whitespace that might have been introduced
             return cookieValue ? cookieValue.trim() : null;
+        }
+
+
+        // ===============================
+        // Program Competencies (Applicant Read-Only)
+        // ===============================
+        function initializeCompetencies() {
+            try {
+                const basicListEl = document.getElementById('basic-competencies-list');
+                const commonListEl = document.getElementById('common-competencies-list');
+                const coreListEl = document.getElementById('core-competencies-list');
+                const filterEl = document.getElementById('competency-filter');
+
+                // If the section doesn't exist on this page, skip
+                if (!basicListEl || !commonListEl || !coreListEl) {
+                    return;
+                }
+
+                // Pull program competencies from context (fallback to program_info.program_competencies)
+                const programCompetenciesContext = (function(){ try { return ({{ program_competencies|default:'{}'|safe }}); } catch(e){ return {}; } })();
+                const programInfoCompetencies = (function(){ try { return ({{ program_info.program_competencies|default:'{}'|safe }}); } catch(e){ return {}; } })();
+
+                // Normalize lists: prefer context basic/common/core; fall back to *_competencies keys
+                const basicItems = Array.isArray(programCompetenciesContext.basic) && programCompetenciesContext.basic.length
+                    ? programCompetenciesContext.basic
+                    : (programInfoCompetencies.basic_competencies || []);
+                const commonItems = Array.isArray(programCompetenciesContext.common) && programCompetenciesContext.common.length
+                    ? programCompetenciesContext.common
+                    : (programInfoCompetencies.common_competencies || []);
+                const coreItems = Array.isArray(programCompetenciesContext.core) && programCompetenciesContext.core.length
+                    ? programCompetenciesContext.core
+                    : (programInfoCompetencies.core_competencies || []);
+
+                // Determine current user and program
+                const currentUserId = (function(){ try { return ({{ request.user.id|default:'null' }}); } catch(e){ return null; } })();
+                const programId = (function(){ try { return ({{ program_info.id|default:'null' }}); } catch(e){ return null; } })();
+
+                // Render unchecked skeletons first (for fast paint)
+                renderCompetencyGroup(basicListEl, 'basic', basicItems, {});
+                renderCompetencyGroup(commonListEl, 'common', commonItems, {});
+                renderCompetencyGroup(coreListEl, 'core', coreItems, {});
+
+                // Wire up filter
+                if (filterEl) {
+                    filterEl.addEventListener('change', function() {
+                        const val = this.value;
+                        const basicSection = basicListEl.closest('.mb-6');
+                        const commonSection = commonListEl.closest('.mb-6');
+                        const coreSection = coreListEl.closest('.mb-6');
+                        if (!basicSection || !commonSection || !coreSection) return;
+                        if (val === 'all') {
+                            basicSection.style.display = '';
+                            commonSection.style.display = '';
+                            coreSection.style.display = '';
+                        } else {
+                            basicSection.style.display = (val === 'basic') ? '' : 'none';
+                            commonSection.style.display = (val === 'common') ? '' : 'none';
+                            coreSection.style.display = (val === 'core') ? '' : 'none';
+                        }
+                    });
+                }
+
+                // If we don't have a program, nothing else to do
+                if (!programId || !currentUserId) {
+                    return;
+                }
+
+                // Fetch saved checkbox states for this user and program
+                fetch(`/get-competency-states/?program_id=${programId}`)
+                  .then(resp => resp.json())
+                  .then(data => {
+                      if (!data || !data.success || !data.competencies) return;
+                      const userKey = String(currentUserId);
+                      const userComp = data.competencies[userKey] || null;
+
+                      // Render with actual states if available
+                      const basicStates = (userComp && userComp.basic_competencies) ? userComp.basic_competencies : {};
+                      const commonStates = (userComp && userComp.common_competencies) ? userComp.common_competencies : {};
+                      const coreStates = (userComp && userComp.core_competencies) ? userComp.core_competencies : {};
+
+                      renderCompetencyGroup(basicListEl, 'basic', basicItems, basicStates);
+                      renderCompetencyGroup(commonListEl, 'common', commonItems, commonStates);
+                      renderCompetencyGroup(coreListEl, 'core', coreItems, coreStates);
+
+                      // Update percentage displays if present
+                      if (userComp) {
+                          updateCompetencyPercentages({
+                              basic: userComp.basic_percentage,
+                              common: userComp.common_percentage,
+                              core: userComp.core_percentage,
+                              overall: userComp.overall_percentage,
+                          });
+                      }
+                  })
+                  .catch(err => {
+                      console.warn('Failed to load competency states:', err);
+                  });
+            } catch (e) {
+                console.warn('initializeCompetencies error:', e);
+            }
+        }
+
+        function renderCompetencyGroup(containerEl, type, items, states) {
+            if (!containerEl) return;
+            const fragments = [];
+            const safeStates = states || {};
+            for (let i = 0; i < (items || []).length; i++) {
+                const label = items[i];
+                const isChecked = !!safeStates[String(i)]; // indices are stored as strings in DB
+                fragments.push(renderCompetencyItem(type, i, label, isChecked));
+            }
+            containerEl.innerHTML = fragments.join('');
+        }
+
+        function renderCompetencyItem(type, index, label, isChecked) {
+            const checkedAttr = isChecked ? 'checked' : '';
+            const id = `${type}-competency-${index}`;
+            // Disabled (read-only) checkbox reflecting trainer's progress
+            // Derive a human-readable text from either a string or an object { name, learning_outcomes }
+            let text = '';
+            if (typeof label === 'string') {
+                text = label;
+            } else if (label && typeof label === 'object') {
+                // Prefer the name/title; fallback to the first learning outcome; finally fallback to string coercion
+                text = label.name || label.title || '';
+                if (!text) {
+                    if (Array.isArray(label.learning_outcomes) && label.learning_outcomes.length) {
+                        text = String(label.learning_outcomes[0]);
+                    } else {
+                        text = String(label);
+                    }
+                }
+            } else {
+                text = String(label ?? '');
+            }
+
+            return `
+                <label for="${id}" class="flex items-start space-x-3 bg-white rounded-md border border-gray-200 p-3">
+                    <input id="${id}" type="checkbox" class="mt-1 form-checkbox h-4 w-4 text-blue-600" ${checkedAttr} disabled>
+                    <span class="text-gray-800">${text}</span>
+                </label>
+            `;
+        }
+
+        function updateCompetencyPercentages(pcts) {
+            // Update cards
+            const basicPctEl = document.getElementById('basic-percentage');
+            const commonPctEl = document.getElementById('common-percentage');
+            const corePctEl = document.getElementById('core-percentage');
+            const overallPctEl = document.getElementById('overall-percentage');
+            if (typeof pcts.basic === 'number' && basicPctEl) basicPctEl.textContent = `${Math.round(pcts.basic)}%`;
+            if (typeof pcts.common === 'number' && commonPctEl) commonPctEl.textContent = `${Math.round(pcts.common)}%`;
+            if (typeof pcts.core === 'number' && corePctEl) corePctEl.textContent = `${Math.round(pcts.core)}%`;
+            if (typeof pcts.overall === 'number' && overallPctEl) overallPctEl.textContent = `${Math.round(pcts.overall)}%`;
+
+            // Update detailed labels
+            const basicDetailEl = document.getElementById('basic-detail-percentage');
+            const commonDetailEl = document.getElementById('common-detail-percentage');
+            const coreDetailEl = document.getElementById('core-detail-percentage');
+            if (typeof pcts.basic === 'number' && basicDetailEl) basicDetailEl.textContent = `${Math.round(pcts.basic)}%`;
+            if (typeof pcts.common === 'number' && commonDetailEl) commonDetailEl.textContent = `${Math.round(pcts.common)}%`;
+            if (typeof pcts.core === 'number' && coreDetailEl) coreDetailEl.textContent = `${Math.round(pcts.core)}%`;
+
+            // Update circular progress
+            const circle = document.getElementById('progress-circle');
+            const progressPctEl = document.getElementById('progress-percentage');
+            if (circle && typeof pcts.overall === 'number') {
+                const circumference = 314; // matches SVG stroke-dasharray
+                const offset = circumference - (circumference * Math.max(0, Math.min(100, pcts.overall))) / 100;
+                circle.setAttribute('stroke-dashoffset', `${offset}`);
+                if (progressPctEl) progressPctEl.textContent = `${Math.round(pcts.overall)}%`;
+            }
+        }
+
+        // Change program and reload competencies
+        function changeProgram(programId) {
+            if (!programId) return;
+            // Reload the page with the selected program_id parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('program_id', programId);
+            window.location.href = url.toString();
+        }
+
+        // Filter schedule by program (client-side filtering)
+        function changeScheduleProgram(programName) {
+            const tableBody = document.getElementById('scheduleTableBody');
+            if (!tableBody) return;
+            
+            const rows = tableBody.querySelectorAll('tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const rowProgramName = row.getAttribute('data-program-name');
+                if (programName === 'all' || rowProgramName === programName) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show empty message if no rows are visible
+            if (visibleCount === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = '<td colspan="5" class="text-center text-gray-500">No training sessions found for this program.</td>';
+                emptyRow.id = 'empty-schedule-message';
+                tableBody.appendChild(emptyRow);
+            } else {
+                const emptyMsg = document.getElementById('empty-schedule-message');
+                if (emptyMsg) emptyMsg.remove();
+            }
+        }
+
+        // Export button handler
+        function exportCompetencies() {
+            try {
+                const rows = [];
+                rows.push(['Type', 'Index', 'Competency', 'Checked']);
+
+                function collect(type, containerId) {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    const labels = container.querySelectorAll('label');
+                    labels.forEach((labelEl, idx) => {
+                        const input = labelEl.querySelector('input[type="checkbox"]');
+                        const text = labelEl.querySelector('span')?.textContent || '';
+                        rows.push([type, idx, text, input && input.checked ? 'Yes' : 'No']);
+                    });
+                }
+
+                collect('Basic', 'basic-competencies-list');
+                collect('Common', 'common-competencies-list');
+                collect('Core', 'core-competencies-list');
+
+                // Build CSV
+                const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'program_competencies.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.warn('Export failed:', e);
+            }
         }
 
 
@@ -3673,6 +4273,269 @@
             alert('Decline Reason:\n\n' + reason);
         }
 
+        // ==================== MODULES & GUIDELINES FUNCTIONALITY ====================
+        
+        // Tab switching for Modules & Guidelines
+        function switchModuleTab(tab) {
+            const modulesTab = document.getElementById('modules-tab-content');
+            const guidelinesTab = document.getElementById('guidelines-tab-content');
+            const modulesBtn = document.getElementById('modules-tab-btn');
+            const guidelinesBtn = document.getElementById('guidelines-tab-btn');
+            
+            if (tab === 'modules') {
+                modulesTab.classList.remove('hidden');
+                guidelinesTab.classList.add('hidden');
+                modulesBtn.classList.add('active', 'border-blue-500', 'text-blue-600');
+                modulesBtn.classList.remove('border-transparent', 'text-gray-500');
+                guidelinesBtn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                guidelinesBtn.classList.add('border-transparent', 'text-gray-500');
+                loadModules();
+            } else {
+                modulesTab.classList.add('hidden');
+                guidelinesTab.classList.remove('hidden');
+                guidelinesBtn.classList.add('active', 'border-blue-500', 'text-blue-600');
+                guidelinesBtn.classList.remove('border-transparent', 'text-gray-500');
+                modulesBtn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                modulesBtn.classList.add('border-transparent', 'text-gray-500');
+                loadGuidelines();
+            }
+        }
+
+        // Load Modules & Manuals
+        function loadModules() {
+            const tbody = document.getElementById('modulesTableBody');
+            const emptyDiv = document.getElementById('modules-empty');
+            const countSpan = document.getElementById('modules-count');
+            
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td></tr>';
+            emptyDiv.classList.add('hidden');
+            
+            // Get selected program ID from the selector (if available)
+            const programSelector = document.getElementById('modules-program-selector');
+            const selectedProgramId = programSelector ? programSelector.value : '';
+            
+            // Build URL with program filter if a program is selected
+            let url = `/get-lmstc-documents/?document_type=modules_manuals&per_page=100&status=active`;
+            if (selectedProgramId) {
+                url += `&program_id=${selectedProgramId}`;
+            }
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.documents && data.documents.length > 0) {
+                        // Filter documents by applicant's programs (if program info is available)
+                        // For now, show all active modules_manuals
+                        const documents = data.documents;
+                        
+                        if (documents.length === 0) {
+                            tbody.innerHTML = '';
+                            emptyDiv.classList.remove('hidden');
+                            countSpan.textContent = '0 documents';
+                        } else {
+                            tbody.innerHTML = documents.map(doc => {
+                                const fileSize = doc.file_size ? formatFileSize(doc.file_size) : 'N/A';
+                                const fileUrl = doc.file_path || doc.file_url || '#';
+                                const fileIcon = getFileIcon(doc.document_name || '');
+                                return `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="text-left py-3">
+                                            <div class="flex items-center">
+                                                <i class="${fileIcon} mr-2"></i>
+                                                <span class="font-medium text-gray-800">${escapeHtml(doc.document_name || 'Untitled')}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-left py-3 text-gray-600">${escapeHtml(doc.description || 'N/A')}</td>
+                                        <td class="text-left py-3 text-gray-600">${escapeHtml(doc.uploaded_by || 'N/A')}</td>
+                                        <td class="text-left py-3 text-gray-600">${doc.uploaded_at || 'N/A'}</td>
+                                        <td class="text-left py-3 text-gray-600">${fileSize}</td>
+                                        <td class="text-center py-3">
+                                            <a href="${fileUrl}" target="_blank" download class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">
+                                                <i class="fas fa-download mr-1"></i> Download
+                                            </a>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('');
+                            emptyDiv.classList.add('hidden');
+                            countSpan.textContent = `${documents.length} document${documents.length !== 1 ? 's' : ''}`;
+                        }
+                    } else {
+                        tbody.innerHTML = '';
+                        emptyDiv.classList.remove('hidden');
+                        countSpan.textContent = '0 documents';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading modules:', error);
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-4">Error loading documents. Please try again.</td></tr>';
+                    emptyDiv.classList.add('hidden');
+                });
+        }
+
+        // Load Policy & Guidelines
+        function loadGuidelines() {
+            const tbody = document.getElementById('guidelinesTableBody');
+            const emptyDiv = document.getElementById('guidelines-empty');
+            const countSpan = document.getElementById('guidelines-count');
+            
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 py-4">Loading documents...</td></tr>';
+            emptyDiv.classList.add('hidden');
+            
+            // Get selected program ID from the selector (if available)
+            const programSelector = document.getElementById('modules-program-selector');
+            const selectedProgramId = programSelector ? programSelector.value : '';
+            
+            // Build URL with program filter if a program is selected
+            let url = `/get-lmstc-documents/?document_type=policy_guidelines&per_page=100&status=active`;
+            if (selectedProgramId) {
+                url += `&program_id=${selectedProgramId}`;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.documents && data.documents.length > 0) {
+                        const documents = data.documents;
+                        
+                        if (documents.length === 0) {
+                            tbody.innerHTML = '';
+                            emptyDiv.classList.remove('hidden');
+                            countSpan.textContent = '0 documents';
+                        } else {
+                            tbody.innerHTML = documents.map(doc => {
+                                const fileSize = formatFileSize(doc.file_size || 'N/A');
+                                const fileUrl = doc.file_path || doc.file_url || '#';
+                                return `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="text-left py-3">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                                                <span class="font-medium text-gray-800">${escapeHtml(doc.document_name || 'Untitled')}</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-left py-3 text-gray-600">${escapeHtml(doc.description || 'N/A')}</td>
+                                        <td class="text-left py-3 text-gray-600">${escapeHtml(doc.uploaded_by || 'N/A')}</td>
+                                        <td class="text-left py-3 text-gray-600">${doc.uploaded_at || 'N/A'}</td>
+                                        <td class="text-left py-3 text-gray-600">${fileSize}</td>
+                                        <td class="text-center py-3">
+                                            <a href="${fileUrl}" target="_blank" download class="inline-flex items-center px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors">
+                                                <i class="fas fa-download mr-1"></i> Download
+                                            </a>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('');
+                            emptyDiv.classList.add('hidden');
+                            countSpan.textContent = `${documents.length} document${documents.length !== 1 ? 's' : ''}`;
+                        }
+                    } else {
+                        tbody.innerHTML = '';
+                        emptyDiv.classList.remove('hidden');
+                        countSpan.textContent = '0 documents';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading guidelines:', error);
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-red-500 py-4">Error loading documents. Please try again.</td></tr>';
+                    emptyDiv.classList.add('hidden');
+                });
+        }
+
+        // Change program filter for modules and guidelines
+        function changeModulesProgram(programId) {
+            // Reload both modules and guidelines with the new program filter
+            const activeTab = document.getElementById('modules-tab-content').classList.contains('hidden') ? 'guidelines' : 'modules';
+            if (activeTab === 'modules') {
+                loadModules();
+            } else {
+                loadGuidelines();
+            }
+        }
+
+        // Refresh both modules and guidelines
+        function refreshModulesGuidelines() {
+            const activeTab = document.getElementById('modules-tab-content').classList.contains('hidden') ? 'guidelines' : 'modules';
+            if (activeTab === 'modules') {
+                loadModules();
+            } else {
+                loadGuidelines();
+            }
+            showNotificationMessage('Documents refreshed successfully', 'success');
+        }
+
+        // Format file size helper
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 'N/A') return 'N/A';
+            if (typeof bytes === 'string') {
+                // If it's already formatted, return as is
+                if (bytes.includes('KB') || bytes.includes('MB') || bytes.includes('GB')) {
+                    return bytes;
+                }
+                bytes = parseInt(bytes);
+            }
+            if (isNaN(bytes) || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Escape HTML helper
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Get file icon based on file extension
+        function getFileIcon(fileName) {
+            if (!fileName) return 'fas fa-file text-gray-500';
+            const ext = fileName.split('.').pop().toLowerCase();
+            const iconMap = {
+                'pdf': 'fas fa-file-pdf text-red-500',
+                'doc': 'fas fa-file-word text-blue-500',
+                'docx': 'fas fa-file-word text-blue-500',
+                'xls': 'fas fa-file-excel text-green-500',
+                'xlsx': 'fas fa-file-excel text-green-500',
+                'txt': 'fas fa-file-alt text-gray-500',
+                'jpg': 'fas fa-file-image text-purple-500',
+                'jpeg': 'fas fa-file-image text-purple-500',
+                'png': 'fas fa-file-image text-purple-500',
+                'gif': 'fas fa-file-image text-purple-500'
+            };
+            return iconMap[ext] || 'fas fa-file text-gray-500';
+        }
+
+        // Load modules when section is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load modules when the section is first accessed
+            const modulesSection = document.getElementById('modules-guidelines-section');
+            if (modulesSection) {
+                // Load modules immediately if section is already active
+                if (modulesSection.classList.contains('active')) {
+                    loadModules();
+                }
+                
+                // Use MutationObserver to load modules when section becomes active
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                            if (modulesSection.classList.contains('active')) {
+                                loadModules();
+                            }
+                        }
+                    });
+                });
+                observer.observe(modulesSection, { attributes: true, attributeFilter: ['class'] });
+            }
+        });
+
         // Job Recommendations Functionality
         document.addEventListener('DOMContentLoaded', function() {
             let currentPage = 1;
@@ -3683,13 +4546,14 @@
             // DOM Elements
             const refreshBtn = document.getElementById('refresh-jobs-btn');
             const refreshIcon = document.getElementById('refresh-icon');
+            const cancelRefreshBtn = document.getElementById('cancel-refresh-btn');
             const loadingIndicator = document.getElementById('loading-indicator');
             const jobsContainer = document.getElementById('jobs-container');
             const searchInput = document.getElementById('job-search');
             const locationFilter = document.getElementById('location-filter');
-            const skillFilter = document.getElementById('skill-filter');
+            const matchPercentageFilter = document.getElementById('match-percentage-filter');
             const clearFiltersBtn = document.getElementById('clear-filters');
-            const viewAllJobsBtn = document.getElementById('view-all-jobs');
+            const applySearchBtn = document.getElementById('apply-search');
             const pagination = document.getElementById('pagination');
             const prevPageBtn = document.getElementById('prev-page');
             const nextPageBtn = document.getElementById('next-page');
@@ -3700,6 +4564,15 @@
             const skillMatchesCount = document.getElementById('skill-matches-count');
             const newJobsCount = document.getElementById('new-jobs-count');
             const applicationsSentCount = document.getElementById('applications-sent-count');
+
+            // Active filter state
+            const JOB_FETCH_LIMIT = 100;
+            const JOB_FETCH_PAGES = 10;
+            let currentFetchController = null;
+            let isFetching = false;
+            let activeSearchTerm = '';
+            let activeLocationFilter = '';
+            let activeMatchFilter = '';
 
             // Mock PESO job data (in real implementation, this would come from web scraping)
             const mockPesoJobs = [
@@ -3774,39 +4647,92 @@
             function init() {
                 updateStatistics();
                 bindEvents();
-                // Auto-refresh every 5 minutes
-                setInterval(() => {
-                    if (jobsData.length > 0) {
-                        refreshJobs();
-                    }
-                }, 300000);
+                // Auto-refresh removed - jobs only refresh when button is clicked
             }
 
             // Bind event listeners
             function bindEvents() {
-                refreshBtn.addEventListener('click', refreshJobs);
-                searchInput.addEventListener('input', debounce(filterJobs, 300));
-                locationFilter.addEventListener('change', filterJobs);
-                skillFilter.addEventListener('change', filterJobs);
+                refreshBtn.addEventListener('click', () => refreshJobs(true));
+                applySearchBtn.addEventListener('click', () => applySearchFilters());
+                searchInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applySearchFilters();
+                    }
+                });
+                // Match percentage filter - filter locally when changed
+                if (matchPercentageFilter) {
+                    matchPercentageFilter.addEventListener('change', () => {
+                        if (jobsData.length > 0) {
+                            activeMatchFilter = matchPercentageFilter.value.trim();
+                            filterJobs();
+                        }
+                    });
+                }
                 clearFiltersBtn.addEventListener('click', clearFilters);
-                viewAllJobsBtn.addEventListener('click', () => showSection('jobs'));
                 prevPageBtn.addEventListener('click', () => changePage(currentPage - 1));
                 nextPageBtn.addEventListener('click', () => changePage(currentPage + 1));
                 
-                // Debug button to open all PESO job links
-                const debugBtn = document.getElementById('debug-open-all-jobs');
-                if (debugBtn) {
-                    debugBtn.addEventListener('click', openAllJobLinks);
+                // Cancel refresh
+                if (cancelRefreshBtn) {
+                    cancelRefreshBtn.addEventListener('click', cancelRefresh);
                 }
             }
 
             // Refresh jobs from PhilJobNet with Skill Matching
-            function refreshJobs() {
+            function applySearchFilters() {
+                const newSearchTerm = searchInput.value.trim();
+                const newLocationFilter = locationFilter.value.trim();
+                const newMatchFilter = matchPercentageFilter ? matchPercentageFilter.value.trim() : '';
+                
+                // If only match percentage filter changed (and we already have jobs loaded), just filter locally
+                if (jobsData.length > 0 && 
+                    newSearchTerm === activeSearchTerm && 
+                    newLocationFilter === activeLocationFilter && 
+                    newMatchFilter !== activeMatchFilter) {
+                    activeMatchFilter = newMatchFilter;
+                    filterJobs();
+                    return;
+                }
+                
+                // Otherwise, refresh from server with search and location filters
+                activeSearchTerm = newSearchTerm;
+                activeLocationFilter = newLocationFilter;
+                activeMatchFilter = newMatchFilter;
+                refreshJobs(true);
+            }
+
+            function refreshJobs(showFilterNotice = false) {
                 showLoading(true);
                 refreshIcon.classList.add('animate-spin');
+                // Abort any previous in-flight request
+                if (currentFetchController) {
+                    try { currentFetchController.abort(); } catch (e) {}
+                }
+                currentFetchController = new AbortController();
+                isFetching = true;
+                // Toggle buttons
+                refreshBtn.disabled = true;
+                if (cancelRefreshBtn) cancelRefreshBtn.classList.remove('hidden');
                 
+                const params = new URLSearchParams({
+                    limit: JOB_FETCH_LIMIT,
+                    min_threshold: 0,
+                    pages: JOB_FETCH_PAGES,
+                    batches: 5,
+                    pages_per_batch: 1,
+                    stop_after_count: 10,
+                    stop_after_high: 10
+                });
+                if (activeSearchTerm) {
+                    params.append('search', activeSearchTerm);
+                }
+                if (activeLocationFilter) {
+                    params.append('location', activeLocationFilter);
+                }
+
                 // Fetch ALL jobs from PhilJobNet ranked by skill match (min_threshold=0)
-                fetch('/api/matched-jobs/?limit=50&min_threshold=0')
+                fetch(`/api/matched-jobs/?${params.toString()}`, { signal: currentFetchController.signal })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -3816,28 +4742,35 @@
                                 filteredJobs = [];
                                 renderNoMatchMessage();
                                 updateStatistics();
-                                showNotification('No jobs available from PESO at this time.', 'info');
+                                const msg = data.cancelled ? 'Refresh cancelled.' : 'No jobs available from PESO at this time.';
+                                showNotification(msg, data.cancelled ? 'warning' : 'info');
                             } else {
-                                // Transform job data - ALL jobs are included and ranked
-                                jobsData = data.jobs.map(job => ({
-                                    id: job.id,
-                                    title: job.title,
-                                    company: job.company,
-                                    location: job.location,
-                                    description: job.description,
-                                    requirements: job.requirements,
-                                    salary: job.salary,
-                                    employment_type: job.employment_type,
-                                    posted_date: job.posted_date,
-                                    deadline: job.deadline,
-                                    skills: job.skills || [],
-                                    vacancy_count: job.vacancy_count || 1,
-                                    url: job.url,
-                                    source: job.source || 'PhilJobNet',
-                                    matchScore: job.match_percentage || 0,
-                                    match_percentage: job.match_percentage || 0,
-                                    isNew: isJobNew(job.posted_date)
-                                }));
+                                // Transform job data - Filter out jobs with 0% match (only show matched jobs)
+                                jobsData = data.jobs
+                                    .map(job => ({
+                                        id: job.id,
+                                        title: job.title,
+                                        company: job.company,
+                                        location: job.location,
+                                        description: job.description,
+                                        requirements: job.requirements,
+                                        salary: job.salary,
+                                        employment_type: job.employment_type,
+                                        posted_date: job.posted_date,
+                                        deadline: job.deadline,
+                                        skills: job.skills || [],
+                                        vacancy_count: job.vacancy_count || 1,
+                                        url: job.url,
+                                        source: job.source || 'PhilJobNet',
+                                        matchScore: job.match_percentage || 0,
+                                        match_percentage: job.match_percentage || 0,
+                                        isNew: isJobNew(job.posted_date)
+                                    }))
+                                    .filter(job => {
+                                        // Only include jobs with match percentage > 0
+                                        const matchScore = job.match_percentage || job.matchScore || 0;
+                                        return matchScore > 0;
+                                    });
                                 
                                 filteredJobs = [...jobsData];
                                 currentPage = 1;
@@ -3846,17 +4779,24 @@
                                 
                                 // Show different messages based on match quality
                                 const highMatches = data.high_match_count || 0;
-                                if (highMatches > 0) {
-                                    showNotification(`Showing all ${data.total_count} PESO jobs ranked by match. ${highMatches} high matches (≥30%) found!`, 'success');
+                                if (showFilterNotice) {
+                                    if (highMatches > 0) {
+                                        const stopped = data.stopped_early ? ` Stopped early after ${data.stop_reason === 'high' ? 'reaching high-match target' : 'reaching match count target'}.` : '';
+                                        showNotification(`Applied filters → ${data.total_count} PESO jobs ranked by match. ${highMatches} high matches (≥50%) found!${stopped}`, 'success');
+                                    } else {
+                                        const stopped = data.stopped_early ? ` Stopped early after ${data.stop_reason === 'high' ? 'reaching high-match target' : 'reaching match count target'}.` : '';
+                                        showNotification(`Applied filters → Showing all ${data.total_count} PESO jobs ranked by skill match percentage.${stopped}`, 'info');
+                                    }
                                 } else {
-                                    showNotification(`Showing all ${data.total_count} PESO jobs ranked by skill match percentage.`, 'info');
+                                    if (highMatches > 0) {
+                                        const stopped = data.stopped_early ? ` Stopped early after ${data.stop_reason === 'high' ? 'reaching high-match target' : 'reaching match count target'}.` : '';
+                                        showNotification(`Showing all ${data.total_count} PESO jobs ranked by match. ${highMatches} high matches (≥50%) found!${stopped}`, 'success');
+                                    } else {
+                                        const stopped = data.stopped_early ? ` Stopped early after ${data.stop_reason === 'high' ? 'reaching high-match target' : 'reaching match count target'}.` : '';
+                                        showNotification(`Showing all ${data.total_count} PESO jobs ranked by skill match percentage.${stopped}`, 'info');
+                                    }
                                 }
                                 
-                                // Show debug button if jobs have URLs
-                                const debugBtn = document.getElementById('debug-open-all-jobs');
-                                if (debugBtn && jobsData.some(job => job.url)) {
-                                    debugBtn.classList.remove('hidden');
-                                }
                             }
                         } else {
                             // Handle error from API
@@ -3869,17 +4809,46 @@
                         }
                     })
                     .catch(error => {
-                        console.error('Error fetching matched jobs:', error);
-                        jobsData = [];
-                        filteredJobs = [];
-                        renderNoMatchMessage();
-                        updateStatistics();
-                        showNotification('Network error. Unable to load jobs.', 'error');
+                        if (error && (error.name === 'AbortError' || error.message?.includes('aborted'))) {
+                            showNotification('Refresh cancelled.', 'warning');
+                        } else {
+                            console.error('Error fetching matched jobs:', error);
+                            jobsData = [];
+                            filteredJobs = [];
+                            renderNoMatchMessage();
+                            updateStatistics();
+                            showNotification('Network error. Unable to load jobs.', 'error');
+                        }
                     })
                     .finally(() => {
                         showLoading(false);
                         refreshIcon.classList.remove('animate-spin');
+                        isFetching = false;
+                        refreshBtn.disabled = false;
+                        if (cancelRefreshBtn) cancelRefreshBtn.classList.add('hidden');
+                        currentFetchController = null;
                     });
+            }
+
+            async function cancelRefresh() {
+                try {
+                    // Abort client-side fetch
+                    if (currentFetchController) {
+                        try { currentFetchController.abort(); } catch (e) {}
+                    }
+                    // Signal server to stop between batches
+                    const csrftoken = getCookie('csrftoken');
+                    await fetch('/api/matched-jobs/cancel/', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrftoken }
+                    });
+                } catch (e) {
+                    console.warn('Failed to signal cancel:', e);
+                } finally {
+                    if (cancelRefreshBtn) cancelRefreshBtn.classList.add('hidden');
+                    refreshIcon.classList.remove('animate-spin');
+                    refreshBtn.disabled = false;
+                }
             }
 
             // Show/hide loading indicator
@@ -3935,19 +4904,31 @@
             function filterJobs() {
                 const searchTerm = searchInput.value.toLowerCase();
                 const locationValue = locationFilter.value;
-                const skillValue = skillFilter.value;
+                const matchPercentageValue = matchPercentageFilter ? matchPercentageFilter.value : '';
 
                 filteredJobs = jobsData.filter(job => {
+                    // Only show jobs with match percentage > 0 (filter out unmatched jobs)
+                    const matchScore = job.match_percentage || job.matchScore || 0;
+                    if (matchScore === 0) {
+                        return false;
+                    }
+
                     const matchesSearch = !searchTerm || 
                         job.title.toLowerCase().includes(searchTerm) ||
                         job.company.toLowerCase().includes(searchTerm) ||
-                        job.skills.some(skill => skill.toLowerCase().includes(searchTerm));
+                        (job.skills && Array.isArray(job.skills) && job.skills.some(skill => skill.toLowerCase().includes(searchTerm)));
                     
                     const matchesLocation = !locationValue || 
                         job.location.toLowerCase().includes(locationValue);
                     
+                    // Match percentage range filter
+                    let matchesPercentage = true;
+                    if (matchPercentageValue) {
+                        const [min, max] = matchPercentageValue.split('-').map(Number);
+                        matchesPercentage = matchScore >= min && matchScore <= max;
+                    }
 
-                    return matchesSearch && matchesLocation;
+                    return matchesSearch && matchesLocation && matchesPercentage;
                 });
 
                 currentPage = 1;
@@ -3957,18 +4938,26 @@
 
             // Clear all filters
             function clearFilters() {
+                const hadFilters = activeSearchTerm || activeLocationFilter || activeMatchFilter;
                 searchInput.value = '';
                 locationFilter.value = '';
-                filterJobs();
-                filteredJobs = [...jobsData];
-                currentPage = 1;
-                renderJobs();
-                updatePagination();
+                if (matchPercentageFilter) matchPercentageFilter.value = '';
+                activeSearchTerm = '';
+                activeLocationFilter = '';
+                activeMatchFilter = '';
+                if (hadFilters) {
+                    refreshJobs(true);
+                } else {
+                    filteredJobs = [...jobsData];
+                    currentPage = 1;
+                    renderJobs();
+                    updatePagination();
+                }
             }
 
             // Render jobs
             function renderJobs() {
-                const jobsPerPage = 10;  // Show more jobs per page
+                const jobsPerPage = 20;  // Show more jobs per page
                 const startIndex = (currentPage - 1) * jobsPerPage;
                 const endIndex = startIndex + jobsPerPage;
                 const jobsToShow = filteredJobs.slice(startIndex, endIndex);
@@ -4170,10 +5159,10 @@
             // Update statistics
             function updateStatistics() {
                 totalJobsCount.textContent = jobsData.length;
-                // High matches are jobs with 30% or higher match percentage
+                // High matches are jobs with 50% or higher match percentage
                 const highMatches = jobsData.filter(job => {
                     const matchScore = job.match_percentage || job.matchScore || 0;
-                    return matchScore >= 30;
+                    return matchScore >= 50;
                 }).length;
                 skillMatchesCount.textContent = highMatches;
                 newJobsCount.textContent = jobsData.filter(job => job.isNew).length;
@@ -4189,7 +5178,7 @@
 
             // Update pagination
             function updatePagination() {
-                const jobsPerPage = 10;  // Match the renderJobs function
+                const jobsPerPage = 20;  // Match the renderJobs function
                 totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
                 
                 if (totalPages <= 1) {
@@ -4417,14 +5406,64 @@
                     this.disabled = true;
                     this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating PDF...';
                     
-                    // Redirect to download URL
-                    window.location.href = '{% url "download_profile_pdf" %}';
+                    // Open registration form PDF generator in a new tab (auto-downloads)
+                    window.open('{% url "download_registration_form" profile.id %}', '_blank');
                     
                     // Reset button after a short delay (since download doesn't navigate away)
                     setTimeout(() => {
                         this.disabled = false;
                         this.innerHTML = originalHTML;
                     }, 2000);
+                });
+            }
+        });
+
+        // Certificate Preview Modal Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const certificateModal = document.getElementById('certificateModal');
+            const closeCertificateModal = document.getElementById('closeCertificateModal');
+            const programNameEl = document.getElementById('modal-program-name');
+            const trainerNameEl = document.getElementById('modal-trainer-name');
+
+            function openCertificateModal(programName, trainerName) {
+                if (programNameEl && programName) {
+                    programNameEl.textContent = programName;
+                }
+                if (trainerNameEl && trainerName) {
+                    trainerNameEl.textContent = trainerName;
+                }
+                if (certificateModal) {
+                    certificateModal.classList.remove('hidden');
+                    certificateModal.classList.add('flex');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function hideCertificateModal() {
+                if (certificateModal) {
+                    certificateModal.classList.add('hidden');
+                    certificateModal.classList.remove('flex');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            // Bind buttons
+            document.querySelectorAll('.view-certificate-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const programName = this.dataset.programName || '';
+                    const trainerName = this.dataset.trainerName || '';
+                    openCertificateModal(programName, trainerName);
+                });
+            });
+
+            if (closeCertificateModal) {
+                closeCertificateModal.addEventListener('click', hideCertificateModal);
+            }
+            if (certificateModal) {
+                certificateModal.addEventListener('click', function(e) {
+                    if (e.target === certificateModal) {
+                        hideCertificateModal();
+                    }
                 });
             }
         });

@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import Applicant
 from .models import Programs, ProgramImage
 from .models import JobPost
-from .models import ProgramApplication, TrainerProfile, ApprovedApplicant, Attendance, EmployerProfile, Task, Event, BatchCycle
+from .models import ProgramApplication, TrainerProfile, ApprovedApplicant, Attendance, EmployerProfile, Task, Event, BatchCycle, StaffMember
 
 from .models import Learner_Profile, ClientClassification, DisabilityType, DisabilityCause, EducationalAttainment, SupportTicket
 
@@ -44,6 +44,8 @@ class TrainerProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'program']
     list_filter = ['program']
     search_fields = ['user__username', 'user__first_name', 'user__last_name']
+
+admin.site.register(StaffMember)
 
 admin.site.register(ApprovedApplicant)
 

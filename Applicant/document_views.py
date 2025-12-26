@@ -6,11 +6,15 @@ from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 import mimetypes
+import os
+from datetime import datetime
+from openpyxl import load_workbook
 
 from .models import (
     Applicant, Programs, DocumentCategory, ManualDocument, PolicyDocument, 
-    Learner_Profile, TrainerProfile
+    Learner_Profile, TrainerProfile, LMSTC_Documents
 )
 
 
@@ -169,6 +173,7 @@ def search_documents(request):
         semester = request.GET.get('semester', '')
         program_id = request.GET.get('program_id', '')
         trainor_id = request.GET.get('trainor_id', '')
+        year = request.GET.get('year', '')
         page = int(request.GET.get('page', 1))
         per_page = int(request.GET.get('per_page', 10))
         
@@ -236,6 +241,10 @@ def search_documents(request):
                     models.Q(learner_profile__first_name__icontains=query) |
                     models.Q(learner_profile__last_name__icontains=query)
                 )
+            
+            # Apply year filter
+            if year:
+                lmstc_profiles = lmstc_profiles.filter(uploaded_at__year=year)
             
             if batch:
                 lmstc_profiles = lmstc_profiles.filter(batch=batch)
@@ -329,7 +338,105 @@ def search_documents(request):
                     'file_type': 'Manual'
                 })
         
-        # Search Policy Documents
+        # Search LMSTC Documents with type='modules_manuals' (bulk uploaded modules/manuals)
+        if not document_type or document_type == 'modules_manuals':
+            lmstc_manuals = LMSTC_Documents.objects.select_related(
+                'program', 'uploaded_by'
+            ).filter(document_type='modules_manuals', status='active')
+            
+            if query:
+                lmstc_manuals = lmstc_manuals.filter(
+                    models.Q(document_name__icontains=query) |
+                    models.Q(description__icontains=query)
+                )
+            
+            # Apply year filter
+            if year:
+                lmstc_manuals = lmstc_manuals.filter(uploaded_at__year=year)
+            
+            if batch:
+                # Handle batch format conversion
+                normalized = f"batch_{batch}" if not str(batch).startswith('batch_') else batch
+                lmstc_manuals = lmstc_manuals.filter(batch__in=[batch, normalized])
+            
+            if program_id:
+                lmstc_manuals = lmstc_manuals.filter(program_id=program_id)
+            
+            for doc in lmstc_manuals:
+                batch_display = 'N/A'
+                if doc.batch:
+                    if '_' in doc.batch:
+                        batch_num = doc.batch.split('_')[1]
+                        batch_display = f"Batch {batch_num}"
+                    else:
+                        batch_display = f"Batch {doc.batch}"
+                
+                results.append({
+                    'id': f'LMSTC-{doc.id}',
+                    'document_id': doc.id,
+                    'title': doc.document_name,
+                    'type': 'Modules and Manuals',
+                    'content': f"Description: {doc.description or 'No description'}",
+                    'batch': batch_display,
+                    'semester': 'N/A',
+                    'program': doc.program.program_name if doc.program else 'N/A',
+                    'trainor': doc.uploaded_by.get_full_name() or doc.uploaded_by.username,
+                    'created_at': doc.uploaded_at,
+                    'file_type': 'Modules and Manuals',
+                    'file_url': doc.document_file.url if (doc.document_file and hasattr(doc.document_file, 'name') and doc.document_file.name) else None,
+                    'source': 'lmstc_document'
+                })
+        
+        # Search LMSTC Documents with type='policy_guidelines' (bulk uploaded policies)
+        if not document_type or document_type == 'policy_guidelines':
+            lmstc_policies = LMSTC_Documents.objects.select_related(
+                'program', 'uploaded_by'
+            ).filter(document_type='policy_guidelines', status='active')
+            
+            if query:
+                lmstc_policies = lmstc_policies.filter(
+                    models.Q(document_name__icontains=query) |
+                    models.Q(description__icontains=query)
+                )
+            
+            # Apply year filter
+            if year:
+                lmstc_policies = lmstc_policies.filter(uploaded_at__year=year)
+            
+            if batch:
+                # Handle batch format conversion
+                normalized = f"batch_{batch}" if not str(batch).startswith('batch_') else batch
+                lmstc_policies = lmstc_policies.filter(batch__in=[batch, normalized])
+            
+            if program_id:
+                lmstc_policies = lmstc_policies.filter(program_id=program_id)
+            
+            for doc in lmstc_policies:
+                batch_display = 'N/A'
+                if doc.batch:
+                    if '_' in doc.batch:
+                        batch_num = doc.batch.split('_')[1]
+                        batch_display = f"Batch {batch_num}"
+                    else:
+                        batch_display = f"Batch {doc.batch}"
+                
+                results.append({
+                    'id': f'LMSTC-{doc.id}',
+                    'document_id': doc.id,
+                    'title': doc.document_name,
+                    'type': 'Policy and Guidelines',
+                    'content': f"Description: {doc.description or 'No description'}",
+                    'batch': batch_display,
+                    'semester': 'N/A',
+                    'program': doc.program.program_name if doc.program else 'N/A',
+                    'trainor': doc.uploaded_by.get_full_name() or doc.uploaded_by.username,
+                    'created_at': doc.uploaded_at,
+                    'file_type': 'Policy and Guidelines',
+                    'file_url': doc.document_file.url if (doc.document_file and hasattr(doc.document_file, 'name') and doc.document_file.name) else None,
+                    'source': 'lmstc_document'
+                })
+        
+        # Search Policy Documents (from PolicyDocument model - legacy)
         if not document_type or document_type == 'policy':
             policy_docs = PolicyDocument.objects.select_related('category', 'program', 'uploaded_by').filter(status='active')
             
@@ -526,7 +633,7 @@ def bulk_upload_lmstc_documents(request):
 
 def get_bulk_download_documents(request):
     """Get combined Learner_Profile and LMSTC_Documents data for bulk download with BatchCycle info"""
-    from .models import LMSTC_Documents, Learner_Profile, ApprovedApplicant
+    from .models import LMSTC_Documents, Learner_Profile, ApprovedApplicant, ApprovedWalkIn
     from django.db.models import Q
     
     try:
@@ -555,7 +662,10 @@ def get_bulk_download_documents(request):
             
             # Apply batch filter
             if batch:
-                lmstc_docs = lmstc_docs.filter(batch=batch)
+                # UI sends '1', '2', '3' while model stores 'batch_1', etc.
+                # Match either format to be safe
+                normalized = f"batch_{batch}" if not str(batch).startswith('batch_') else batch
+                lmstc_docs = lmstc_docs.filter(batch__in=[batch, normalized])
             
             # Apply search filter
             if search_query:
@@ -581,19 +691,35 @@ def get_bulk_download_documents(request):
                 year_display = doc.uploaded_at.year if doc.uploaded_at else None
                 semester_display = 'N/A'
                 
-                if doc.applicant:
+                # Prefer explicit applicant, otherwise fall back to learner_profile.user
+                applicant_user = doc.applicant
+                if not applicant_user and doc.learner_profile and getattr(doc.learner_profile, 'user', None):
+                    applicant_user = doc.learner_profile.user
+                
+                if applicant_user:
                     try:
-                        approved_app = ApprovedApplicant.objects.get(
-                            applicant=doc.applicant,
-                            status='active'
-                        )
-                        if approved_app.batch_number:
-                            batch_display = f"Batch {approved_app.batch_number}"
-                        if approved_app.enrollment_year:
-                            year_display = approved_app.enrollment_year
-                        if approved_app.enrollment_semester:
-                            semester_display = f"Semester {approved_app.enrollment_semester}"
-                    except ApprovedApplicant.DoesNotExist:
+                        # Use the most recent ApprovedApplicant regardless of status
+                        approved_app = ApprovedApplicant.objects.filter(
+                            applicant=applicant_user
+                        ).order_by('-approved_at').first()
+                        if approved_app:
+                            if approved_app.batch_number:
+                                batch_display = f"Batch {approved_app.batch_number}"
+                            if approved_app.enrollment_year:
+                                year_display = approved_app.enrollment_year
+                            if approved_app.enrollment_semester:
+                                semester_display = f"Semester {approved_app.enrollment_semester}"
+                        else:
+                            # Fallback to ApprovedWalkIn if present
+                            walkin_app = ApprovedWalkIn.objects.filter(
+                                applicant=applicant_user
+                            ).order_by('-approved_at').first()
+                            if walkin_app:
+                                if walkin_app.batch_number:
+                                    batch_display = f"Batch {walkin_app.batch_number}"
+                                if walkin_app.enrollment_year:
+                                    year_display = walkin_app.enrollment_year
+                    except Exception:
                         pass
                 
                 # Fallback to doc.batch if no ApprovedApplicant
@@ -603,6 +729,14 @@ def get_bulk_download_documents(request):
                         batch_display = f"Batch {batch_num}"
                     else:
                         batch_display = f"Batch {doc.batch}"
+                
+                # Get file URL - check if file exists and has a name
+                file_url = None
+                if doc.document_file and hasattr(doc.document_file, 'name') and doc.document_file.name:
+                    try:
+                        file_url = doc.document_file.url
+                    except (ValueError, AttributeError):
+                        file_url = None
                 
                 results.append({
                     'id': f'LMSTC-{doc.id}',
@@ -617,7 +751,7 @@ def get_bulk_download_documents(request):
                     'year': year_display,
                     'status': 'Active',
                     'source': 'lmstc_document',
-                    'file_url': doc.document_file.url if doc.document_file else None
+                    'file_url': file_url
                 })
         
         # Fetch Learner Profiles (if document type is applicant_profile or not specified)
@@ -648,36 +782,76 @@ def get_bulk_download_documents(request):
                 batch_display = 'N/A'
                 semester_display = 'N/A'
                 
+                has_approval_record = False
+                
                 if profile.user:
                     try:
-                        approved_app = ApprovedApplicant.objects.select_related('program').get(
-                            applicant=profile.user,
-                            status='active'
-                        )
-                        
-                        # Apply filters based on ApprovedApplicant
-                        if batch and approved_app.batch_number != batch:
-                            continue
-                        if year and approved_app.enrollment_year != int(year):
-                            continue
-                        if program_id and approved_app.program_id != int(program_id):
-                            continue
-                        
-                        # Set batch and semester display
-                        if approved_app.batch_number:
-                            batch_display = f"Batch {approved_app.batch_number}"
-                        if approved_app.enrollment_year:
-                            year_value = approved_app.enrollment_year
-                        if approved_app.enrollment_semester:
-                            semester_display = f"Semester {approved_app.enrollment_semester}"
+                        # Use the most recent ApprovedApplicant regardless of status
+                        approved_app = ApprovedApplicant.objects.select_related('program').filter(
+                            applicant=profile.user
+                        ).order_by('-approved_at').first()
+                        if approved_app:
+                            has_approval_record = True
+                            # Apply filters based on ApprovedApplicant
+                            if batch and approved_app.batch_number != batch:
+                                continue
+                            if year and approved_app.enrollment_year and approved_app.enrollment_year != int(year):
+                                continue
+                            if program_id and approved_app.program_id != int(program_id):
+                                continue
                             
-                    except ApprovedApplicant.DoesNotExist:
-                        # If filters are applied and no ApprovedApplicant, skip this profile
-                        if batch or year or program_id:
+                            # Set batch and semester display
+                            if approved_app.batch_number:
+                                batch_display = f"Batch {approved_app.batch_number}"
+                            if approved_app.enrollment_year:
+                                year_value = approved_app.enrollment_year
+                            if approved_app.enrollment_semester:
+                                semester_display = f"Semester {approved_app.enrollment_semester}"
+                        else:
+                            # Try walk-in approvals
+                            walkin_app = ApprovedWalkIn.objects.filter(
+                                applicant=profile.user
+                            ).order_by('-approved_at').first()
+                            if walkin_app:
+                                has_approval_record = True
+                                if batch and walkin_app.batch_number != batch:
+                                    continue
+                                if year and walkin_app.enrollment_year and walkin_app.enrollment_year != int(year):
+                                    continue
+                                # Set display from walk-in
+                                if walkin_app.batch_number:
+                                    batch_display = f"Batch {walkin_app.batch_number}"
+                                if walkin_app.enrollment_year:
+                                    year_value = walkin_app.enrollment_year
+                    except Exception:
+                        # On any error, if filters are applied and we cannot confidently match,
+                        # fall back to entry_date/year_value for year filtering
+                        if year:
+                            try:
+                                if not year_value or year_value != int(year):
+                                    continue
+                            except ValueError:
+                                continue
+                        if batch or program_id:
                             continue
                 else:
-                    # No user - skip if filters are applied
-                    if batch or year or program_id:
+                    # No user - if filters are applied use entry_date/year_value for year filtering,
+                    # but skip when batch/program filters are present (no way to resolve them)
+                    if batch or program_id:
+                        continue
+                    if year:
+                        try:
+                            if not year_value or year_value != int(year):
+                                continue
+                        except ValueError:
+                            continue
+                
+                # If we have a year filter and no approval/walk-in record, fall back to entry_date/year_value
+                if year and not has_approval_record:
+                    try:
+                        if not year_value or year_value != int(year):
+                            continue
+                    except ValueError:
                         continue
                 
                 results.append({
@@ -711,7 +885,8 @@ def get_bulk_download_documents(request):
 
 def get_lmstc_documents(request):
     """Get LMSTC documents with filtering"""
-    from .models import LMSTC_Documents
+    from .models import LMSTC_Documents, ApprovedApplicant, ApprovedWalkIn, TrainerProfile
+    from django.db.models import Q
     
     try:
         document_type = request.GET.get('document_type', '')
@@ -734,6 +909,43 @@ def get_lmstc_documents(request):
         if program_id:
             documents = documents.filter(program_id=program_id)
         
+        # Filter by user's approved programs (only for non-staff users)
+        if request.user.is_authenticated and not (request.user.is_staff or request.user.is_superuser):
+            # Get user's approved programs (from both ApprovedApplicant and ApprovedWalkIn)
+            approved_program_ids = set()
+            
+            # Get from ApprovedApplicant
+            approved_applicants = ApprovedApplicant.objects.filter(applicant=request.user).values_list('program_id', flat=True)
+            approved_program_ids.update(approved_applicants)
+            
+            # Get from ApprovedWalkIn
+            approved_walkins = ApprovedWalkIn.objects.filter(applicant=request.user).values_list('program_id', flat=True)
+            approved_program_ids.update(approved_walkins)
+            
+            if approved_program_ids:
+                # Filter documents based on program assignment
+                # Documents should be visible if:
+                # 1. Document has a program AND user is approved for that program
+                # 2. Document has no program BUT uploaded_by is a trainer AND user is approved for any of trainer's programs
+                
+                # Build query for documents with explicit program matching user's approved programs
+                program_filter = Q(program_id__in=approved_program_ids)
+                
+                # Build query for documents without program but uploaded by trainers
+                # Get all trainers who have programs that match user's approved programs
+                trainers_with_matching_programs = TrainerProfile.objects.filter(
+                    programs__id__in=approved_program_ids
+                ).values_list('user_id', flat=True).distinct()
+                
+                # Documents without program uploaded by trainers with matching programs
+                trainer_filter = Q(program__isnull=True) & Q(uploaded_by_id__in=trainers_with_matching_programs)
+                
+                # Combine both conditions
+                documents = documents.filter(program_filter | trainer_filter)
+            else:
+                # User has no approved programs, show no documents
+                documents = documents.none()
+        
         # Order by upload date (newest first)
         documents = documents.order_by('-uploaded_at')
         
@@ -748,6 +960,14 @@ def get_lmstc_documents(request):
         # Format results
         results = []
         for doc in documents:
+            # Get file URL - check if file exists and has a name
+            file_url = None
+            if doc.document_file and hasattr(doc.document_file, 'name') and doc.document_file.name:
+                try:
+                    file_url = doc.document_file.url
+                except (ValueError, AttributeError):
+                    file_url = None
+            
             results.append({
                 'id': doc.id,
                 'document_name': doc.document_name,
@@ -758,7 +978,9 @@ def get_lmstc_documents(request):
                 'applicant': f"{doc.applicant.first_name} {doc.applicant.last_name}" if doc.applicant else 'N/A',
                 'uploaded_by': doc.uploaded_by.get_full_name() or doc.uploaded_by.username,
                 'uploaded_at': doc.uploaded_at.strftime('%Y-%m-%d %H:%M'),
-                'file_path': doc.file_path.url if doc.file_path else None
+                'file_url': file_url,
+                'file_size': doc.get_file_size_display(),
+                'description': doc.description or ''
             })
         
         return JsonResponse({
@@ -1289,15 +1511,18 @@ def archive_document(request):
         
         # Get the document based on type
         if document_type == 'manual':
-            document = ManualDocument.objects.get(id=document_id)
+            document = ManualDocument.objects.get(id=document_id, status='active')
             document_name = document.title
         elif document_type == 'policy':
-            document = PolicyDocument.objects.get(id=document_id)
+            document = PolicyDocument.objects.get(id=document_id, status='active')
             document_name = document.title
-        elif document_type == 'lmstc_document':
+        elif document_type == 'lmstc_document' or document_type == 'lmstc':
             from .models import LMSTC_Documents
-            document = LMSTC_Documents.objects.get(id=document_id)
-            document_name = document.document_name
+            try:
+                document = LMSTC_Documents.objects.get(id=document_id, status='active')
+                document_name = document.document_name
+            except LMSTC_Documents.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Document not found or already archived'})
         else:
             return JsonResponse({'success': False, 'error': 'Invalid document type'})
         
@@ -1722,4 +1947,178 @@ def get_archived_documents(request):
         return JsonResponse({
             'success': False,
             'error': f'Failed to retrieve archived documents: {str(e)}'
+        })
+
+
+@csrf_exempt
+@require_POST
+def import_2024_excel_to_documents(request):
+    """Import data from 2024.xlsx file into LMSTC_Documents"""
+    try:
+        # Check if user is authenticated and is staff/admin
+        if not request.user.is_authenticated:
+            return JsonResponse({'success': False, 'error': 'Authentication required'})
+        
+        # Path to the 2024.xlsx file
+        file_path = os.path.join(settings.BASE_DIR, 'Applicant', 'static', 'data', '2024.xlsx')
+        
+        # Also check in staticfiles
+        if not os.path.exists(file_path):
+            file_path = os.path.join(settings.BASE_DIR, 'staticfiles', 'data', '2024.xlsx')
+        
+        if not os.path.exists(file_path):
+            return JsonResponse({'success': False, 'error': '2024.xlsx file not found in static/data or staticfiles/data'})
+        
+        # Read Excel file
+        try:
+            wb = load_workbook(filename=file_path, data_only=True)
+            ws = wb.active
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Failed to read 2024.xlsx: {str(e)}'
+            })
+        
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return JsonResponse({'success': False, 'error': '2024.xlsx is empty'})
+        
+        # Get header row
+        header = [str(h).strip() if h is not None else '' for h in rows[0]]
+        
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
+        errors = []
+        
+        # Set a default date in 2024 for all imported records
+        default_upload_date = datetime(2024, 1, 1, 12, 0, 0)
+        default_upload_date = timezone.make_aware(default_upload_date)
+        
+        # Process each row
+        for row_idx, row in enumerate(rows[1:], start=2):  # Start at 2 because row 1 is header
+            try:
+                if row is None:
+                    continue
+                
+                # Create record dictionary from row
+                record = {}
+                for idx, value in enumerate(row):
+                    col_name = header[idx] if idx < len(header) else f'Column{idx+1}'
+                    if col_name:
+                        record[col_name] = '' if value is None else str(value).strip()
+                
+                # Skip completely empty rows
+                if not any(str(v).strip() for v in record.values() if v):
+                    skipped_count += 1
+                    continue
+                
+                # Extract key fields for matching
+                first_name = record.get('first_name', '') or record.get('First Name', '') or record.get('firstname', '') or ''
+                last_name = record.get('last_name', '') or record.get('Last Name', '') or record.get('lastname', '') or ''
+                email = record.get('email', '') or record.get('Email', '') or ''
+                
+                # Try to find matching Learner_Profile
+                learner_profile = None
+                applicant = None
+                
+                if email:
+                    try:
+                        learner_profile = Learner_Profile.objects.filter(email__iexact=email).first()
+                        if learner_profile and learner_profile.user:
+                            applicant = learner_profile.user
+                    except Exception:
+                        pass
+                
+                # If no match by email, try by name
+                if not learner_profile and first_name and last_name:
+                    try:
+                        learner_profile = Learner_Profile.objects.filter(
+                            first_name__iexact=first_name,
+                            last_name__iexact=last_name
+                        ).first()
+                        if learner_profile and learner_profile.user:
+                            applicant = learner_profile.user
+                    except Exception:
+                        pass
+                
+                # Create document name from available data
+                if first_name and last_name:
+                    document_name = f"{first_name} {last_name} - Profile (2024)"
+                elif email:
+                    document_name = f"Profile - {email} (2024)"
+                else:
+                    document_name = f"Imported Record {row_idx} (2024)"
+                
+                # Create description from record data
+                description_parts = []
+                for key, value in record.items():
+                    if value and key.lower() not in ['first_name', 'last_name', 'email', 'first name', 'last name']:
+                        description_parts.append(f"{key}: {value}")
+                description = "; ".join(description_parts[:10])  # Limit to first 10 fields
+                
+                # Check if document already exists (to avoid duplicates)
+                existing_doc = None
+                if learner_profile:
+                    existing_doc = LMSTC_Documents.objects.filter(
+                        learner_profile=learner_profile,
+                        document_name__icontains="2024",
+                        uploaded_at__year=2024
+                    ).first()
+                elif applicant:
+                    existing_doc = LMSTC_Documents.objects.filter(
+                        applicant=applicant,
+                        document_name__icontains="2024",
+                        uploaded_at__year=2024
+                    ).first()
+                
+                if existing_doc:
+                    # Update existing docwument
+                    existing_doc.description = description
+                    existing_doc.uploaded_at = default_upload_date
+                    existing_doc.save()
+                    updated_count += 1
+                else:
+                    # Create new document record
+                    # Note: We're creating a document record without an actual file
+                    # The document_file field will be empty, but the record will exist in the database
+                    document = LMSTC_Documents.objects.create(
+                        document_name=document_name,
+                        document_type='applicant_profile',
+                        description=description,
+                        learner_profile=learner_profile,
+                        applicant=applicant,
+                        uploaded_by=request.user,
+                        uploaded_at=default_upload_date,
+                        status='active',
+                        file_size=0,
+                        mime_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+                    created_count += 1
+                    
+            except Exception as row_error:
+                errors.append(f"Row {row_idx}: {str(row_error)}")
+                skipped_count += 1
+                continue
+        
+        # Prepare response
+        response_data = {
+            'success': True,
+            'message': f'Import completed. {created_count} records created, {updated_count} records updated, {skipped_count} rows skipped.',
+            'created_count': created_count,
+            'updated_count': updated_count,
+            'skipped_count': skipped_count,
+            'total_processed': len(rows) - 1  # Exclude header
+        }
+        
+        if errors:
+            response_data['errors'] = errors[:10]  # Limit to first 10 errors
+            response_data['error_count'] = len(errors)
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Import failed: {str(e)}'
         })
