@@ -1,0 +1,28 @@
+<!-- Underage Restriction Modal (18+ only) -->
+<div id="underage-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button class="modal-close-btn" onclick="closeUnderageModal()" aria-label="Close">
+            &times;
+        </button>
+        <div class="modal-header">
+            <div class="modal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86l-8.02 14A1 1 0 003.13 19h17.74a1 1 0 00.86-1.5l-8.02-14a1 1 0 00-1.72 0z" />
+                </svg>
+            </div>
+            <h2 class="modal-title">Age Requirement</h2>
+        </div>
+        <div class="modal-body">
+            <p><strong>Applicants must be at least 18 years old to proceed.</strong></p>
+            <p id="underage-message" class="mt-2">
+                Based on the birthdate you entered, your application will be cancelled.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-btn" onclick="confirmUnderageCancel()">
+                Okay, Cancel Application
+            </button>
+        </div>
+    </div>
+</div>
+

@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from .models import Learner_Profile, ApplicantPasser
+from .models import Learner_Profile, ApplicantPasser, Applicant
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -710,6 +710,128 @@ def download_certificate_pdf(request):
         elements.append(footer_table)
 
         # Build and return
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Certificate_{full_name.replace(" ", "_")}.pdf"'
+        response.write(pdf)
+        return response
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error generating certificate: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def admin_download_certificate_pdf(request, applicant_id):
+    """Admin/staff endpoint to generate a Certificate of Completion PDF for a specific applicant.
+
+    This mirrors download_certificate_pdf but allows specifying the applicant ID and
+    restricts access to staff/superusers.
+    """
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({
+            'success': False,
+            'error': 'You do not have permission to access this resource.'
+        }, status=403)
+
+    try:
+        target_applicant = get_object_or_404(Applicant, id=applicant_id)
+
+        passer = ApplicantPasser.objects.filter(applicant=target_applicant).select_related('program').first()
+        if not passer:
+            return JsonResponse({
+                'success': False,
+                'error': 'Certificate is available only after the applicant completes a program.'
+            }, status=404)
+
+        profile = get_object_or_404(Learner_Profile, user=target_applicant)
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=0.75*inch,
+            leftMargin=0.75*inch,
+            topMargin=0.75*inch,
+            bottomMargin=0.75*inch
+        )
+
+        elements = []
+
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CertTitle', parent=styles['Heading1'], fontSize=22, alignment=TA_CENTER,
+            textColor=colors.HexColor('#1e3a8a'), spaceAfter=14
+        )
+        subtitle_style = ParagraphStyle(
+            'CertSub', parent=styles['Normal'], fontSize=11, alignment=TA_CENTER,
+            textColor=colors.HexColor('#6b7280'), spaceAfter=10
+        )
+        name_style = ParagraphStyle(
+            'NameStyle', parent=styles['Heading1'], fontSize=20, alignment=TA_CENTER,
+            textColor=colors.HexColor('#0f172a'), spaceAfter=8
+        )
+        body_style = ParagraphStyle(
+            'BodyStyle', parent=styles['Normal'], fontSize=12, alignment=TA_CENTER,
+            textColor=colors.HexColor('#374151'), leading=16, spaceAfter=12
+        )
+        foot_label_style = ParagraphStyle(
+            'FootLbl', parent=styles['Normal'], fontSize=9, alignment=TA_CENTER,
+            textColor=colors.HexColor('#6b7280')
+        )
+        foot_value_style = ParagraphStyle(
+            'FootVal', parent=styles['Heading3'], fontSize=11, alignment=TA_CENTER,
+            textColor=colors.HexColor('#1f2937')
+        )
+
+        elements.append(Paragraph('Lucena Manpower Skill Training Center', title_style))
+        elements.append(Paragraph('Dalubhasaan ng Lungsod ng Lucena', subtitle_style))
+        elements.append(Spacer(1, 14))
+
+        elements.append(Paragraph('Certificate of Completion', title_style))
+        elements.append(Spacer(1, 6))
+
+        elements.append(Paragraph('This is to certify that', body_style))
+        full_name = f"{profile.first_name} {profile.middle_name or ''} {profile.last_name}".strip()
+        elements.append(Paragraph(full_name, name_style))
+        elements.append(Spacer(1, 6))
+        elements.append(Paragraph('has successfully completed the requirements for', body_style))
+        program_name = passer.program.program_name if passer.program else passer.program_name
+        elements.append(Paragraph(program_name, ParagraphStyle('Program', parent=body_style, fontSize=13, textColor=colors.HexColor('#1e3a8a'))))
+        elements.append(Spacer(1, 6))
+        elements.append(Paragraph('and has demonstrated proficiency in the required skills and competencies.', body_style))
+        elements.append(Spacer(1, 18))
+
+        issued_date = (profile.date_accomplished.strftime('%B %d, %Y') if getattr(profile, 'date_accomplished', None)
+                       else passer.completion_date.strftime('%B %d, %Y') if passer.completion_date else datetime.now().strftime('%B %d, %Y'))
+
+        footer_table = Table([
+            [
+                Paragraph('<br/><br/><br/>______________________________', foot_label_style),
+                Paragraph('Date Issued:<br/>' + issued_date, foot_value_style),
+                Paragraph('<br/><br/><br/>______________________________', foot_label_style),
+            ],
+            [
+                Paragraph('Trainer/Coordinator', foot_label_style),
+                Paragraph('', foot_label_style),
+                Paragraph('Recipient Signature', foot_label_style),
+            ]
+        ], colWidths=[2.5*inch, 2.0*inch, 2.5*inch])
+        footer_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+
+        elements.append(Spacer(1, 20))
+        elements.append(footer_table)
+
         doc.build(elements)
         pdf = buffer.getvalue()
         buffer.close()

@@ -1,0 +1,563 @@
+{% load static %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-gray-800">Analytics Dashboard</h3>
+        <div class="flex items-center space-x-4">
+            <!-- Filter Controls -->
+            <select id="analyticsBatchFilter" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Batches</option>
+                <option value="1">Batch 1</option>
+                <option value="2">Batch 2</option>
+                <option value="3">Batch 3</option>
+            </select>
+            <select id="analyticsYearFilter" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Years</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Enrollments</p>
+                    <p id="totalEnrollments" class="text-3xl font-bold text-blue-600">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Current batch cycle</p>
+                </div>
+                <i class="fas fa-graduation-cap text-blue-500 text-4xl"></i>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">DMS Documents</p>
+                    <p id="totalDMSDocuments" class="text-3xl font-bold text-green-600">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Active documents</p>
+                </div>
+                <i class="fas fa-file-alt text-green-500 text-4xl"></i>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Job Recommendations</p>
+                    <p id="totalJobRecommendations" class="text-3xl font-bold text-purple-600">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Active recommendations</p>
+                </div>
+                <i class="fas fa-briefcase text-purple-500 text-4xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment Analytics Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+        <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+            Enrollment Analytics
+        </h4>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Enrollment Trend Chart -->
+            <div>
+                <h5 class="text-md font-semibold text-gray-700 mb-3">Enrollment Trends Over Time</h5>
+                <canvas id="enrollmentTrendChart" style="max-height: 300px;"></canvas>
+            </div>
+            <!-- Enrollment by Program Chart -->
+            <div>
+                <h5 class="text-md font-semibold text-gray-700 mb-3">Enrollments by Program</h5>
+                <canvas id="enrollmentByProgramChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+        <!-- Enrollment Status Distribution -->
+        <div class="mt-6">
+            <h5 class="text-md font-semibold text-gray-700 mb-3">Enrollment Status Distribution</h5>
+            <canvas id="enrollmentStatusChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+
+    <!-- DMS Analytics Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+        <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-chart-bar mr-2 text-green-600"></i>
+            Document Management System (DMS) Analytics
+        </h4>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- DMS Document Types Chart -->
+            <div>
+                <h5 class="text-md font-semibold text-gray-700 mb-3">Documents by Type</h5>
+                <canvas id="dmsDocumentTypesChart" style="max-height: 300px;"></canvas>
+            </div>
+            <!-- DMS Upload Trends Chart -->
+            <div>
+                <h5 class="text-md font-semibold text-gray-700 mb-3">Document Upload Trends</h5>
+                <canvas id="dmsUploadTrendsChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+        <!-- DMS Status Chart -->
+        <div class="mt-6">
+            <h5 class="text-md font-semibold text-gray-700 mb-3">Document Status Overview</h5>
+            <canvas id="dmsStatusChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Job Recommendations Analytics Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+        <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-chart-pie mr-2 text-purple-600"></i>
+            Job Recommendations Analytics
+        </h4>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Job Recommendations by Status Chart -->
+            <div>
+                <h5 class="text-md font-semibold text-gray-700 mb-3">Recommendations by Status</h5>
+                <canvas id="jobRecommendationsStatusChart" style="max-height: 300px;"></canvas>
+            </div>
+            <!-- Job Recommendations Trends Chart -->
+            <div>
+                <h5 class="text-md font-semibold text-gray-700 mb-3">Recommendations Trends</h5>
+                <canvas id="jobRecommendationsTrendsChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+        <!-- Top Recommended Jobs -->
+        <div class="mt-6">
+            <h5 class="text-md font-semibold text-gray-700 mb-3">Top Recommended Job Positions</h5>
+            <canvas id="topJobPositionsChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Combined Overview Chart -->
+    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-chart-area mr-2 text-indigo-600"></i>
+            Combined Overview
+        </h4>
+        <canvas id="combinedOverviewChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<script>
+    // Chart instances storage
+    let analyticsCharts = {};
+
+    // Initialize Analytics Charts
+    function initializeAnalyticsCharts() {
+        // Check if analytics section is visible
+        const analyticsSection = document.getElementById('analyticsContent');
+        if (!analyticsSection || analyticsSection.classList.contains('hidden')) {
+            // Section is not visible, wait a bit and try again
+            setTimeout(initializeAnalyticsCharts, 100);
+            return;
+        }
+
+        // Destroy existing charts if they exist
+        Object.values(analyticsCharts).forEach(chart => {
+            if (chart) chart.destroy();
+        });
+        analyticsCharts = {};
+
+        // Enrollment Trend Chart (Line Chart)
+        const enrollmentTrendCtx = document.getElementById('enrollmentTrendChart');
+        if (enrollmentTrendCtx) {
+            analyticsCharts.enrollmentTrend = new Chart(enrollmentTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Enrollments',
+                        data: [45, 52, 38, 67, 73, 89, 95, 78, 65, 82, 91, 76],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Enrollment by Program Chart (Bar Chart)
+        const enrollmentByProgramCtx = document.getElementById('enrollmentByProgramChart');
+        if (enrollmentByProgramCtx) {
+            analyticsCharts.enrollmentByProgram = new Chart(enrollmentByProgramCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Program 1', 'Program 2', 'Program 3', 'Program 4', 'Program 5'],
+                    datasets: [{
+                        label: 'Enrollments',
+                        data: [120, 95, 87, 156, 134],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)'
+                        ],
+                        borderColor: [
+                            '#3B82F6',
+                            '#10B981',
+                            '#F59E0B',
+                            '#EF4444',
+                            '#8B5CF6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Enrollment Status Chart (Doughnut Chart)
+        const enrollmentStatusCtx = document.getElementById('enrollmentStatusChart');
+        if (enrollmentStatusCtx) {
+            analyticsCharts.enrollmentStatus = new Chart(enrollmentStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Completed', 'Dropped', 'Pending'],
+                    datasets: [{
+                        data: [350, 280, 45, 125],
+                        backgroundColor: [
+                            '#10B981',
+                            '#3B82F6',
+                            '#EF4444',
+                            '#F59E0B'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // DMS Document Types Chart (Pie Chart)
+        const dmsDocumentTypesCtx = document.getElementById('dmsDocumentTypesChart');
+        if (dmsDocumentTypesCtx) {
+            analyticsCharts.dmsDocumentTypes = new Chart(dmsDocumentTypesCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Modules/Manuals', 'Policy Guidelines', 'Certificates', 'Other'],
+                    datasets: [{
+                        data: [145, 98, 67, 34],
+                        backgroundColor: [
+                            '#3B82F6',
+                            '#10B981',
+                            '#F59E0B',
+                            '#EF4444'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // DMS Upload Trends Chart (Line Chart)
+        const dmsUploadTrendsCtx = document.getElementById('dmsUploadTrendsChart');
+        if (dmsUploadTrendsCtx) {
+            analyticsCharts.dmsUploadTrends = new Chart(dmsUploadTrendsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Documents Uploaded',
+                        data: [12, 19, 15, 25, 22, 30, 28, 35, 32, 27, 40, 38],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // DMS Status Chart (Bar Chart)
+        const dmsStatusCtx = document.getElementById('dmsStatusChart');
+        if (dmsStatusCtx) {
+            analyticsCharts.dmsStatus = new Chart(dmsStatusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Active', 'Archived', 'Pending Review'],
+                    datasets: [{
+                        label: 'Documents',
+                        data: [280, 45, 19],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(107, 114, 128, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderColor: [
+                            '#10B981',
+                            '#6B7280',
+                            '#F59E0B'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Job Recommendations Status Chart (Doughnut Chart)
+        const jobRecommendationsStatusCtx = document.getElementById('jobRecommendationsStatusChart');
+        if (jobRecommendationsStatusCtx) {
+            analyticsCharts.jobRecommendationsStatus = new Chart(jobRecommendationsStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Accepted', 'Declined', 'Expired'],
+                    datasets: [{
+                        data: [156, 89, 34, 12],
+                        backgroundColor: [
+                            '#8B5CF6',
+                            '#10B981',
+                            '#EF4444',
+                            '#6B7280'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Job Recommendations Trends Chart (Line Chart)
+        const jobRecommendationsTrendsCtx = document.getElementById('jobRecommendationsTrendsChart');
+        if (jobRecommendationsTrendsCtx) {
+            analyticsCharts.jobRecommendationsTrends = new Chart(jobRecommendationsTrendsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Recommendations',
+                        data: [28, 35, 42, 38, 45, 52, 48, 55, 62, 58, 65, 72],
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Top Job Positions Chart (Horizontal Bar Chart)
+        const topJobPositionsCtx = document.getElementById('topJobPositionsChart');
+        if (topJobPositionsCtx) {
+            analyticsCharts.topJobPositions = new Chart(topJobPositionsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['IT Support', 'Data Entry', 'Customer Service', 'Administrative', 'Sales'],
+                    datasets: [{
+                        label: 'Recommendations',
+                        data: [45, 38, 32, 28, 23],
+                        backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                        borderColor: '#8B5CF6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Combined Overview Chart (Multi-line Chart)
+        const combinedOverviewCtx = document.getElementById('combinedOverviewChart');
+        if (combinedOverviewCtx) {
+            analyticsCharts.combinedOverview = new Chart(combinedOverviewCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: 'Enrollments',
+                            data: [45, 52, 38, 67, 73, 89, 95, 78, 65, 82, 91, 76],
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'DMS Documents',
+                            data: [12, 19, 15, 25, 22, 30, 28, 35, 32, 27, 40, 38],
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Job Recommendations',
+                            data: [28, 35, 42, 38, 45, 52, 48, 55, 62, 58, 65, 72],
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update summary cards (you can replace these with actual data from your backend)
+        document.getElementById('totalEnrollments').textContent = '800';
+        document.getElementById('totalDMSDocuments').textContent = '344';
+        document.getElementById('totalJobRecommendations').textContent = '291';
+    }
+
+    // Filter change handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        const batchFilter = document.getElementById('analyticsBatchFilter');
+        const yearFilter = document.getElementById('analyticsYearFilter');
+        
+        if (batchFilter) {
+            batchFilter.addEventListener('change', function() {
+                // Reload charts with filtered data
+                // You can make an AJAX call here to get filtered data
+                initializeAnalyticsCharts();
+            });
+        }
+        
+        if (yearFilter) {
+            yearFilter.addEventListener('change', function() {
+                // Reload charts with filtered data
+                // You can make an AJAX call here to get filtered data
+                initializeAnalyticsCharts();
+            });
+        }
+    });
+
+    // Make the function globally available
+    window.initializeAnalyticsCharts = initializeAnalyticsCharts;
+</script>
+

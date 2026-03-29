@@ -2,9 +2,21 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
-from .models import Event, BatchCycle
+from .models import Event, BatchCycle, Notification, Applicant, AdminPermission, Training, ApprovedApplicant
 from django.utils import timezone
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, date
+
+def check_admin_permission(user, permission_name: str) -> bool:
+    """Local helper to avoid circular imports with views.py."""
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    if not user.is_superuser:
+        return False
+    try:
+        perms = AdminPermission.objects.get(user=user)
+        return getattr(perms, permission_name, True)
+    except AdminPermission.DoesNotExist:
+        return True
 
 
 # Event Management Views
@@ -51,6 +63,26 @@ def create_event(request):
                 trimester=data.get('trimester') if data.get('trimester') else None,
                 created_by=request.user
             )
+            
+            # Create notifications for departmental events - notify all applicants
+            if event.category == 'departmental' and event.start_date <= date.today() and event.end_date >= date.today():
+                try:
+                    from .models import Applicant, Notification
+                    # Get all active applicants (users who are not staff/admin)
+                    applicants = Applicant.objects.filter(is_superuser=False, is_staff=False)
+                    
+                    for applicant in applicants:
+                        Notification.objects.create(
+                            recipient=applicant,
+                            sender=None,  # System notification
+                            notification_type='departmental_event',
+                            title=f'New Departmental Event: {event.title}',
+                            message=f'A new departmental event "{event.title}" is now active. Dates: {event.start_date.strftime("%B %d, %Y")} - {event.end_date.strftime("%B %d, %Y")}',
+                            is_read=False
+                        )
+                except Exception as e:
+                    # Don't fail event creation if notification fails
+                    print(f"Error creating departmental event notifications: {e}")
             
             return JsonResponse({
                 'success': True,
@@ -207,6 +239,8 @@ def archive_event(request, event_id):
 def get_batch_cycle_status(request):
     """Get the current batch cycle status"""
     try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'success': False, 'error': 'User not authenticated'}, status=401)
         cycle = BatchCycle.get_active_cycle()
         
         return JsonResponse({
@@ -231,6 +265,8 @@ def get_batch_cycle_status(request):
 def check_enrollment_events(request):
     """Check for ended enrollment events and activate batches"""
     try:
+        if not check_admin_permission(request.user, 'manage_enrollments'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage enrollments.'}, status=403)
         now = timezone.now()
         today = now.date()
         current_time = now.time()
@@ -284,6 +320,8 @@ def check_enrollment_events(request):
 def complete_semester(request):
     """Mark a semester as completed for the current batch"""
     try:
+        if not check_admin_permission(request.user, 'manage_enrollments'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage enrollments.'}, status=403)
         data = json.loads(request.body)
         semester = data.get('semester')
         
@@ -317,6 +355,8 @@ def complete_semester(request):
 def progress_to_next_batch(request):
     """Progress to the next batch in the cycle (after all semesters completed)"""
     try:
+        if not check_admin_permission(request.user, 'manage_enrollments'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage enrollments.'}, status=403)
         cycle = BatchCycle.get_active_cycle()
         
         # Check if all semesters are completed
@@ -344,6 +384,8 @@ def progress_to_next_batch(request):
 def auto_check_and_activate_batch(request):
     """Automatically check for ended enrollment events and activate batches"""
     try:
+        if not check_admin_permission(request.user, 'manage_enrollments'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage enrollments.'}, status=403)
         now = timezone.now()
         today = now.date()
         current_time = now.time()
@@ -393,6 +435,212 @@ def auto_check_and_activate_batch(request):
                 'batch_started_at': cycle.batch_started_at.isoformat() if cycle.batch_started_at else None,
                 'active_event_id': cycle.active_enrollment_event.id if cycle.active_enrollment_event else None
             }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+@require_POST
+def check_event_reminders(request):
+    """
+    Create reminder notifications for events:
+    - Ending soon (within 3 days)
+    - Upcoming (starting within 3 days)
+
+    Notes:
+    - This endpoint is triggered periodically from the admin dashboard.
+    - De-duplicates notifications per (recipient, type, event title + date window).
+    """
+    try:
+        now = timezone.now()
+        today = now.date()
+        
+        # Find events within the next 3 days
+        three_days_later = today + timedelta(days=3)
+        
+        # Upcoming events (starting within 3 days)
+        events_starting_soon = Event.objects.filter(
+            status='active',
+            start_date__gte=today,
+            start_date__lte=three_days_later
+        )
+
+        events_ending_soon = Event.objects.filter(
+            status='active',
+            end_date__gte=today,
+            end_date__lte=three_days_later
+        )
+        
+        reminders_created = 0
+        
+        # Get all admin users for admin notifications
+        admin_users = Applicant.objects.filter(is_superuser=True)
+        
+        # Get all applicants for departmental event notifications
+        applicants = Applicant.objects.filter(is_superuser=False, is_staff=False)
+        
+        # Upcoming reminders (admins, all categories)
+        for event in events_starting_soon:
+            days_until_start = (event.start_date - today).days
+
+            for admin in admin_users:
+                # Check if notification already exists for this event/admin/type (ignore read state)
+                existing_notification = Notification.objects.filter(
+                    recipient=admin,
+                    notification_type='event_upcoming',
+                    title__icontains=event.title,
+                    message__icontains=event.start_date.strftime("%B %d, %Y"),
+                ).first()
+
+                if not existing_notification:
+                    days_text = 'today' if days_until_start == 0 else f'in {days_until_start} day{"s" if days_until_start != 1 else ""}'
+                    date_range = event.start_date.strftime("%B %d, %Y")
+                    if event.end_date and event.end_date != event.start_date:
+                        date_range = f'{event.start_date.strftime("%B %d, %Y")} - {event.end_date.strftime("%B %d, %Y")}'
+
+                    Notification.objects.create(
+                        recipient=admin,
+                        sender=None,  # System notification
+                        notification_type='event_upcoming',
+                        title=f'Upcoming Event: {event.title}',
+                        message=f'The event "{event.title}" starts {days_text}. Schedule: {date_range}',
+                        is_read=False
+                    )
+                    reminders_created += 1
+
+            # Also notify applicants for Enrollment and Departmental events starting within 3 days
+            if event.category in ['enrollment', 'departmental']:
+                for applicant in applicants:
+                    existing_app_notif = Notification.objects.filter(
+                        recipient=applicant,
+                        notification_type='event_upcoming',
+                        title__icontains=event.title,
+                        message__icontains=event.start_date.strftime("%B %d, %Y"),
+                    ).first()
+                    if not existing_app_notif:
+                        days_text = 'today' if days_until_start == 0 else f'in {days_until_start} day{"s" if days_until_start != 1 else ""}'
+                        date_range = event.start_date.strftime("%B %d, %Y")
+                        if event.end_date and event.end_date != event.start_date:
+                            date_range = f'{event.start_date.strftime("%B %d, %Y")} - {event.end_date.strftime("%B %d, %Y")}'
+                        Notification.objects.create(
+                            recipient=applicant,
+                            sender=None,
+                            notification_type='event_upcoming',
+                            title=f'Upcoming Event: {event.title}',
+                            message=f'The event "{event.title}" starts {days_text}. Schedule: {date_range}',
+                            is_read=False
+                        )
+                        reminders_created += 1
+
+        # Ending reminders (existing behavior)
+        for event in events_ending_soon:
+            days_until_end = (event.end_date - today).days
+            
+            if event.category == 'enrollment':
+                # Create notification for each admin if not already created
+                for admin in admin_users:
+                    # Check if notification already exists for this event and admin
+                    existing_notification = Notification.objects.filter(
+                        recipient=admin,
+                        notification_type='event_reminder',
+                        title__icontains=event.title,
+                    ).first()
+                    
+                    if not existing_notification:
+                        days_text = 'today' if days_until_end == 0 else f'in {days_until_end} day{"s" if days_until_end != 1 else ""}'
+                        
+                        Notification.objects.create(
+                            recipient=admin,
+                            sender=None,  # System notification
+                            notification_type='event_reminder',
+                            title=f'Event Ending Soon: {event.title}',
+                            message=f'The event "{event.title}" is ending {days_text}. End date: {event.end_date.strftime("%B %d, %Y")}',
+                            is_read=False
+                        )
+                        reminders_created += 1
+            elif event.category == 'departmental':
+                # Create notification for each applicant if not already created
+                for applicant in applicants:
+                    # Check if notification already exists for this event and applicant
+                    existing_notification = Notification.objects.filter(
+                        recipient=applicant,
+                        notification_type='departmental_event',
+                        title__icontains=event.title,
+                    ).first()
+                    
+                    if not existing_notification:
+                        days_text = 'today' if days_until_end == 0 else f'in {days_until_end} day{"s" if days_until_end != 1 else ""}'
+                        
+                        Notification.objects.create(
+                            recipient=applicant,
+                            sender=None,  # System notification
+                            notification_type='departmental_event',
+                            title=f'Departmental Event Ending Soon: {event.title}',
+                            message=f'The departmental event "{event.title}" is ending {days_text}. End date: {event.end_date.strftime("%B %d, %Y")}',
+                            is_read=False
+                        )
+                        reminders_created += 1
+        
+        # Training session reminders (starting within 3 days)
+        trainings_starting_soon = Training.objects.filter(
+            start_date__gte=today,
+            start_date__lte=three_days_later
+        )
+
+        for training in trainings_starting_soon:
+            days_until_start = (training.start_date - today).days
+            days_text = 'today' if days_until_start == 0 else f'in {days_until_start} day{"s" if days_until_start != 1 else ""}'
+            date_text = training.start_date.strftime("%B %d, %Y")
+
+            # Notify the trainer (owner)
+            existing_trainer_notif = Notification.objects.filter(
+                recipient=training.trainer,
+                notification_type='training_upcoming',
+                title__icontains=training.program_name,
+                message__icontains=date_text,
+            ).first()
+            if not existing_trainer_notif:
+                Notification.objects.create(
+                    recipient=training.trainer,
+                    sender=None,
+                    notification_type='training_upcoming',
+                    title=f'Upcoming Training Session: {training.program_name}',
+                    message=f'Your training session "{training.program_name}" starts {days_text} on {date_text}.',
+                    is_read=False
+                )
+                reminders_created += 1
+
+            # Notify approved trainees for the same program
+            approved_trainees = ApprovedApplicant.objects.filter(
+                program__program_name=training.program_name,
+                status='active'
+            ).select_related('applicant')
+
+            for approved in approved_trainees:
+                recipient = approved.applicant
+                existing_student_notif = Notification.objects.filter(
+                    recipient=recipient,
+                    notification_type='training_upcoming',
+                    title__icontains=training.program_name,
+                    message__icontains=date_text,
+                ).first()
+                if not existing_student_notif:
+                    Notification.objects.create(
+                        recipient=recipient,
+                        sender=None,
+                        notification_type='training_upcoming',
+                        title=f'Upcoming Training Session: {training.program_name}',
+                        message=f'A training session for {training.program_name} starts {days_text} on {date_text}.',
+                        is_read=False
+                    )
+                    reminders_created += 1
+
+        return JsonResponse({
+            'success': True,
+            'reminders_created': reminders_created,
+            'events_checked': (events_ending_soon.count() + events_starting_soon.count())
         })
         
     except Exception as e:

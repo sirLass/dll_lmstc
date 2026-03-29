@@ -1,0 +1,35 @@
+<div class="mt-6 bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h4 class="text-lg font-semibold">Program Completion Certificates</h4>
+        <p class="text-sm text-gray-500">Overview of applicants who have completed their programs and received certificates.</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 p-5 rounded-lg text-white">
+            <div class="flex items-center">
+                <i class="fas fa-certificate text-3xl mr-4"></i>
+                <div>
+                    <p class="text-indigo-100 text-sm">Total Certificates Issued</p>
+                    <p class="text-2xl font-bold">{{ total_certificates_issued|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-5 rounded-lg text-white">
+            <div class="flex items-center">
+                <i class="fas fa-calendar-check text-3xl mr-4"></i>
+                <div>
+                    <p class="text-emerald-100 text-sm">Certificates This Month</p>
+                    <p class="text-2xl font-bold">{{ certificates_this_month|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gradient-to-r from-amber-500 to-amber-600 p-5 rounded-lg text-white">
+            <div class="flex items-center">
+                <i class="fas fa-hourglass-half text-3xl mr-4"></i>
+                <div>
+                    <p class="text-amber-100 text-sm">Pending / Not Yet Generated</p>
+                    <p class="text-2xl font-bold">{{ pending_certificates_count|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
+from django.conf import settings
 
 # Custom user model
 class Applicant(AbstractUser):
@@ -48,6 +49,7 @@ class Programs(models.Model):
     program_detail = models.CharField(max_length=255)
     program_sched = models.CharField(max_length=255)
     program_trainor = models.CharField(max_length=255, null=True, blank=True)
+    training_image = models.ImageField(upload_to='program_images/', null=True, blank=True)
     program_competencies = models.JSONField(default=dict, null=True, blank=True)  # Changed from program_skill to program_competencies
 
     def __str__(self):
@@ -114,6 +116,7 @@ class ProgramApplication(models.Model):
     applicant = models.ForeignKey(Applicant, on_delete=models.CASCADE, related_name='program_applications')
     program = models.ForeignKey(Programs, on_delete=models.CASCADE, related_name='applications')
     applied_at = models.DateTimeField(auto_now_add=True)
+    voter_id_image = models.ImageField(upload_to='uploads/voter_ids/', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')  # <-- Add this
     decline_reason = models.TextField(blank=True, null=True)  # <-- Add this
     
@@ -914,6 +917,7 @@ class BatchCycle(models.Model):
         ('trimester_2', '2nd Semester Active'),
         ('trimester_3', '3rd Semester Active'),
         ('trimester_completed', 'Trimester Completed - Waiting for Next Enrollment'),
+        ('application_blocked', 'Application Blocked - After Batch 3, Waiting for Admin to Open Batch 1'),
     ]
     
     # Current active batch (1, 2, or 3)
@@ -1004,9 +1008,27 @@ class BatchCycle(models.Model):
         self.save()
     
     def progress_to_next_batch(self):
-        """Move to the next batch in the cycle (1 -> 2 -> 3 -> 1)"""
-        batch_map = {'1': '2', '2': '3', '3': '1'}
-        self.current_batch = batch_map.get(self.current_batch, '1')
+        """Move to the next batch in the cycle (1 -> 2 -> 3 -> blocked)"""
+        if self.current_batch == '3':
+            # After batch 3, block applications until admin opens batch 1
+            self.cycle_state = 'application_blocked'
+            self.current_batch = '3'  # Keep at batch 3
+            self.current_semester = '1'
+            self.completed_semesters = {'1': False, '2': False, '3': False}
+            self.active_enrollment_event = None
+        else:
+            # Normal progression: 1 -> 2 -> 3
+            batch_map = {'1': '2', '2': '3'}
+            self.current_batch = batch_map.get(self.current_batch, '2')
+            self.cycle_state = 'waiting_enrollment'
+            self.current_semester = '1'
+            self.completed_semesters = {'1': False, '2': False, '3': False}
+            self.active_enrollment_event = None
+        self.save()
+    
+    def open_batch_1_enrollment(self):
+        """Admin manually opens enrollment for Batch 1 after application block"""
+        self.current_batch = '1'
         self.cycle_state = 'waiting_enrollment'
         self.current_semester = '1'
         self.completed_semesters = {'1': False, '2': False, '3': False}
@@ -1015,7 +1037,11 @@ class BatchCycle(models.Model):
     
     def can_start_enrollment(self):
         """Check if a new enrollment event can be started"""
-        return self.cycle_state in ['waiting_enrollment', 'trimester_completed']
+        return self.cycle_state in ['waiting_enrollment', 'trimester_completed', 'application_blocked']
+    
+    def is_application_blocked(self):
+        """Check if applications are currently blocked (after batch 3)"""
+        return self.cycle_state == 'application_blocked'
 
 
 # Active Batch and Semester Settings for Trainers
@@ -1378,6 +1404,11 @@ class SupportTicket(models.Model):
     trainer_response = models.TextField(blank=True, null=True)
     response_at = models.DateTimeField(null=True, blank=True)
     
+    # Forwarding tracking - for trainer-to-admin flow
+    forwarded_to_admin = models.BooleanField(default=False)
+    forwarded_by = models.ForeignKey(Applicant, on_delete=models.SET_NULL, null=True, blank=True, related_name='forwarded_tickets')
+    forwarded_at = models.DateTimeField(null=True, blank=True)
+    
     class Meta:
         ordering = ['-created_at']
         verbose_name = 'Support Ticket'
@@ -1447,4 +1478,42 @@ class TicketResponse(models.Model):
     
     def __str__(self):
         return f"Response to #{self.ticket.ticket_id} by {self.responder.username}"
-        super().save(*args, **kwargs)
+
+
+# Admin Permission Model
+class AdminPermission(models.Model):
+    """Store custom permissions for admin users"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='admin_permissions')
+    approve_applicants = models.BooleanField(default=True)
+    manage_programs = models.BooleanField(default=True)
+    manage_documents = models.BooleanField(default=True)
+    manage_trainors = models.BooleanField(default=True)
+    manage_enrollments = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Admin Permission'
+        verbose_name_plural = 'Admin Permissions'
+    
+    def __str__(self):
+        return f"Permissions for {self.user.username}"
+
+
+class AdminActivity(models.Model):
+    """Track admin login/logout events for activity log"""
+    ACTION_CHOICES = (
+        ('login', 'Login'),
+        ('logout', 'Logout'),
+    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='admin_activities')
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    session_key = models.CharField(max_length=64, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} {self.action} at {self.created_at}"

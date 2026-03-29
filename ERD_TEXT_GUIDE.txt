@@ -1,0 +1,438 @@
+ERD TEXT GUIDE (DLL_LMSTC)
+
+Legend (use these shapes when drawing):
+- SQUARE = Entity / Table
+- OVAL   = Attribute / Column
+- DIAMOND = Relationship (name + cardinality)
+
+============================================================
+1. CORE USER / APPLICANT ENTITIES
+============================================================
+
+SQUARE: Applicant
+  OVAL: id (PK)
+  OVAL: username
+  OVAL: email
+  OVAL: password
+  OVAL: first_name
+  OVAL: last_name
+  OVAL: is_staff
+  OVAL: is_superuser
+  OVAL: date_joined
+
+SQUARE: SocialAccount
+  OVAL: id (PK)
+  OVAL: provider
+  OVAL: account_id
+
+SQUARE: EmailAddress
+  OVAL: id (PK)
+  OVAL: email
+  OVAL: verified
+
+SQUARE: UserProfile
+  OVAL: id (PK)
+  OVAL: bio
+
+SQUARE: UserGroup
+  OVAL: id (PK)
+  OVAL: group_name
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Applicant -- DIAMOND has_social_accounts (1 Applicant : many SocialAccount) -- SocialAccount
+Applicant -- DIAMOND has_email_addresses (1 : many) -- EmailAddress
+Applicant -- DIAMOND has_profiles (1 : 0..many, usually 0 or 1) -- UserProfile
+Applicant -- DIAMOND belongs_to_groups (1 : many UserGroup) -- UserGroup
+
+============================================================
+2. PROGRAMS AND JOB POSTS
+============================================================
+
+SQUARE: Programs
+  OVAL: id (PK)
+  OVAL: program_name
+  OVAL: program_detail
+  OVAL: program_sched
+  OVAL: program_trainor
+  OVAL: training_image
+  OVAL: program_competencies (JSON)
+
+SQUARE: ProgramImage
+  OVAL: id (PK)
+  OVAL: image
+
+SQUARE: JobPost
+  OVAL: id (PK)
+  OVAL: job_title
+  OVAL: company
+  OVAL: address
+  OVAL: job_description
+  OVAL: availability
+  OVAL: status
+  OVAL: skills (JSON)
+  OVAL: email_or_link
+  OVAL: posted_at
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Programs -- DIAMOND has_images (1 : many) -- ProgramImage
+Programs -- DIAMOND related_job_posts (1 : 0..many, optional) -- JobPost
+
+============================================================
+3. PROGRAM APPLICATION / ENROLLMENT FLOW
+============================================================
+
+SQUARE: ProgramApplication
+  OVAL: id (PK)
+  OVAL: applied_at
+  OVAL: voter_id_image
+  OVAL: status (Pending / Accepted / Declined)
+  OVAL: decline_reason
+  OVAL: marked_fields (JSON)
+  OVAL: is_under_review
+  OVAL: review_notes
+  OVAL: reviewed_at
+
+SQUARE: ApprovedApplicant
+  OVAL: id (PK)
+  OVAL: approved_at
+  OVAL: status (active / finished / dropped)
+  OVAL: application_type (online / walkin)
+  OVAL: progress
+  OVAL: total_present
+  OVAL: total_absent
+  OVAL: batch_number
+  OVAL: enrollment_year
+  OVAL: enrollment_semester
+
+SQUARE: ApplicantPasser
+  OVAL: id (PK)
+  OVAL: trainee_name
+  OVAL: program_name
+  OVAL: final_progress
+  OVAL: total_present
+  OVAL: total_absent
+  OVAL: enrollment_date
+  OVAL: completion_date
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Applicant -- DIAMOND applies_for (1 Applicant : many ProgramApplication) -- ProgramApplication
+ProgramApplication -- DIAMOND is_for_program (many : 1) -- Programs
+
+Applicant -- DIAMOND is_approved_for (1 : many ApprovedApplicant) -- ApprovedApplicant
+ApprovedApplicant -- DIAMOND is_for_program (many : 1) -- Programs
+
+Applicant -- DIAMOND passes (1 : many ApplicantPasser) -- ApplicantPasser
+ApplicantPasser -- DIAMOND is_for_program (many : 1) -- Programs
+
+============================================================
+4. NOTIFICATIONS AND JOB MATCHING
+============================================================
+
+SQUARE: Notification
+  OVAL: id (PK)
+  OVAL: notification_type
+  OVAL: title
+  OVAL: message
+  OVAL: is_read
+  OVAL: created_at
+
+SQUARE: SavedJobMatch
+  OVAL: id (PK)
+  OVAL: job_title
+  OVAL: job_url
+  OVAL: job_company
+  OVAL: match_score
+  OVAL: saved_at
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Applicant -- DIAMOND receives (1 recipient : many Notification) -- Notification
+Applicant -- DIAMOND sends (1 sender : many Notification) -- Notification
+
+Applicant -- DIAMOND saves_job_matches (1 : many) -- SavedJobMatch
+
+============================================================
+5. LEARNER PROFILE AND LOOKUP TABLES
+============================================================
+
+SQUARE: ClientClassification
+  OVAL: id (PK)
+  OVAL: name
+
+SQUARE: DisabilityType
+  OVAL: id (PK)
+  OVAL: name
+
+SQUARE: DisabilityCause
+  OVAL: id (PK)
+  OVAL: name
+
+SQUARE: EducationalAttainment
+  OVAL: id (PK)
+  OVAL: name
+
+SQUARE: Learner_Profile
+  OVAL: id (PK)
+  OVAL: entry_date
+  OVAL: id_picture
+  OVAL: last_name
+  OVAL: first_name
+  OVAL: middle_name
+  OVAL: region / region_name
+  OVAL: province / province_name
+  OVAL: city / city_name
+  OVAL: barangay / barangay_name
+  OVAL: district
+  OVAL: street
+  OVAL: contact_number
+  OVAL: email
+  OVAL: nationality
+  OVAL: sex
+  OVAL: civil_status
+  OVAL: employment_status
+  OVAL: monthly_income
+  OVAL: date_hired
+  OVAL: company_name
+  OVAL: birthdate
+  OVAL: age
+  OVAL: birthplace_* fields
+  OVAL: educational_attainment (text)
+  OVAL: parent_guardian
+  OVAL: permanent_address
+  OVAL: other_classification
+  OVAL: course_or_qualification
+  OVAL: scholarship_package
+  OVAL: agree_to_privacy
+  OVAL: applicant_signature
+  OVAL: applicant_name
+  OVAL: date_accomplished
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Applicant -- DIAMOND has_learner_profile (1 : 0..1 or many) -- Learner_Profile
+Learner_Profile -- DIAMOND has_classifications (many-to-many) -- ClientClassification
+Learner_Profile -- DIAMOND has_disability_types (many-to-many) -- DisabilityType
+Learner_Profile -- DIAMOND has_disability_causes (many-to-many) -- DisabilityCause
+
+============================================================
+6. TRAINER, TRAINING, ATTENDANCE, TASKS, EMPLOYER
+============================================================
+
+SQUARE: TrainerProfile
+  OVAL: id (PK)
+  OVAL: photo
+
+SQUARE: StaffMember
+  OVAL: id (PK)
+  OVAL: full_name
+  OVAL: role
+  OVAL: photo
+
+SQUARE: Training
+  OVAL: id (PK)
+  OVAL: program_name
+  OVAL: start_date
+  OVAL: end_date
+  OVAL: task_time
+  OVAL: end_time
+  OVAL: room_lab
+  OVAL: category
+  OVAL: description
+  OVAL: created_at
+  OVAL: updated_at
+  OVAL: batch_number
+  OVAL: semester
+  OVAL: enrollment_year
+
+SQUARE: Attendance
+  OVAL: id (PK)
+  OVAL: attendance_date
+  OVAL: status
+  OVAL: recorded_at
+
+SQUARE: Task
+  OVAL: id (PK)
+  OVAL: name
+  OVAL: task_id
+  OVAL: created_at
+
+SQUARE: TaskCompletion
+  OVAL: id (PK)
+  OVAL: is_completed
+  OVAL: completed_at
+
+SQUARE: EmployerProfile
+  OVAL: id (PK)
+  OVAL: full_name
+  OVAL: created_at
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Applicant -- DIAMOND has_trainer_profile (1 : 0..1) -- TrainerProfile
+TrainerProfile -- DIAMOND teaches_programs (many-to-many) -- Programs
+
+Applicant -- DIAMOND is_trainer_for (1 Applicant : many Training as trainer) -- Training
+
+Training -- DIAMOND has_attendance_records (1 : many) -- Attendance
+Applicant -- DIAMOND attends_training (1 : many Attendance as student) -- Attendance
+Applicant -- DIAMOND records_attendance (1 : many Attendance as recorded_by) -- Attendance
+
+Applicant -- DIAMOND creates_tasks (1 : many) -- Task
+Applicant -- DIAMOND completes_tasks (1 : many TaskCompletion) -- TaskCompletion
+Task -- DIAMOND has_completions (1 : many) -- TaskCompletion
+
+Applicant -- DIAMOND has_employer_profile (1 : 0..1) -- EmployerProfile
+
+============================================================
+7. WALK-IN APPLICATIONS AND DMS
+============================================================
+
+SQUARE: WalkInApplication
+  OVAL: id (PK)
+  OVAL: applied_at
+  OVAL: status
+  OVAL: decline_reason
+  OVAL: is_walkin
+  OVAL: queue_number
+  OVAL: processed_at
+
+SQUARE: ApprovedWalkIn
+  OVAL: id (PK)
+  OVAL: approved_at
+  OVAL: status
+  OVAL: progress
+  OVAL: total_present
+  OVAL: total_absent
+  OVAL: batch_number
+  OVAL: enrollment_year
+
+SQUARE: WalkInPasser
+  OVAL: id (PK)
+  OVAL: trainee_name
+  OVAL: program_name
+  OVAL: final_progress
+  OVAL: total_present
+  OVAL: total_absent
+  OVAL: enrollment_date
+  OVAL: completion_date
+
+SQUARE: DMSReview
+  OVAL: id (PK)
+  OVAL: application_type (program / walkin)
+  OVAL: application_id
+  OVAL: status (pending / incomplete / ready_for_approval)
+  OVAL: reviewed_at
+  OVAL: has_id_picture
+  OVAL: has_learner_profile
+  OVAL: has_signature
+  OVAL: has_required_documents
+  OVAL: review_notes
+  OVAL: missing_documents
+  OVAL: created_at
+  OVAL: updated_at
+
+SQUARE: DMSApproval
+  OVAL: id (PK)
+  OVAL: application_type
+  OVAL: status (approved / pending_final_approval)
+  OVAL: approved_at
+  OVAL: final_approved_at
+  OVAL: approval_notes
+  OVAL: created_at
+  OVAL: updated_at
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+Applicant -- DIAMOND walkin_applies_for (1 : many WalkInApplication) -- WalkInApplication
+Programs -- DIAMOND has_walkin_applications (1 : many) -- WalkInApplication
+
+Applicant -- DIAMOND approves_walkins (1 : many ApprovedWalkIn as approved_by) -- ApprovedWalkIn
+WalkInApplication -- DIAMOND is_approved_as (1 : 0..1) -- ApprovedWalkIn
+Programs -- DIAMOND has_approved_walkins (1 : many) -- ApprovedWalkIn
+
+Applicant -- DIAMOND passes_walkin_programs (1 : many WalkInPasser) -- WalkInPasser
+Programs -- DIAMOND has_walkin_passers (1 : many) -- WalkInPasser
+
+Applicant -- DIAMOND is_subject_of_review (1 : many DMSReview) -- DMSReview
+Applicant -- DIAMOND reviews_applications (1 reviewer : many DMSReview) -- DMSReview
+Programs -- DIAMOND is_reviewed_in (1 : many) -- DMSReview
+
+DMSReview -- DIAMOND has_approval (1 : 0..1) -- DMSApproval
+Applicant -- DIAMOND approves_dms (1 : many DMSApproval as approved_by / final_approved_by) -- DMSApproval
+Programs -- DIAMOND is_in_approval (1 : many) -- DMSApproval
+
+============================================================
+8. DOCUMENT MANAGEMENT AND ARCHIVED TRAINING
+============================================================
+
+SQUARE: DocumentCategory
+  OVAL: id (PK)
+  OVAL: name
+  OVAL: category_type (manual / policy)
+  OVAL: description
+  OVAL: created_at
+
+SQUARE: ManualDocument
+  OVAL: id (PK)
+  OVAL: title
+  OVAL: description
+  OVAL: document_file
+  OVAL: batch
+  OVAL: semester
+  OVAL: version
+  OVAL: status
+  OVAL: created_at
+  OVAL: updated_at
+
+SQUARE: PolicyDocument
+  OVAL: id (PK)
+  OVAL: title
+  OVAL: description
+  OVAL: document_file
+  OVAL: batch
+  OVAL: semester
+  OVAL: version
+  OVAL: status
+  OVAL: effective_date
+  OVAL: expiry_date
+  OVAL: created_at
+  OVAL: updated_at
+
+SQUARE: ArchivedTraining
+  OVAL: id (PK)
+  OVAL: original_training_id
+  OVAL: program_name
+  OVAL: start_date
+  OVAL: end_date
+  OVAL: task_time
+  OVAL: end_time
+  OVAL: room_lab
+  OVAL: category
+
+------------------------------------------------------------
+Relationships (DIAMOND):
+
+DocumentCategory -- DIAMOND categorizes_manuals (1 : many) -- ManualDocument
+DocumentCategory -- DIAMOND categorizes_policies (1 : many) -- PolicyDocument
+
+Programs -- DIAMOND has_manuals (1 : 0..many, optional) -- ManualDocument
+Programs -- DIAMOND has_policies (1 : 0..many, optional) -- PolicyDocument
+
+Applicant -- DIAMOND uploads_manuals (1 : many) -- ManualDocument
+Applicant -- DIAMOND uploads_policies (1 : many) -- PolicyDocument
+
+Training -- DIAMOND is_archived_as (1 : 0..1) -- ArchivedTraining
+
+============================================================
+END OF ERD TEXT GUIDE
+============================================================

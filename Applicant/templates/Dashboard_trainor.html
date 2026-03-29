@@ -9,6 +9,7 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trainer Dashboard</title>
+    <link rel="icon" type="image/png" href="{% static 'Images/icon.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -2152,7 +2153,7 @@
         <div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="{% url 'logout_view' %}"><i class="fas fa-sign-out-alt"></i> <span class="sidebar-text">Sign Out</span></a></li>
+                    <li><a href="{% url 'trainor_logout_view' %}"><i class="fas fa-sign-out-alt"></i> <span class="sidebar-text">Sign Out</span></a></li>
                 </ul>
             </nav>
         </div>
@@ -3358,7 +3359,8 @@
                                     data-trainee-name="{% if ticket.created_by.learner_profile.first %}{{ ticket.created_by.learner_profile.first.last_name }}, {{ ticket.created_by.learner_profile.first.first_name }}{% else %}{{ ticket.created_by.get_full_name|default:ticket.created_by.username }}{% endif %}"
                                     data-trainee-program="{{ selected_program.program_name|default:'N/A' }}"
                                     data-created-at="{{ ticket.created_at|timesince }} ago"
-                                    data-updated-at="{{ ticket.updated_at|timesince }} ago">
+                                    data-updated-at="{{ ticket.updated_at|timesince }} ago"
+                                    data-forwarded="{{ ticket.forwarded_to_admin|yesno:'true,false' }}">
                                     <td class="align-top"><span class="text-xs font-mono text-gray-500">#{{ ticket.ticket_id }}</span></td>
                                     <td class="align-top">
                                         <div class="font-semibold text-gray-800">{{ ticket.subject }}</div>
@@ -3405,6 +3407,15 @@
                                                 <option value="resolved">Resolved</option>
                                                 <option value="closed">Close Ticket</option>
                                             </select>
+                                            {% if not ticket.forwarded_to_admin %}
+                                            <button onclick="forwardTicketToAdminFromTable('{{ ticket.ticket_id }}')" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                                                <i class="fas fa-paper-plane mr-1"></i> Forward to Admin
+                                            </button>
+                                            {% else %}
+                                            <span class="px-3 py-2 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
+                                                <i class="fas fa-check-circle mr-1"></i> Forwarded
+                                            </span>
+                                            {% endif %}
                                             {% endif %}
                                         </div>
                                     </td>
@@ -3450,7 +3461,7 @@
     <!-- All Training Sessions Modal -->
     <div id="allTrainingsModal" class="modal-overlay hidden">
         <div class="modal-content" style="max-width: 900px;">
-            <h3>All Training Sessions (All Trainers)</h3>
+            <h3>My Training Sessions</h3>
             <div style="max-height: 400px; overflow-y: auto;">
                 <table class="data-table">
                     <thead>
@@ -3572,17 +3583,27 @@
                 
                 <!-- Actions -->
                 <div class="border-t pt-4">
-                    <h5 class="font-semibold text-gray-700 mb-3">Update Status</h5>
-                    <div class="flex gap-2">
-                        <select id="modalStatusUpdate" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select new status...</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Close Ticket</option>
-                        </select>
-                        <button onclick="saveTicketStatus()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                            <i class="fas fa-save mr-2"></i>Update
-                        </button>
+                    <h5 class="font-semibold text-gray-700 mb-3">Actions</h5>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex gap-2">
+                            <select id="modalStatusUpdate" class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select new status...</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Close Ticket</option>
+                            </select>
+                            <button onclick="saveTicketStatus()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-save mr-2"></i>Update Status
+                            </button>
+                        </div>
+                        <div id="forwardToAdminSection" class="flex gap-2">
+                            <button id="forwardToAdminBtn" onclick="forwardTicketToAdmin()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-paper-plane mr-2"></i>Forward to Admin
+                            </button>
+                            <span id="forwardedIndicator" class="hidden px-4 py-2 bg-green-100 text-green-800 rounded-lg font-medium flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i>Forwarded to Admin
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -5649,8 +5670,8 @@
             function showAllTrainingsModal() {
                 let tableHTML = '';
                                                                 
-                // Sort trainings by date (use all trainings, not filtered)
-                const sortedTrainings = [...allTrainings].sort((a, b) => parseDate(a.startDate) - parseDate(b.startDate));
+                // Sort trainings by date (use only my trainings)
+                const sortedTrainings = [...myTrainings].sort((a, b) => parseDate(a.startDate) - parseDate(b.startDate));
                                                                 
                 sortedTrainings.forEach(training => {
                     const startTime = formatTimeDisplay(training.time);
@@ -7076,6 +7097,38 @@
             // Reset status dropdown
             document.getElementById('modalStatusUpdate').value = '';
             
+            // Check if ticket is already forwarded
+            const isForwarded = ticketElement.dataset.forwarded === 'true';
+            const forwardBtn = document.getElementById('forwardToAdminBtn');
+            const forwardedIndicator = document.getElementById('forwardedIndicator');
+            
+            if (isForwarded) {
+                if (forwardBtn) forwardBtn.classList.add('hidden');
+                if (forwardedIndicator) forwardedIndicator.classList.remove('hidden');
+            } else {
+                // Also check via API to be sure
+                fetch(`/get-ticket-details/${ticketData.ticketNumber}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.ticket) {
+                            const apiForwarded = data.ticket.forwarded_to_admin || false;
+                            if (apiForwarded) {
+                                if (forwardBtn) forwardBtn.classList.add('hidden');
+                                if (forwardedIndicator) forwardedIndicator.classList.remove('hidden');
+                            } else {
+                                if (forwardBtn) forwardBtn.classList.remove('hidden');
+                                if (forwardedIndicator) forwardedIndicator.classList.add('hidden');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking ticket forwarding status:', error);
+                        // Default to showing button if API check fails
+                        if (forwardBtn) forwardBtn.classList.remove('hidden');
+                        if (forwardedIndicator) forwardedIndicator.classList.add('hidden');
+                    });
+            }
+            
             // Show modal
             document.getElementById('ticketDetailsModal').classList.remove('hidden');
             document.getElementById('ticketDetailsModal').classList.add('show');
@@ -7088,6 +7141,67 @@
                 document.getElementById('ticketDetailsModal').classList.add('hidden');
             }, 300);
             currentTicketId = null;
+        }
+        
+        // Forward ticket to admin from modal
+        function forwardTicketToAdmin() {
+            if (!currentTicketId) {
+                alert('No ticket selected.');
+                return;
+            }
+            
+            // Get ticket number from modal
+            const ticketNumber = document.getElementById('modalTicketId').textContent.replace('#', '');
+            
+            if (confirm('Are you sure you want to forward this ticket to admin? This will notify the admin about this ticket.')) {
+                forwardTicketToAdminAPI(ticketNumber);
+            }
+        }
+        
+        // Forward ticket to admin from table
+        function forwardTicketToAdminFromTable(ticketId) {
+            if (confirm('Are you sure you want to forward this ticket to admin? This will notify the admin about this ticket.')) {
+                forwardTicketToAdminAPI(ticketId);
+            }
+        }
+        
+        // API call to forward ticket to admin
+        function forwardTicketToAdminAPI(ticketId) {
+            fetch('/forward-ticket-to-admin/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    ticket_id: ticketId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Ticket forwarded to admin successfully!', 'success');
+                    
+                    // Update UI
+                    const forwardBtn = document.getElementById('forwardToAdminBtn');
+                    const forwardedIndicator = document.getElementById('forwardedIndicator');
+                    if (forwardBtn && forwardedIndicator) {
+                        forwardBtn.classList.add('hidden');
+                        forwardedIndicator.classList.remove('hidden');
+                    }
+                    
+                    // Reload page after a short delay to reflect changes
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showNotification(data.message || 'Error forwarding ticket', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Network error occurred', 'error');
+            });
         }
         
         // Save ticket status from modal

@@ -143,15 +143,15 @@ LOGIN_REDIRECT_URL = '/redirect-after-login/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Google social login
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
-            'secret': os.environ.get('GOOGLE_CLIENT_SECRET'),
-            'key': ''
-        }
-    }
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         'APP': {
+#             'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
+#             'secret': os.environ.get('GOOGLE_CLIENT_SECRET'),
+#             'key': ''
+#         }
+#     }
+# }
 
 
 SOCIALACCOUNT_LOGIN_ON_GET = True

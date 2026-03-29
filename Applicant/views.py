@@ -22,7 +22,7 @@ from .models import Programs
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import login as auth_login
 from django.contrib import messages
-from .models import JobPost, ProgramApplication, ApprovedApplicant, Notification, Task, ApplicantPasser, WalkInApplication, ApprovedWalkIn, DMSReview, DMSApproval, Event, Training, ArchivedTraining, ProgramImage, SupportTicket, TicketResponse, BatchCycle, BatchCycle, SavedJobMatch, TrainerProgramSemesterSetting, TrainerProfile, StaffMember
+from .models import JobPost, ProgramApplication, ApprovedApplicant, Notification, Task, ApplicantPasser, WalkInApplication, ApprovedWalkIn, DMSReview, DMSApproval, Event, Training, ArchivedTraining, ProgramImage, SupportTicket, TicketResponse, BatchCycle, BatchCycle, SavedJobMatch, TrainerProgramSemesterSetting, TrainerProfile, StaffMember, AdminPermission
 from .models import Learner_Profile, ClientClassification, DisabilityType, DisabilityCause, EducationalAttainment
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.mail import send_mail
@@ -53,6 +53,18 @@ import re
 def logout_view(request):
     logout(request)
     return redirect('Login')
+
+
+def coordinator_logout_view(request):
+    """Logout view for Coordinator portal and redirect to CoordinatorLogin."""
+    logout(request)
+    return redirect('CoordinatorLogin')
+
+
+def trainor_logout_view(request):
+    """Logout view for Trainor portal and redirect to TrainorLogin."""
+    logout(request)
+    return redirect('TrainorLogin')
 
 # View to render certification.html
 def certification_view(request):
@@ -348,15 +360,19 @@ def Login(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            # Block superuser/admin accounts from logging in through regular login
+            if user.is_superuser:
+                messages.error(request, "Admin accounts must use the Coordinator Login page. Please use the Coordinator Login to access your dashboard.")
+                return redirect("Login")
+            
+            # Proceed with login for non-superuser accounts
             login(request, user)
             request.session["username"] = user.username
 
             messages.success(request, "Welcome to Online DLL LMSTC")
 
             # Redirect based on user role
-            if user.is_superuser:
-                return redirect("Dashboard_admin")
-            elif user.is_staff:
+            if user.is_staff:
                 return redirect("Dashboard_trainor")
             else:
                 # ✅ Special handling for walk-in applicants:
@@ -401,6 +417,34 @@ def CoordinatorLogin(request):
             return redirect("CoordinatorLogin")
 
     return render(request, "CoordinatorLogin.html")
+
+
+def TrainorLogin(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            # Only allow trainors (staff but not superuser)
+            if user.is_staff and not user.is_superuser:
+                login(request, user)
+                request.session["username"] = user.username
+                messages.success(request, "Welcome to the trainor portal")
+                return redirect("Dashboard_trainor")
+            else:
+                # Block superusers and non-staff users
+                if user.is_superuser:
+                    messages.error(request, "Admin accounts must use the Coordinator Login page.")
+                else:
+                    messages.error(request, "Only trainors can access this portal. Please use the appropriate login page.")
+                return redirect("TrainorLogin")
+        else:
+            messages.error(request, "Invalid trainor credentials.")
+            return redirect("TrainorLogin")
+
+    return render(request, "TrainorLogin.html")
 
 
 @login_required
@@ -504,14 +548,86 @@ def Dashboard(request):
     all_disability_types = DisabilityType.objects.all()
     all_disability_causes = DisabilityCause.objects.all()
     
-    # Filter trainings by user's approved programs
-    # Training model uses program_name (CharField) which should match Programs.program_name
+    # Filter trainings by user's approved programs AND match batch/semester/year
+    # Improved logic: Match trainings by trainer's assigned programs (via TrainerProfile) 
+    # OR by exact program_name match, then filter by batch/semester/year
     trainings = Training.objects.none()  # Default to empty
     if approved_programs.exists():
-        # Get program names from approved programs
-        approved_program_names = approved_programs.values_list('program__program_name', flat=True)
-        # Filter trainings where program_name matches any of the user's approved programs
-        trainings = Training.objects.filter(program_name__in=approved_program_names).order_by('start_date', 'task_time')
+        from django.db.models import Q
+        from .models import TrainerProfile
+        
+        # Get all programs the applicant is approved for
+        approved_program_ids = approved_programs.values_list('program_id', flat=True)
+        
+        # Get all trainers assigned to these programs (via TrainerProfile)
+        trainer_profiles = TrainerProfile.objects.filter(programs__id__in=approved_program_ids).select_related('user')
+        trainer_users = [tp.user for tp in trainer_profiles]
+        
+        # Get program names from approved programs (for exact name matching fallback)
+        approved_program_names = list(approved_programs.values_list('program__program_name', flat=True))
+        
+        # Build base filter: trainings created by trainers assigned to applicant's programs OR exact program_name match
+        base_filters = Q()
+        
+        # Option 1: Trainings created by trainers assigned to applicant's programs
+        if trainer_users:
+            base_filters |= Q(trainer__in=trainer_users)
+        
+        # Option 2: Trainings with exact program_name match (fallback for legacy or direct matches)
+        if approved_program_names:
+            base_filters |= Q(program_name__in=approved_program_names)
+        
+        # If no base filters, return empty
+        if not base_filters:
+            trainings = Training.objects.none()
+        else:
+            # Now filter by batch/semester/year: show trainings that match OR are general (null/empty)
+            # For each approved program, show trainings where:
+            # (batch matches OR batch is null) AND (semester matches OR semester is null) AND (year matches OR year is null)
+            batch_semester_year_filters = Q()
+            
+            for approved_program in approved_programs:
+                batch_number = approved_program.batch_number
+                semester = approved_program.enrollment_semester
+                enrollment_year = approved_program.enrollment_year
+                
+                # Build batch/semester/year filter for this approved program
+                # Each condition: match specific value OR is null/empty (general training)
+                program_filter = Q()
+                
+                # Batch: match specific batch OR null/empty (general)
+                if batch_number:
+                    batch_q = Q(batch_number=batch_number) | Q(batch_number__isnull=True) | Q(batch_number='')
+                    program_filter = batch_q
+                else:
+                    # No batch in approved program - accept any batch (including null)
+                    batch_q = Q()  # Match all batches
+                    program_filter = batch_q
+                
+                # Semester: match specific semester OR null/empty (general)
+                if semester:
+                    semester_q = Q(semester=semester) | Q(semester__isnull=True) | Q(semester='')
+                    program_filter = program_filter & semester_q if program_filter else semester_q
+                # If no semester, don't add restriction (accept any)
+                
+                # Year: match specific year OR null (general)
+                if enrollment_year:
+                    year_q = Q(enrollment_year=enrollment_year) | Q(enrollment_year__isnull=True)
+                    program_filter = program_filter & year_q if program_filter else year_q
+                # If no year, don't add restriction (accept any)
+                
+                # Combine with OR: trainings matching any approved program's batch/semester/year criteria
+                batch_semester_year_filters |= program_filter
+            
+            # Combine base filter (trainer/program_name) with batch/semester/year filter
+            # If batch_semester_year_filters is empty (shouldn't happen), just use base_filters
+            if batch_semester_year_filters:
+                final_filter = base_filters & batch_semester_year_filters
+            else:
+                final_filter = base_filters
+            
+            # Apply the combined filter
+            trainings = Training.objects.filter(final_filter).distinct().order_by('start_date', 'task_time')
     
     # Get competencies data from approved programs
     program_competencies = {
@@ -667,6 +783,17 @@ def Dashboard(request):
                 document_type__in=['modules_manuals', 'policy_guidelines']  # Only count relevant document types
             ).count()
     
+    # Get active departmental events for applicants
+    from .models import Event
+    from datetime import date
+    today = date.today()
+    active_departmental_events = Event.objects.filter(
+        category='departmental',
+        status='active',
+        start_date__lte=today,
+        end_date__gte=today
+    ).order_by('start_date')
+    
     context = {
         "user_profile_picture": user_profile_picture,
         "username": username,
@@ -720,6 +847,9 @@ def Dashboard(request):
         
         # New documents count for notifications
         'new_documents_count': new_documents_count,
+        
+        # Departmental events for applicants
+        'departmental_events': active_departmental_events,
     }
 
     # Disable caching
@@ -1167,7 +1297,7 @@ def end_batch(request):
     """Handle End Batch action from admin - progress to next batch cycle when all programs are complete"""
     if request.method == 'POST':
         try:
-            from .models import ActiveSemesterSettings, BatchCycle, Programs, TrainerProfile
+            from .models import ActiveSemesterSettings, BatchCycle, Programs, TrainerProfile, TrainerProgramSemesterSetting
             
             # Check if user is admin
             if not request.user.is_superuser:
@@ -1175,6 +1305,12 @@ def end_batch(request):
                     'success': False,
                     'error': 'Only admin can end the batch'
                 })
+            
+            if not check_admin_permission(request.user, 'manage_enrollments'):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'You do not have permission to manage enrollments.'
+                }, status=403)
             
             # Get all programs and check if all are completed
             programs = Programs.objects.all()
@@ -1185,10 +1321,14 @@ def end_batch(request):
                 # Get trainer(s) for this program (support legacy FK and M2M)
                 trainer_profiles = TrainerProfile.objects.filter(Q(program=program) | Q(programs=program)).distinct()
                 if trainer_profiles.exists():
-                    # Check each trainer's semester status; any ongoing marks program incomplete
+                    # Check each trainer's program-specific semester status
                     for tp in trainer_profiles:
-                        semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(tp.user)
-                        if semester_settings.semester_status != 'completed':
+                        # Use program-specific semester settings (preferred)
+                        program_semester_setting, _ = TrainerProgramSemesterSetting.get_or_create_for_program(
+                            tp.user,
+                            program
+                        )
+                        if program_semester_setting.semester_status != 'completed':
                             all_complete = False
                             incomplete_programs.append(program.program_name)
                             break
@@ -1208,10 +1348,22 @@ def end_batch(request):
             batch_cycle = BatchCycle.get_active_cycle()
             batch_cycle.progress_to_next_batch()
             
-            # Reset all trainer semester settings for the next batch cycle
+            # Reset all trainer program-specific semester settings for the next batch cycle
             for program in programs:
                 trainer_profiles = TrainerProfile.objects.filter(Q(program=program) | Q(programs=program)).distinct()
                 for tp in trainer_profiles:
+                    # Reset program-specific semester settings
+                    program_semester_setting, _ = TrainerProgramSemesterSetting.get_or_create_for_program(
+                        tp.user,
+                        program
+                    )
+                    program_semester_setting.active_semester = '1'
+                    program_semester_setting.semester_status = 'ongoing'
+                    program_semester_setting.completed_semester = None
+                    program_semester_setting.completed_at = None
+                    program_semester_setting.save()
+                    
+                    # Also reset legacy trainer-wide settings for backward compatibility
                     semester_settings = ActiveSemesterSettings.get_or_create_for_trainer(tp.user)
                     semester_settings.active_semester = '1'
                     semester_settings.semester_status = 'ongoing'
@@ -1225,6 +1377,8 @@ def end_batch(request):
             })
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({
                 'success': False,
                 'error': str(e)
@@ -1584,7 +1738,19 @@ def Dashboard_admin(request, application_id=None):
     total_documents_count = LMSTC_Documents.objects.count()
     approved_learners_count = Learner_Profile.objects.filter(user__approved_programs__isnull=False).distinct().count()
     pending_learners_count = Learner_Profile.objects.filter(user__program_applications__status='Pending').distinct().count()
-    
+
+    total_certificates_issued = ApplicantPasser.objects.count()
+    current_time = timezone.now()
+    certificates_this_month = ApplicantPasser.objects.filter(
+        completion_date__year=current_time.year,
+        completion_date__month=current_time.month
+    ).count()
+
+    finished_approved = ApprovedApplicant.objects.filter(status='finished').count()
+    finished_walkin = ApprovedWalkIn.objects.filter(status='finished').count()
+    total_finished = finished_approved + finished_walkin
+    pending_certificates_count = max(total_finished - total_certificates_issued, 0)
+
     # Support Ticket data
     all_tickets = SupportTicket.objects.select_related('created_by', 'assigned_to').order_by('-created_at')
     total_tickets_count = all_tickets.count()
@@ -1592,8 +1758,8 @@ def Dashboard_admin(request, application_id=None):
     resolved_tickets_count = all_tickets.filter(status='resolved').count()
     high_priority_tickets_count = all_tickets.filter(priority='high').count()
     
-    # Count new tickets (open status indicates new/unresolved tickets)
-    new_tickets_count = open_tickets_count
+    # Count new tickets - only tickets forwarded by trainers to admin
+    new_tickets_count = SupportTicket.objects.filter(forwarded_to_admin=True, status='open').count()
     
     # Count new documents (documents uploaded within the last 7 days)
     seven_days_ago = timezone.now() - timedelta(days=7)
@@ -1719,6 +1885,142 @@ def Dashboard_admin(request, application_id=None):
         # If there's any error, just use the default
         pass
     
+    # Get all admin (superuser) accounts for Admin Accounts section
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    admin_users = User.objects.filter(is_superuser=True).order_by('-date_joined')
+    
+    # Activity Log - Collect recent admin activities
+    activity_logs = []
+    
+    # 1. Collect recent applicant approvals (from ApprovedApplicant)
+    # Note: ApprovedApplicant doesn't have approved_by field, so we'll try to get it from related WalkInApplication
+    recent_approved = ApprovedApplicant.objects.select_related('applicant', 'program').order_by('-approved_at')[:20]
+    for approval in recent_approved:
+        applicant_name = approval.applicant.get_full_name() or approval.applicant.username
+        # Try to find the admin who approved from related WalkInApplication
+        admin_username = 'Admin'
+        try:
+            walkin_app = WalkInApplication.objects.filter(
+                applicant=approval.applicant,
+                program=approval.program,
+                status='Approved'
+            ).first()
+            if walkin_app and walkin_app.processed_by:
+                admin_username = walkin_app.processed_by.username
+        except:
+            pass
+        
+        activity_logs.append({
+            'admin_username': admin_username,
+            'action': f'approved',
+            'applicant_name': applicant_name,
+            'details': f'for {approval.program.program_name}',
+            'timestamp': approval.approved_at,
+        })
+    
+    # 2. Collect recent walk-in approvals (from ApprovedWalkIn)
+    recent_walkin_approved = ApprovedWalkIn.objects.select_related('applicant', 'program', 'approved_by').order_by('-approved_at')[:20]
+    for approval in recent_walkin_approved:
+        applicant_name = approval.applicant.get_full_name() or approval.applicant.username
+        # Use approved_by if available, otherwise try processed_by from related WalkInApplication
+        admin_username = 'Admin'
+        if approval.approved_by:
+            admin_username = approval.approved_by.username
+        else:
+            try:
+                walkin_app = WalkInApplication.objects.filter(
+                    applicant=approval.applicant,
+                    program=approval.program
+                ).first()
+                if walkin_app and walkin_app.processed_by:
+                    admin_username = walkin_app.processed_by.username
+            except:
+                pass
+        
+        activity_logs.append({
+            'admin_username': admin_username,
+            'action': f'approved walk-in applicant',
+            'applicant_name': applicant_name,
+            'details': f'for {approval.program.program_name}',
+            'timestamp': approval.approved_at,
+        })
+    
+    # 2b. Also collect from WalkInApplication directly (for processed walk-ins)
+    recent_processed_walkins = WalkInApplication.objects.filter(
+        status='Approved'
+    ).select_related('applicant', 'program', 'processed_by').order_by('-processed_at')[:20]
+    for walkin in recent_processed_walkins:
+        if walkin.processed_by:
+            applicant_name = walkin.applicant.get_full_name() or walkin.applicant.username
+            activity_logs.append({
+                'admin_username': walkin.processed_by.username,
+                'action': f'processed walk-in application',
+                'applicant_name': applicant_name,
+                'details': f'for {walkin.program.program_name}',
+                'timestamp': walkin.processed_at or walkin.applied_at,
+            })
+    
+    # 3. Collect recent admin account creations
+    recent_admins = User.objects.filter(is_superuser=True).order_by('-date_joined')[:10]
+    for admin in recent_admins:
+        # Only show if created recently (within last 30 days) or if it's a new account
+        days_since_creation = (timezone.now() - admin.date_joined).days
+        if days_since_creation <= 30:
+            activity_logs.append({
+                'admin_username': admin.username if admin.username != request.user.username else 'System',
+                'action': f'created admin account',
+                'applicant_name': admin.get_full_name() or admin.username,
+                'details': '',
+                'timestamp': admin.date_joined,
+            })
+    
+    # 4. Collect recent Document Management actions (from DMSApproval)
+    try:
+        from .models import DMSApproval
+        recent_dms_approvals = DMSApproval.objects.select_related('applicant', 'program', 'approved_by', 'final_approved_by').order_by('-created_at')[:20]
+        for dms_approval in recent_dms_approvals:
+            if dms_approval.approved_by:
+                applicant_name = dms_approval.applicant.get_full_name() or dms_approval.applicant.username
+                activity_logs.append({
+                    'admin_username': dms_approval.approved_by.username,
+                    'action': f'approved documents in Document Management',
+                    'applicant_name': applicant_name,
+                    'details': f'for {dms_approval.program.program_name}',
+                    'timestamp': dms_approval.approved_at,
+                })
+            if dms_approval.final_approved_by and dms_approval.final_approved_at:
+                applicant_name = dms_approval.applicant.get_full_name() or dms_approval.applicant.username
+                activity_logs.append({
+                    'admin_username': dms_approval.final_approved_by.username,
+                    'action': f'final approved documents in Document Management',
+                    'applicant_name': applicant_name,
+                    'details': f'for {dms_approval.program.program_name}',
+                    'timestamp': dms_approval.final_approved_at,
+                })
+    except Exception as e:
+        # If DMSApproval model doesn't exist or has issues, just skip it
+        pass
+
+    # 5. Collect recent admin login/logout events
+    try:
+        from .models import AdminActivity
+        recent_admin_activity = AdminActivity.objects.select_related('user').order_by('-created_at')[:30]
+        for activity in recent_admin_activity:
+            activity_logs.append({
+                'admin_username': activity.user.username,
+                'action': 'logged in' if activity.action == 'login' else 'logged out',
+                'applicant_name': '',
+                'details': activity.ip_address or '',
+                'timestamp': activity.created_at,
+            })
+    except Exception:
+        pass
+    
+    # Sort activity logs by timestamp (most recent first) and limit to 30 most recent
+    activity_logs.sort(key=lambda x: x['timestamp'], reverse=True)
+    activity_logs = activity_logs[:30]
+    
     context = {
         "Dashboard_username": username,
         "user_profile_picture": user_profile_picture,  # Add user's Google profile picture
@@ -1775,6 +2077,9 @@ def Dashboard_admin(request, application_id=None):
         'total_documents_count': total_documents_count,
         'approved_learners_count': approved_learners_count,
         'pending_learners_count': pending_learners_count,
+        'total_certificates_issued': total_certificates_issued,
+        'certificates_this_month': certificates_this_month,
+        'pending_certificates_count': pending_certificates_count,
         # Support Ticket data
         'all_tickets': all_tickets,
         'total_tickets_count': total_tickets_count,
@@ -1788,6 +2093,16 @@ def Dashboard_admin(request, application_id=None):
         'batch_cycles': batch_cycles,
         # Years range for Applicant Profiles filter
         'years_range': years_range,
+        # Admin users for Admin Accounts section
+        'admin_users': admin_users,
+        # Activity logs for Dashboard
+        'activity_logs': activity_logs,
+        # Current user permissions
+        'can_manage_programs': check_admin_permission(request.user, 'manage_programs'),
+        'can_approve_applicants': check_admin_permission(request.user, 'approve_applicants'),
+        'can_manage_documents': check_admin_permission(request.user, 'manage_documents'),
+        'can_manage_trainors': check_admin_permission(request.user, 'manage_trainors'),
+        'can_manage_enrollments': check_admin_permission(request.user, 'manage_enrollments'),
 
     }
     
@@ -2130,7 +2445,26 @@ def get_profile_data(request, profile_id):
                 'date_accomplished': profile.date_accomplished.strftime('%Y-%m-%d') if getattr(profile, 'date_accomplished', None) else '',
                 'id_picture': profile.id_picture.url if getattr(profile, 'id_picture', None) else '',
                 'entry_date': profile.entry_date.strftime('%Y-%m-%d') if getattr(profile, 'entry_date', None) else '',
+                'scholarship_package': getattr(profile, 'scholarship_package', ''),
             }
+            
+            # Add classifications
+            classifications = []
+            if hasattr(profile, 'classifications'):
+                classifications = [{'id': c.id, 'name': c.name} for c in profile.classifications.all()]
+            profile_data['classifications'] = classifications
+            
+            # Add disability types
+            disability_types = []
+            if hasattr(profile, 'disability_types'):
+                disability_types = [{'id': d.id, 'name': d.name} for d in profile.disability_types.all()]
+            profile_data['disability_types'] = disability_types
+            
+            # Add disability causes
+            disability_causes = []
+            if hasattr(profile, 'disability_causes'):
+                disability_causes = [{'id': c.id, 'name': c.name} for c in profile.disability_causes.all()]
+            profile_data['disability_causes'] = disability_causes
             
             # Add user data if user exists
             if hasattr(profile, 'user') and profile.user:
@@ -2163,14 +2497,20 @@ def Homepage_user(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            # Block superuser/admin accounts from logging in through regular login
+            if user.is_superuser:
+                messages.error(request, "Admin accounts must use the Coordinator Login page. Please use the Coordinator Login to access your dashboard.")
+                response = redirect("Login")
+                response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response['Pragma'] = 'no-cache'
+                response['Expires'] = '0'
+                return response
+            
+            # Proceed with login for non-superuser accounts
             login(request, user)
             request.session["username"] = user.username
 
-            # Check if the user is an admin
-            if user.is_superuser:
-                response = redirect("Dashboard_admin")
-            else:
-                response = redirect("Home")
+            response = redirect("Home")
 
             # Add no-cache headers
             response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -2548,6 +2888,9 @@ def create_program_completion_notification(applicant, program_name):
 @staff_member_required
 @login_required
 def approve_application(request, application_id):
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        messages.error(request, "You do not have permission to approve applicants.")
+        return redirect('Dashboard_admin')
     from datetime import datetime
     from django.utils import timezone
     application = get_object_or_404(ProgramApplication, id=application_id)
@@ -2632,6 +2975,9 @@ def approve_application(request, application_id):
 @staff_member_required
 @login_required
 def reject_application(request, application_id):
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        messages.error(request, "You do not have permission to approve applicants.")
+        return redirect('Dashboard_admin')
     application = get_object_or_404(ProgramApplication, id=application_id)
     
     # Create notification for the applicant
@@ -2651,6 +2997,10 @@ def reject_application(request, application_id):
 
 
 def decline_application(request):
+    # Decline is a form of application decision; keep consistent with approve/reject
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        messages.error(request, "You do not have permission to approve applicants.")
+        return redirect('Dashboard_admin')
     if request.method == 'POST':
         application_id = request.POST.get('application_id')
         decline_reason = request.POST.get('decline_reason')
@@ -2777,26 +3127,105 @@ from .forms import LearnerProfileForm
 
 @login_required
 def cancel_application(request):
-    """Cancel the user's pending application and redirect to program selection page"""
+    """Cancel the user's pending application and redirect to program selection page.
+    For walk-in applicants, this also deletes the WalkInApplication, Learner_Profile (if incomplete),
+    and the generated account to prevent duplication."""
     try:
-        # Find and delete the user's pending application
-        application = ProgramApplication.objects.filter(
-            applicant=request.user,
+        user = request.user
+        deleted_items = []
+        should_delete_account = False
+        
+        # Check if user has any approved applications - if so, don't delete account
+        has_approved = ApprovedApplicant.objects.filter(applicant=user).exists()
+        has_approved_walkin = ApprovedWalkIn.objects.filter(applicant=user).exists()
+        
+        if has_approved or has_approved_walkin:
+            messages.warning(request, "Cannot cancel application: You have approved programs. Please contact admin if you need assistance.")
+            return redirect('Dashboard' if request.user.is_authenticated else 'Login')
+        
+        # Find and delete ProgramApplication (if exists and pending)
+        program_application = ProgramApplication.objects.filter(
+            applicant=user,
             status='Pending'
         ).first()
         
-        if application:
-            program_name = application.program.program_name
-            application.delete()
-            messages.success(request, f"Your application for {program_name} has been cancelled successfully. You can now apply to a different program.")
+        if program_application:
+            program_name = program_application.program.program_name
+            program_application.delete()
+            deleted_items.append(f"Program application for {program_name}")
+            should_delete_account = True
+        
+        # Find and delete WalkInApplication (if exists and pending)
+        walkin_application = WalkInApplication.objects.filter(
+            applicant=user,
+            status='Pending'
+        ).first()
+        
+        if walkin_application:
+            walkin_program_name = walkin_application.program.program_name
+            walkin_application.delete()
+            deleted_items.append(f"Walk-in application for {walkin_program_name}")
+            should_delete_account = True
+        
+        # Check if this is a walk-in account (email ends with @walkin.local)
+        is_walkin_account = user.email and user.email.endswith('@walkin.local')
+        
+        # Delete Learner_Profile if it exists and is incomplete (no submitted data)
+        # We consider it incomplete if entry_date is None or if it was just created
+        try:
+            learner_profile = Learner_Profile.objects.get(user=user)
+            # Check if profile is incomplete (no entry_date or minimal data)
+            if not learner_profile.entry_date or (not learner_profile.first_name and not learner_profile.last_name):
+                learner_profile.delete()
+                deleted_items.append("Incomplete learner profile")
+        except Learner_Profile.DoesNotExist:
+            pass
+        
+        # Delete related DMSReview if exists (for walk-in applications)
+        if is_walkin_account:
+            try:
+                dms_reviews = DMSReview.objects.filter(applicant=user)
+                if dms_reviews.exists():
+                    dms_reviews.delete()
+                    deleted_items.append("DMS review records")
+            except Exception:
+                pass
+        
+        # Delete related notifications
+        try:
+            Notification.objects.filter(recipient=user, notification_type='application').delete()
+        except Exception:
+            pass
+        
+        # If this is a walk-in account and we deleted applications, delete the account itself
+        if is_walkin_account and should_delete_account:
+            # Logout the user before deleting the account
+            logout(request)
+            
+            # Delete the user account
+            username = user.username
+            user.delete()
+            
+            deleted_items.append(f"Walk-in account ({username})")
+            
+            messages.success(request, f"Your application has been cancelled and your walk-in account has been removed. Items deleted: {', '.join(deleted_items)}")
+            # Redirect to login page since account is deleted
+            return redirect('Login')
+        
+        # For regular accounts, just show success message
+        if deleted_items:
+            messages.success(request, f"Your application has been cancelled successfully. Items removed: {', '.join(deleted_items)}")
         else:
             messages.info(request, "No pending application found.")
             
     except Exception as e:
         messages.error(request, f"Error cancelling application: {str(e)}")
     
-    # Redirect to the programs page
-    return redirect('Program_user')
+    # Redirect to the programs page (or login if account was deleted)
+    if request.user.is_authenticated:
+        return redirect('Program_user')
+    else:
+        return redirect('Login')
 
 
 def learner_profile_form(request):
@@ -2863,6 +3292,11 @@ def learner_profile_form(request):
                 profile_instance.age = today.year - profile_instance.birthdate.year - ((today.month, today.day) < (profile_instance.birthdate.month, profile_instance.birthdate.day))
             else:
                 profile_instance.age = None
+
+            # Enforce legal age requirement (18+ only)
+            if profile_instance.age is not None and profile_instance.age < 18:
+                messages.error(request, "Applicants must be at least 18 years old. Your application has been cancelled.")
+                return redirect('Program_user')
             
             # Handle birthplace
             profile_instance.birthplace_regionb_name = request.POST.get('birthplace-region-name', '')
@@ -2992,12 +3426,18 @@ def learner_profile_form(request):
     except Exception:
         approved_program_name = ''
 
+    # Get user's email if available (for Google account users)
+    user_email = ''
+    if request.user.is_authenticated and hasattr(request.user, 'email'):
+        user_email = request.user.email or ''
+    
     context = {
         'classifications': ClientClassification.objects.all(),
         'disability_types': DisabilityType.objects.all(),
         'disability_causes': DisabilityCause.objects.all(),
         'educational_options': educational_options,
         'approved_program_name': approved_program_name,
+        'user_email': user_email,
     }
     return render(request, 'registration_f1.html', context)
 
@@ -4354,6 +4794,14 @@ def apply_program(request, program_id):
     program = get_object_or_404(Programs, id=program_id)
     user = request.user
 
+    # Check if applications are blocked (after batch 3)
+    from .enrollment_validation import get_enrollment_info
+    enrollment_info = get_enrollment_info()
+    
+    if enrollment_info.get('is_blocked', False):
+        messages.error(request, "Applications are currently blocked. The enrollment cycle has completed all batches (1, 2, and 3). Please wait for the administration to open enrollment for the next cycle (Batch 1).")
+        return redirect('Program_user')
+
     # Count how many ACTIVE (not declined) applications the user has
     active_application_count = ProgramApplication.objects.filter(
         applicant=user
@@ -4370,22 +4818,33 @@ def apply_program(request, program_id):
         messages.info(request, f"You already applied for {program.program_name}.")
         return redirect('Dashboard')
 
-    # Create application - applications accepted anytime
+    # Check enrollment status
+    from .enrollment_validation import is_enrollment_active
+    is_active, enrollment_message, event = is_enrollment_active()
+    
+    # Create application
     application = ProgramApplication.objects.create(applicant=user, program=program)
     
     # Determine which batch they'll be assigned to when approved
-    from .enrollment_validation import is_enrollment_active, get_enrollment_info
-    is_active, enrollment_message, event = is_enrollment_active()
-    enrollment_info = get_enrollment_info()
+    batch_cycle = BatchCycle.get_active_cycle()
     
     if is_active:
+        # Enrollment is active - direct application
         batch_message = f"Your application will be reviewed for {enrollment_info['batch_display']} enrollment."
     else:
-        # Application submitted outside enrollment - will be assigned to next batch
-        batch_cycle = BatchCycle.get_active_cycle()
-        # Get next batch
-        next_batch = {'1': '2', '2': '3', '3': '1'}.get(batch_cycle.current_batch, '1')
-        batch_message = f"Enrollment is currently closed. Your application will be queued and reviewed for the next enrollment period (Batch {next_batch})."
+        # Application submitted outside enrollment - queue for next batch (only for batch 2 and 3)
+        current_batch = batch_cycle.current_batch
+        
+        # Only allow queuing for batch 2 and 3, not batch 1
+        if current_batch == '1':
+            # Batch 1: No queuing, must wait for active enrollment
+            batch_message = "Enrollment is currently closed. Please wait for the administration to open enrollment for Batch 1."
+        elif current_batch in ['2', '3']:
+            # Batch 2 and 3: Allow queuing for next batch
+            next_batch = {'2': '3', '3': '1'}.get(current_batch, '2')
+            batch_message = f"Enrollment is currently closed. Your application will be queued and reviewed for the next enrollment period (Batch {next_batch})."
+        else:
+            batch_message = "Enrollment is currently closed. Your application will be reviewed when enrollment opens."
     
     messages.success(request, f"Application submitted for {program.program_name}. {batch_message}")
 
@@ -4400,14 +4859,44 @@ def apply_program(request, program_id):
             message=f"{user.username} has submitted a new application for {program.program_name}."
         )
 
-    # If user has no LearnerProfile, redirect to learner_form
+    # If user has no LearnerProfile, redirect to voter ID verification step
     has_profile = Learner_Profile.objects.filter(user=user).exists()
     if not has_profile:
-        return redirect('learner_form')
+        return redirect('valid_voters', application_id=application.id)
 
     # Otherwise stay on Dashboard
     return redirect('Dashboard')
 
+
+@login_required
+def valid_voters(request, application_id):
+    """Intermediate step between program application and registration form.
+    Asks the applicant to upload a Voter's ID image. If they cancel, the
+    corresponding ProgramApplication is removed and the user is returned
+    to the program list.
+    """
+    application = get_object_or_404(ProgramApplication, id=application_id, applicant=request.user)
+
+    if request.method == 'POST':
+        # Handle explicit cancellation
+        if 'cancel' in request.POST:
+            program_name = application.program.program_name
+            application.delete()
+            messages.info(request, f"Your application for {program_name} has been cancelled.")
+            return redirect('Program_user')
+
+        # Handle continue with voter ID upload
+        if 'continue' in request.POST:
+            voter_file = request.FILES.get('voter_id_image')
+            if not voter_file:
+                messages.error(request, "Please upload your Voter's ID to continue.")
+                return render(request, 'valid_voters.html', {'application': application})
+
+            application.voter_id_image = voter_file
+            application.save()
+            return redirect('learner_form')
+
+    return render(request, 'valid_voters.html', {'application': application})
 
 
 # Update your decline application view
@@ -4666,6 +5155,11 @@ def update_status(request):
 @staff_member_required
 @login_required
 def add_program(request):
+    # Check if user has permission to manage programs
+    if not check_admin_permission(request.user, 'manage_programs'):
+        messages.error(request, "You do not have permission to manage programs.")
+        return redirect('Dashboard_admin')
+    
     if request.method == 'POST':
         try:
             program_name = request.POST.get('program_name')
@@ -4674,6 +5168,7 @@ def add_program(request):
             program_trainor = request.POST.get('program_trainor')
             program_competencies_json = request.POST.get('program_competencies')
             program_image = request.FILES.get('program_image')
+            training_images = request.FILES.getlist('training_images')
             
             # Validate required fields
             if not all([program_name, program_detail, program_sched]):
@@ -4700,12 +5195,14 @@ def add_program(request):
                 program_competencies=program_competencies
             )
             
-            # Handle image upload if provided
-            if program_image:
-                ProgramImage.objects.create(
-                    program=program,
-                    image=program_image
-                )
+            # Handle image upload(s) if provided
+            if training_images:
+                for img in training_images:
+                    if img:
+                        ProgramImage.objects.create(program=program, image=img)
+            elif program_image:
+                # Backward compatibility for single image field
+                ProgramImage.objects.create(program=program, image=program_image)
             
             messages.success(request, f"Program '{program_name}' has been successfully added!")
             return redirect('Dashboard_admin')
@@ -4719,6 +5216,11 @@ def add_program(request):
 @staff_member_required
 @login_required
 def edit_program(request, program_id):
+    # Check if user has permission to manage programs
+    if not check_admin_permission(request.user, 'manage_programs'):
+        messages.error(request, "You do not have permission to manage programs.")
+        return redirect('Dashboard_admin')
+    
     if request.method == 'POST':
         try:
             program = get_object_or_404(Programs, id=program_id)
@@ -4729,6 +5231,8 @@ def edit_program(request, program_id):
             program_trainor = request.POST.get('program_trainor')
             program_competencies_json = request.POST.get('program_competencies')
             program_image = request.FILES.get('program_image')
+            training_images = request.FILES.getlist('training_images')
+            images_to_delete = request.POST.get('images_to_delete', '')
             
             # Validate required fields
             if not all([program_name, program_detail, program_sched]):
@@ -4753,15 +5257,24 @@ def edit_program(request, program_id):
             program.program_competencies = program_competencies
             program.save()
             
-            # Handle image upload if provided
-            if program_image:
-                # Delete old images
+            # Handle image deletions requested in form (hidden input)
+            if images_to_delete:
+                try:
+                    ids = [int(i) for i in images_to_delete.split(',') if i.strip().isdigit()]
+                    if ids:
+                        ProgramImage.objects.filter(program=program, id__in=ids).delete()
+                except Exception:
+                    pass
+
+            # Handle new image upload(s) if provided
+            if training_images:
+                for img in training_images:
+                    if img:
+                        ProgramImage.objects.create(program=program, image=img)
+            elif program_image:
+                # Backward compatibility: replace all with a single image
                 ProgramImage.objects.filter(program=program).delete()
-                # Create new image
-                ProgramImage.objects.create(
-                    program=program,
-                    image=program_image
-                )
+                ProgramImage.objects.create(program=program, image=program_image)
             
             messages.success(request, f"Program '{program_name}' has been successfully updated!")
             return redirect('Dashboard_admin')
@@ -4776,6 +5289,11 @@ def edit_program(request, program_id):
 @login_required
 def delete_program(request, program_id):
     """Delete a program from the database"""
+    # Check if user has permission to manage programs
+    if not check_admin_permission(request.user, 'manage_programs'):
+        messages.error(request, "You do not have permission to manage programs.")
+        return redirect('Dashboard_admin')
+    
     if request.method == 'POST':
         try:
             program = get_object_or_404(Programs, id=program_id)
@@ -4796,9 +5314,30 @@ def delete_program(request, program_id):
     
     return redirect('Dashboard_admin')
 
+@staff_member_required
+@login_required
+def get_program_images(request, program_id):
+    """Return JSON list of images for a program (used by Edit Program modal)."""
+    try:
+        program = get_object_or_404(Programs, id=program_id)
+        images = ProgramImage.objects.filter(program=program)
+        data = [
+            {
+                'id': img.id,
+                'image_url': img.image.url if img.image else ''
+            }
+            for img in images
+        ]
+        return JsonResponse({'success': True, 'images': data})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
 @login_required
 def approve_walkin(request, application_id):
     """Approve a walk-in application"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        messages.error(request, "You do not have permission to approve applicants.")
+        return redirect('Dashboard_admin')
     if request.method == 'POST':
         try:
             from datetime import datetime
@@ -4998,6 +5537,8 @@ def get_bulk_review_data(request):
 @csrf_exempt
 def process_bulk_review(request):
     """Process selected applications for bulk review"""
+    if not check_admin_permission(request.user, 'manage_documents'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -5058,6 +5599,8 @@ def process_bulk_review(request):
 @csrf_exempt
 def get_bulk_approval_data(request):
     """Get applications ready for bulk approval"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
     if request.method == 'GET':
         try:
             # Get all DMSApproval entries that are ready for final approval
@@ -5097,6 +5640,8 @@ def get_bulk_approval_data(request):
 @csrf_exempt
 def process_bulk_approval(request):
     """Process selected applications for bulk approval"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -5262,6 +5807,12 @@ def process_bulk_approval(request):
 @login_required
 def decline_walkin(request, application_id):
     """Decline a walk-in application"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        # Support both JSON (AJAX) and regular form POST payloads
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
+        messages.error(request, "You do not have permission to approve applicants.")
+        return redirect('Dashboard_admin')
     if request.method == 'POST':
         try:
             # Get the walk-in application
@@ -5444,6 +5995,8 @@ def get_bulk_review_data(request):
 @csrf_exempt
 def process_bulk_review(request):
     """Process selected applications for bulk review"""
+    if not check_admin_permission(request.user, 'manage_documents'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -5504,6 +6057,8 @@ def process_bulk_review(request):
 @csrf_exempt
 def get_bulk_approval_data(request):
     """Get applications ready for bulk approval"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
     if request.method == 'GET':
         try:
             # Get all DMSApproval entries that are ready for final approval
@@ -5543,6 +6098,8 @@ def get_bulk_approval_data(request):
 @csrf_exempt
 def process_bulk_approval(request):
     """Process selected applications for bulk approval"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -5818,6 +6375,8 @@ def get_bulk_review_data(request):
 @csrf_exempt
 def process_bulk_review(request):
     """Process selected applications for bulk review"""
+    if not check_admin_permission(request.user, 'manage_documents'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -5878,6 +6437,8 @@ def process_bulk_review(request):
 @csrf_exempt
 def get_bulk_approval_data(request):
     """Get applications ready for bulk approval"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
     if request.method == 'GET':
         try:
             # Get all DMSApproval entries that are ready for final approval
@@ -5917,6 +6478,8 @@ def get_bulk_approval_data(request):
 @csrf_exempt
 def process_bulk_approval(request):
     """Process selected applications for bulk approval"""
+    if not check_admin_permission(request.user, 'approve_applicants'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to approve applicants.'}, status=403)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -6260,6 +6823,9 @@ def get_ticket_details(request, ticket_id):
             'responses': responses_data,
             'admin_response': ticket.admin_response,
             'trainer_response': ticket.trainer_response,
+            'forwarded_to_admin': ticket.forwarded_to_admin,
+            'forwarded_by': ticket.forwarded_by.get_full_name() if ticket.forwarded_by else None,
+            'forwarded_at': ticket.forwarded_at.strftime('%Y-%m-%d %H:%M') if ticket.forwarded_at else None,
         }
         
         return JsonResponse({
@@ -6277,9 +6843,10 @@ def get_ticket_details(request, ticket_id):
 @staff_member_required
 @csrf_exempt
 def get_all_tickets(request):
-    """Get all tickets for admin/staff view"""
+    """Get all tickets for admin/staff view - only tickets forwarded by trainers"""
     try:
-        tickets = SupportTicket.objects.all().order_by('-created_at')
+        # Only show tickets that were forwarded to admin by trainers
+        tickets = SupportTicket.objects.filter(forwarded_to_admin=True).order_by('-created_at')
         
         tickets_data = []
         for ticket in tickets:
@@ -6354,4 +6921,295 @@ def update_ticket_status(request):
             'success': False,
             'message': f'Error updating ticket: {str(e)}'
         })
+
+
+@login_required
+@csrf_exempt
+@require_POST
+def forward_ticket_to_admin(request):
+    """Forward a ticket from trainer to admin"""
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'success': False,
+            'message': 'Authentication required'
+        })
+    
+    # Check if user is a trainer
+    try:
+        trainer_profile = TrainerProfile.objects.get(user=request.user)
+    except TrainerProfile.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Only trainers can forward tickets to admin'
+        })
+    
+    try:
+        data = json.loads(request.body)
+        ticket_id = data.get('ticket_id')
+        
+        if not ticket_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'Ticket ID is required'
+            })
+        
+        ticket = get_object_or_404(SupportTicket, ticket_id=ticket_id)
+        
+        # Verify trainer has access to this ticket (ticket from their program applicants)
+        from .models import ApprovedApplicant, ApprovedWalkIn
+        trainer_programs = trainer_profile.programs.all()
+        
+        # Get applicants from trainer's programs
+        approved_ids = ApprovedApplicant.objects.filter(
+            program__in=trainer_programs
+        ).values_list('applicant_id', flat=True)
+        walkin_ids = ApprovedWalkIn.objects.filter(
+            program__in=trainer_programs
+        ).values_list('applicant_id', flat=True)
+        combined_ids = list(set(list(approved_ids)) | set(list(walkin_ids)))
+        
+        if ticket.created_by_id not in combined_ids:
+            return JsonResponse({
+                'success': False,
+                'message': 'You do not have permission to forward this ticket'
+            })
+        
+        # Forward ticket to admin
+        from django.utils import timezone
+        ticket.forwarded_to_admin = True
+        ticket.forwarded_by = request.user
+        ticket.forwarded_at = timezone.now()
+        ticket.save()
+        
+        # Create a response record indicating forwarding
+        TicketResponse.objects.create(
+            ticket=ticket,
+            responder=request.user,
+            responder_type='trainer',
+            message=f'Ticket forwarded to admin by {request.user.get_full_name() or request.user.username}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Ticket forwarded to admin successfully'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error forwarding ticket: {str(e)}'
+        })
+
+
+# Admin Account Management Views
+@login_required
+@staff_member_required
+@csrf_exempt
+def create_admin_account(request):
+    """
+    Create a new admin (superuser) account.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+    try:
+        data = json.loads(request.body or '{}')
+        username = data.get('username', '').strip()
+        email = data.get('email', '').strip()
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        password = data.get('password', '').strip()
+
+        if not username:
+            return JsonResponse({'success': False, 'message': 'Username is required.'}, status=400)
+
+        if not password:
+            return JsonResponse({'success': False, 'message': 'Password is required.'}, status=400)
+
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'success': False, 'message': 'Username already exists.'}, status=400)
+
+        # Create the superuser
+        user = User.objects.create_user(
+            username=username,
+            email=email if email else f"{username}@admin.local",
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            is_superuser=True,
+            is_staff=True,
+            is_active=True
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Admin account created successfully',
+            'admin_id': user.id,
+            'username': user.username
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+def check_admin_permission(user, permission_name):
+    """
+    Helper function to check if an admin user has a specific permission.
+    Returns True if user has permission, False otherwise.
+    Defaults to True if no permission record exists (for backward compatibility).
+    """
+    if not user.is_superuser:
+        return False
+    
+    try:
+        admin_permission = AdminPermission.objects.get(user=user)
+        return getattr(admin_permission, permission_name, True)
+    except AdminPermission.DoesNotExist:
+        # Default to True if no permission record exists (backward compatibility)
+        return True
+
+
+@login_required
+@staff_member_required
+@require_GET
+def get_admin_details(request, admin_id):
+    """
+    Get details of an admin account.
+    """
+    try:
+        admin = User.objects.get(id=admin_id, is_superuser=True)
+        
+        return JsonResponse({
+            'success': True,
+            'admin': {
+                'id': admin.id,
+                'username': admin.username,
+                'email': admin.email or '',
+                'first_name': admin.first_name or '',
+                'last_name': admin.last_name or '',
+                'date_joined': admin.date_joined.strftime('%Y-%m-%d %H:%M:%S') if admin.date_joined else '',
+                'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M:%S') if admin.last_login else 'Never',
+                'is_superuser': admin.is_superuser,
+                'is_staff': admin.is_staff,
+                'is_active': admin.is_active,
+            }
+        })
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Admin account not found'}, status=404)
+    except Exception as e:
+        import traceback
+        error_message = str(e)
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'message': error_message}, status=500)
+
+
+@login_required
+@staff_member_required
+@csrf_exempt
+def update_admin_permissions(request, admin_id):
+    """
+    Get or update permissions for an admin account.
+    GET: Retrieve current permissions
+    POST: Update permissions
+    """
+    try:
+        admin = User.objects.get(id=admin_id, is_superuser=True)
+        
+        if request.method == 'GET':
+            # Retrieve current permissions
+            try:
+                admin_permission = AdminPermission.objects.get(user=admin)
+                permissions = {
+                    'approve_applicants': admin_permission.approve_applicants,
+                    'manage_programs': admin_permission.manage_programs,
+                    'manage_documents': admin_permission.manage_documents,
+                    'manage_trainors': admin_permission.manage_trainors,
+                    'manage_enrollments': admin_permission.manage_enrollments,
+                }
+            except AdminPermission.DoesNotExist:
+                # Return default permissions if none exist
+                permissions = {
+                    'approve_applicants': True,
+                    'manage_programs': True,
+                    'manage_documents': True,
+                    'manage_trainors': True,
+                    'manage_enrollments': True,
+                }
+            
+            return JsonResponse({
+                'success': True,
+                'permissions': permissions
+            })
+        
+        elif request.method == 'POST':
+            # Update permissions
+            data = json.loads(request.body or '{}')
+            
+            permissions = {
+                'approve_applicants': data.get('approve_applicants', False),
+                'manage_programs': data.get('manage_programs', False),
+                'manage_documents': data.get('manage_documents', False),
+                'manage_trainors': data.get('manage_trainors', False),
+                'manage_enrollments': data.get('manage_enrollments', False),
+            }
+            
+            # Get or create AdminPermission object
+            admin_permission, created = AdminPermission.objects.get_or_create(
+                user=admin,
+                defaults=permissions
+            )
+            
+            # Update permissions
+            if not created:
+                admin_permission.approve_applicants = permissions['approve_applicants']
+                admin_permission.manage_programs = permissions['manage_programs']
+                admin_permission.manage_documents = permissions['manage_documents']
+                admin_permission.manage_trainors = permissions['manage_trainors']
+                admin_permission.manage_enrollments = permissions['manage_enrollments']
+                admin_permission.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Permissions updated successfully',
+                'permissions': permissions
+            })
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Admin account not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@staff_member_required
+@csrf_exempt
+def delete_admin_account(request, admin_id):
+    """
+    Delete an admin account.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+
+    try:
+        admin = User.objects.get(id=admin_id, is_superuser=True)
+        
+        # Prevent deleting yourself
+        if admin.id == request.user.id:
+            return JsonResponse({'success': False, 'message': 'You cannot delete your own account.'}, status=400)
+        
+        username = admin.username
+        admin.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Admin account {username} deleted successfully'
+        })
+
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Admin account not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
     return JsonResponse({'success': False, 'message': 'Invalid request method'})

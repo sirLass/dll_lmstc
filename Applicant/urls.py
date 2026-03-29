@@ -28,9 +28,12 @@ urlpatterns = [
     # Authentication
     path('LoginSelect/', views.LoginSelect, name='LoginSelect'),
     path('CoordinatorLogin/', views.CoordinatorLogin, name='CoordinatorLogin'),
+    path('TrainorLogin/', views.TrainorLogin, name='TrainorLogin'),
     path('Login/', views.Login, name='Login'),
     path('Register/', views.Register, name='Register'),
     path('logout_view/', views.logout_view, name='logout_view'),
+    path('coordinator_logout_view/', views.coordinator_logout_view, name='coordinator_logout_view'),
+    path('trainor_logout_view/', views.trainor_logout_view, name='trainor_logout_view'),
     path("redirect-after-login/", views.custom_redirect_view, name="custom_redirect_view"),
     path('Option/', views.Option, name='Option'),
     
@@ -43,6 +46,7 @@ urlpatterns = [
     path('Prog_Info_user/<int:id>/', views.Prog_Info_user, name='Prog_Info_user'),
     path('apply/<int:program_id>/', views.apply_program, name='apply_program'),
     path('apply-program/<int:program_id>/', views.apply_program, name='apply_program'),
+    path('valid-voters/<int:application_id>/', views.valid_voters, name='valid_voters'),
     
     # Dashboard URLs
     path('Login_Nextpage/', views.Login_Nextpage, name='Login_Nextpage'),
@@ -143,6 +147,7 @@ urlpatterns = [
     path('add-program/', views.add_program, name='add_program'),
     path('edit-program/<int:program_id>/', views.edit_program, name='edit_program'),
     path('delete-program/<int:program_id>/', views.delete_program, name='delete_program'),
+    path('get-program-images/<int:program_id>/', views.get_program_images, name='get_program_images'),
     
     # Walk-in Application Management
     path('approve-walkin/<int:application_id>/', views.approve_walkin, name='approve_walkin'),
@@ -171,6 +176,7 @@ urlpatterns = [
     path('get-lmstc-documents/', document_views.get_lmstc_documents, name='get_lmstc_documents'),
     path('get-bulk-download-documents/', document_views.get_bulk_download_documents, name='get_bulk_download_documents'),
     path('import-2024-excel-to-documents/', document_views.import_2024_excel_to_documents, name='import_2024_excel_to_documents'),
+    path('api/completion-certificates/', document_views.get_completion_certificates, name='get_completion_certificates'),
     
     # Document Operations URLs
     path('archive-document/', document_views.archive_document, name='archive_document'),
@@ -190,6 +196,7 @@ urlpatterns = [
     path('download_learner_profile/<int:profile_id>/', learner_views.download_learner_profile, name='download_learner_profile'),
     path('download_profile_pdf/', learner_views.download_profile_pdf, name='download_profile_pdf'),
     path('download-certificate/', learner_views.download_certificate_pdf, name='download_certificate'),
+    path('admin/download-certificate/<int:applicant_id>/', learner_views.admin_download_certificate_pdf, name='admin_download_certificate'),
     path('download-registration-form/<int:profile_id>/', learner_views.registration_form_pdf, name='download_registration_form'),
     
     # Event Management URLs
@@ -198,6 +205,7 @@ urlpatterns = [
     path('api/events/update/<int:event_id>/', event_views.update_event, name='update_event'),
     path('api/events/delete/<int:event_id>/', event_views.delete_event, name='delete_event'),
     path('api/events/archive/<int:event_id>/', event_views.archive_event, name='archive_event'),
+    path('api/events/check-reminders/', event_views.check_event_reminders, name='check_event_reminders'),
     
     # Batch Cycle Management URLs
     path('api/batch-cycle/status/', event_views.get_batch_cycle_status, name='get_batch_cycle_status'),
@@ -216,6 +224,7 @@ urlpatterns = [
     path('get-ticket-details/<str:ticket_id>/', views.get_ticket_details, name='get_ticket_details'),
     path('get-all-tickets/', views.get_all_tickets, name='get_all_tickets'),
     path('update-ticket-status/', views.update_ticket_status, name='update_ticket_status'),
+    path('forward-ticket-to-admin/', views.forward_ticket_to_admin, name='forward_ticket_to_admin'),
     
     # Program API URLs
     path('api/program/<int:program_id>/applicants/', program_api_views.get_program_applicants, name='get_program_applicants'),
@@ -225,6 +234,12 @@ urlpatterns = [
     path('api/trainer/<int:trainer_id>/assign-program/', trainor_program_views.assign_program_to_trainer, name='assign_program_to_trainer'),
     path('api/trainer/<int:trainer_id>/unassign-program/', trainor_program_views.unassign_program_from_trainer, name='unassign_program_from_trainer'),
     path('api/trainer/<int:trainer_id>/delete/', trainor_program_views.delete_trainer_account, name='delete_trainer_account'),
+    
+    # Admin Account Management URLs
+    path('create-admin-account/', views.create_admin_account, name='create_admin_account'),
+    path('get-admin-details/<int:admin_id>/', views.get_admin_details, name='get_admin_details'),
+    path('update-admin-permissions/<int:admin_id>/', views.update_admin_permissions, name='update_admin_permissions'),
+    path('delete-admin-account/<int:admin_id>/', views.delete_admin_account, name='delete_admin_account'),
 ]
 
 # Serve media files during development

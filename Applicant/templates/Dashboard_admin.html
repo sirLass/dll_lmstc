@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DLL - LMSTC Admin Dashboard</title>
+    <link rel="icon" type="image/png" href="{% static 'Images/icon.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -141,9 +142,7 @@
         }
         
         th {
-            background-color: #f9fafb;
             font-weight: 600;
-            color: #4b5563;
             text-transform: uppercase;
             font-size: 0.75rem;
         }
@@ -795,10 +794,20 @@
                         <!-- Job opportunities will be added here dynamically -->
                     </div>
                 </div>
-                <div>
-                    <label for="programImage" class="block text-gray-700 text-sm font-bold mb-2">Program Image</label>
-                    <input type="file" id="programImage" name="program_image" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500">
-                    <p class="text-xs text-gray-500 mt-1">Optional: Upload an image for the program</p>
+                <!-- Training Images Section -->
+                <div class="border-t pt-4 mt-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-3">Training Images</label>
+                    <p class="text-xs text-gray-600 mb-4">Upload multiple images showing the training environment, facilities, and activities for this program</p>
+                    
+                    <div class="mb-3">
+                        <input type="file" id="trainingImages" name="training_images" accept="image/*" multiple class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">You can select multiple images at once. These will be displayed in the program information page carousel.</p>
+                    </div>
+                    
+                    <!-- Preview area for selected images -->
+                    <div id="trainingImagesPreview" class="grid grid-cols-3 gap-3 mt-4 hidden">
+                        <!-- Preview images will be displayed here -->
+                    </div>
                 </div>
                 <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-md w-full hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                     <i class="fas fa-plus mr-2"></i>Add Program
@@ -927,6 +936,7 @@
                     <!-- Address -->
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-gray-600 flex justify-start">2.2 Complete Permanent Mailing Address</label>
+                        <!-- IDs aligned with populateApplicantModal -->
                         <input type="text" id="modal-region-name" class="w-full border rounded p-2" disabled>
                         <input type="text" id="modal-province-name" class="w-full border rounded p-2" disabled>
                         <input type="text" id="modal-city-name" class="w-full border rounded p-2" disabled>
@@ -1056,7 +1066,7 @@
                 <div class="bg-white border-t border-gray-200 p-4 shadow-lg mt-10 sticky">
                     <div class="flex justify-end gap-3">
                         {% if ProgAPP %}
-                        <form method="post" action="{% url 'approve_application' ProgAPP.id %}" style="display: inline;">
+                        <form method="post" action="{% url 'approve_application' ProgAPP.id %}" style="display: inline;" onsubmit="return confirmApproveApplication();">
                             {% csrf_token %}
                             <button type="submit" class="bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
                                 Approve
@@ -1114,6 +1124,7 @@
                     <!-- Address -->
                     <div class="space-y-2">
                         <label class="text-sm font-semibold text-gray-600 flex justify-start">2.2 Complete Permanent Mailing Address</label>
+                        <!-- IDs aligned with populateApprovedModal -->
                         <input type="text" id="modal-region-name" class="w-full border rounded p-2" disabled>
                         <input type="text" id="modal-province-name" class="w-full border rounded p-2" disabled>
                         <input type="text" id="modal-city-name" class="w-full border rounded p-2" disabled>
@@ -1593,10 +1604,34 @@
                         <!-- Job opportunities will be added here dynamically -->
                     </div>
                 </div>
-                <div>
-                    <label for="editProgramImage" class="block text-gray-700 text-sm font-bold mb-2">Program Image</label>
-                    <input type="file" id="editProgramImage" name="program_image" accept="image/*" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500">
-                    <p class="text-xs text-gray-500 mt-1">Leave empty to keep current image</p>
+                <!-- Training Images Section -->
+                <div class="border-t pt-4 mt-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-3">Training Images</label>
+                    <p class="text-xs text-gray-600 mb-4">Manage training images for this program. Images will be displayed in the program information page carousel.</p>
+                    
+                    <!-- Existing Images Display -->
+                    <div id="existingTrainingImages" class="mb-4">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Current Images:</label>
+                        <div id="existingImagesContainer" class="grid grid-cols-3 gap-3 mb-3">
+                            <!-- Existing images will be loaded here dynamically -->
+                        </div>
+                        <p class="text-xs text-gray-500">Click the X button on an image to delete it</p>
+                    </div>
+                    
+                    <!-- Add New Images -->
+                    <div class="mb-3">
+                        <label class="block text-gray-700 text-sm font-semibold mb-2">Add New Images:</label>
+                        <input type="file" id="editTrainingImages" name="training_images" accept="image/*" multiple class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Select multiple images to add to the program</p>
+                    </div>
+                    
+                    <!-- Preview area for new selected images -->
+                    <div id="editTrainingImagesPreview" class="grid grid-cols-3 gap-3 mt-4 hidden">
+                        <!-- Preview images will be displayed here -->
+                    </div>
+                    
+                    <!-- Hidden input to store IDs of images to delete -->
+                    <input type="hidden" id="imagesToDelete" name="images_to_delete" value="">
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" onclick="closeEditProgramModal()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors">
@@ -1942,18 +1977,15 @@
                                 <span class="sidebar-text">Report</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors relative" data-page="Ticket" data-content-type="ticket">
-                                <i class="fas fa-ticket-alt mr-3"></i>
-                                <span class="sidebar-text">Tickets</span>
-                                {% if new_tickets_count > 0 %}
-                                <span class="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">NEW</span>
-                                {% endif %}
-                            </a>
-                        </li>
                     </ul>
                 </li>
                 <li class="mb-4">
+                    <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors relative" data-page="Ticket" data-content-type="ticket">
+                        <i class="fas fa-ticket-alt mr-3"></i>
+                        <span class="sidebar-text">Tickets</span>
+                        {% if new_tickets_count > 0 %}
+                        <span class="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">NEW</span>
+                        {% endif %}
                     </a>
                 </li>
                 <li class="mb-4">
@@ -1970,6 +2002,18 @@
                         <span class="sidebar-text">Enrollment Management</span>
                     </a>
                 </li>
+                <li class="mb-4">
+                    <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Analytics" data-content-type="analytics">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        <span class="sidebar-text">Analytics</span>
+                    </a>
+                </li>
+                <li class="mb-4">
+                    <a href="#" class="nav-link flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors" data-page="Admin Accounts" data-content-type="admin-accounts">
+                        <i class="fas fa-user-shield mr-3"></i>
+                        <span class="sidebar-text">Admin Accounts</span>
+                    </a>
+                </li>
                 
 
                 <!-- <li class="mb-4">
@@ -1981,7 +2025,7 @@
             </ul>
         </nav>
         <div class="mt-auto">
-            <a href="{% url 'logout_view' %}" class="flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors">
+            <a href="{% url 'coordinator_logout_view' %}" class="flex items-center p-2 rounded-lg hover:bg-blue-600 transition-colors">
                 <i class="fas fa-sign-out-alt mr-3"></i>
                 <span class="sidebar-text">Sign Out</span>
             </a>
@@ -2225,6 +2269,63 @@
                     <h3 class="font-semibold text-gray-700 mb-3 text-sm">Monthly Application Trends</h3>
                     <div class="flex justify-center w-full">
                         <canvas id="barChart" width="400" height="300" class="max-w-full"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-history mr-2 text-blue-500"></i>Activity Log
+                    </h3>
+                    <button onclick="refreshActivityLog()" class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
+                    </button>
+                </div>
+                
+                <div class="overflow-y-auto" style="max-height: 500px;">
+                    <div id="activityLogContent" class="space-y-3">
+                        {% if activity_logs %}
+                            {% for log in activity_logs %}
+                                <div class="flex items-start p-3 bg-gray-50 rounded-lg border-l-4 
+                                    {% if 'approve' in log.action|lower %}border-green-500
+                                    {% elif 'create' in log.action|lower or 'created' in log.action|lower %}border-blue-500
+                                    {% elif 'delete' in log.action|lower or 'deleted' in log.action|lower %}border-red-500
+                                    {% elif 'update' in log.action|lower or 'updated' in log.action|lower %}border-yellow-500
+                                    {% else %}border-gray-400{% endif %}">
+                                    <div class="flex-shrink-0 mr-3 mt-1">
+                                        <i class="fas 
+                                            {% if 'approve' in log.action|lower %}fa-check-circle text-green-500
+                                            {% elif 'create' in log.action|lower or 'created' in log.action|lower %}fa-plus-circle text-blue-500
+                                            {% elif 'delete' in log.action|lower or 'deleted' in log.action|lower %}fa-trash text-red-500
+                                            {% elif 'update' in log.action|lower or 'updated' in log.action|lower %}fa-edit text-yellow-500
+                                            {% else %}fa-info-circle text-gray-500{% endif %}"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm text-gray-800">
+                                            <span class="font-semibold text-blue-600">{{ log.admin_username }}</span>
+                                            <span class="text-gray-700">{{ log.action }}</span>
+                                            {% if log.applicant_name %}
+                                                <span class="font-medium text-gray-900">{{ log.applicant_name }}</span>
+                                            {% endif %}
+                                            {% if log.details %}
+                                                <span class="text-gray-600">{{ log.details }}</span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            <i class="far fa-clock mr-1"></i>{{ log.timestamp|date:"M d, Y H:i" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-history text-4xl mb-2 text-gray-300"></i>
+                                <p class="text-lg">No activity logs available</p>
+                                <p class="text-sm">Activity logs will appear here as admins perform actions</p>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -2477,6 +2578,7 @@
                                     </div>
                                 </div>
                                 <button onclick="handleAdminEndBatch()" 
+                                        id="endBatchBtn"
                                         class="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:from-orange-600 hover:to-red-700">
                                     <i class="fas fa-flag-checkered mr-2"></i>End Batch
                                 </button>
@@ -2540,7 +2642,7 @@
             <!-- Events Table -->
             <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between mb-4">
                         <h4 class="text-xl font-bold text-gray-800 flex items-center">
                             <i class="fas fa-list-alt mr-3 text-purple-600"></i>Events List
                         </h4>
@@ -2555,6 +2657,17 @@
                                 <i class="fas fa-sync-alt mr-2"></i>Refresh
                             </button>
                         </div>
+                    </div>
+                    <!-- Events Tab Navigation -->
+                    <div class="flex space-x-2 border-b border-gray-300">
+                        <button id="activeEventsTab" onclick="switchEventsTab('active')" 
+                                class="px-4 py-2 font-medium text-sm border-b-2 border-blue-600 text-blue-600 transition-colors">
+                            <i class="fas fa-calendar-check mr-2"></i>Active Events
+                        </button>
+                        <button id="pastEventsTab" onclick="switchEventsTab('past')" 
+                                class="px-4 py-2 font-medium text-sm border-b-2 border-transparent text-gray-600 hover:text-blue-600 transition-colors">
+                            <i class="fas fa-history mr-2"></i>Past Events
+                        </button>
                     </div>
                 </div>
                 
@@ -2594,7 +2707,7 @@
                             </tr>
                         </thead>
                         <tbody id="eventsTableBody" class="bg-white divide-y divide-gray-100">
-                            <!-- Events will be populated by JavaScript -->
+                            <!-- Active Events will be populated by JavaScript -->
                             <tr id="noEventsRow" class="hidden">
                                 <td colspan="8" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center justify-center">
@@ -2604,6 +2717,18 @@
                                         <button onclick="showNewEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                                             <i class="fas fa-plus mr-2"></i>Create Event
                                         </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="pastEventsTableBody" class="bg-white divide-y divide-gray-100 hidden">
+                            <!-- Past Events will be populated by JavaScript -->
+                            <tr id="noPastEventsRow" class="hidden">
+                                <td colspan="8" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fas fa-history text-4xl text-gray-300 mb-4"></i>
+                                        <h3 class="text-lg font-medium text-gray-500 mb-2">No Past Events Found</h3>
+                                        <p class="text-gray-400 text-sm">Past events will appear here once they end</p>
                                     </div>
                                 </td>
                             </tr>
@@ -3485,6 +3610,9 @@
                     <button onclick="showDocTab('overview')" id="docTab-overview" class="doc-tab-active whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         <i class="fas fa-tachometer-alt mr-2"></i>Overview
                     </button>
+                    <button onclick="showDocTab('certificates')" id="docTab-certificates" class="doc-tab whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-certificate mr-2"></i>Certificates
+                    </button>
                     <button onclick="showDocTab('bulk')" id="docTab-bulk" class="doc-tab whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         <i class="fas fa-layer-group mr-2"></i>Bulk Operations
                     </button>
@@ -3531,30 +3659,140 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Recent Documents -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h4 class="text-lg font-semibold mb-4">Recent Documents</h4>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+                        <h4 class="text-lg font-semibold">Program Completion Overview</h4>
+                        <div class="flex flex-wrap gap-3">
+                            <select id="programYearFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="handleProgramStatsFilterChange()">
+                                <option value="">All Years</option>
+                                {% if years_range %}
+                                    {% for year in years_range %}
+                                    <option value="{{ year }}" {% if request.GET.year|stringformat:'s' == year|stringformat:'s' %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+
+                            <select id="programNameFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="filterProgramStatsByProgram()">
+                                <option value="all">All Programs</option>
+                                {% for prog in Programss %}
+                                <option value="{{ prog.program_name }}">{{ prog.program_name }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <select id="programBatchFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="handleProgramStatsFilterChange()">
+                                <option value="">All Batches</option>
+                                <option value="1" {% if request.GET.batch == '1' %}selected{% endif %}>Batch 1</option>
+                                <option value="2" {% if request.GET.batch == '2' %}selected{% endif %}>Batch 2</option>
+                                <option value="3" {% if request.GET.batch == '3' %}selected{% endif %}>Batch 3</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {% if combined_programs %}
+                    <div id="programStatsList" class="divide-y divide-gray-200">
+                        {% for prog in combined_programs %}
+                        <div class="py-3 program-stats-item" data-program-name="{{ prog.program_name }}">
+                            <button type="button" class="w-full flex items-center justify-between text-left" onclick="toggleProgramStatsDetails(this)">
+                                <div>
+                                    <p class="font-semibold text-gray-800">{{ prog.program_name }}</p>
+                                    <p class="text-sm text-gray-500">Graduated / Completed: <span class="font-semibold">{{ prog.passed_count }}</span></p>
+                                </div>
+                                <span class="ml-4 text-gray-400">
+                                    <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                                </span>
+                            </button>
+                            <div class="mt-3 pl-2 border-l border-gray-200 hidden program-stats-details">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                    <div>
+                                        <p class="font-medium text-gray-700">Total Applicants</p>
+                                        <p>{{ prog.applied_count }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700">Total Approved</p>
+                                        <p>{{ prog.approved_count }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-700">Graduated / Completed</p>
+                                        <p>{{ prog.passed_count }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-graduation-cap text-gray-300 text-4xl mb-2"></i>
+                        <p>No program statistics available for the selected filters.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="docContent-certificates" class="doc-content hidden">
+                {% include 'includes/certificates_summary.html' %}
+
+                <div class="mt-6 bg-white rounded-lg shadow p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+                        <h4 class="text-lg font-semibold">Certificates List</h4>
+                        <div class="flex flex-wrap gap-3 items-center">
+                            <input type="text" id="certificatesSearchInput" placeholder="Search by trainee name, username, or program..."
+                                   class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64">
+                            <select id="certificatesProgramFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="">All Programs</option>
+                                {% for program in programs %}
+                                <option value="{{ program.id }}">{{ program.program_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <select id="certificatesBatchFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="">All Batches</option>
+                                <option value="1">Batch 1</option>
+                                <option value="2">Batch 2</option>
+                                <option value="3">Batch 3</option>
+                            </select>
+                            <select id="certificatesYearFilter" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="">All Years</option>
+                                {% for year in years_range %}
+                                <option value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Batch</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion Date</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200" id="recentDocumentsTableBody">
+                            <tbody id="certificatesTableBody">
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                        <i class="fas fa-file-alt text-gray-300 text-4xl mb-2"></i>
-                                        <p>No recent documents to display</p>
+                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                        Use the filters or search box above to view completion certificates.
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-4 text-sm text-gray-600">
+                        <div>
+                            Showing <span id="certificatesStartRange">0</span><span id="certificatesEndRange">0</span> of <span id="certificatesTotalResults">0</span> results
+                        </div>
+                        <div class="space-x-2">
+                            <button id="certificatesPrevBtn" onclick="previousCertificatesPage()" class="px-3 py-1 border rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Previous
+                            </button>
+                            <button id="certificatesNextBtn" onclick="nextCertificatesPage()" class="px-3 py-1 border rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Next
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4108,6 +4346,13 @@
                     initializeDocumentSearch();
                 }, 100);
             }
+
+            // Load completion certificates when certificates tab is opened
+            if (tabName === 'certificates') {
+                setTimeout(() => {
+                    initializeCertificatesTable();
+                }, 100);
+            }
             
             // Load archived documents when archived tab is opened
             if (tabName === 'archived') {
@@ -4614,6 +4859,223 @@
                 uploadBtn.innerHTML = originalText;
                 uploadBtn.disabled = false;
             });
+        }
+
+        // Completion Certificates Functions
+        let certificatesCurrentPage = 1;
+        let certificatesTotalPages = 1;
+        let certificatesTotalResults = 0;
+        const certificatesPerPage = 10;
+        let certificatesInitialized = false;
+        const certificatesApiUrl = "{% url 'get_completion_certificates' %}";
+        const adminDownloadCertificateBaseUrl = "{% url 'admin_download_certificate' 0 %}".replace(/0\/$/, '');
+
+        function initializeCertificatesTable() {
+            if (certificatesInitialized) {
+                // Avoid attaching duplicate listeners
+                return;
+            }
+            certificatesInitialized = true;
+
+            const searchInput = document.getElementById('certificatesSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    certificatesCurrentPage = 1;
+                    fetchCertificates();
+                });
+                // Prevent form submission on Enter while still allowing auto-search
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            ['certificatesProgramFilter', 'certificatesBatchFilter', 'certificatesYearFilter'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', function() {
+                        certificatesCurrentPage = 1;
+                        fetchCertificates();
+                    });
+                }
+            });
+
+            fetchCertificates();
+        }
+
+        function fetchCertificates(page) {
+            if (page) {
+                certificatesCurrentPage = page;
+            }
+
+            const tableBody = document.getElementById('certificatesTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>Loading completion certificates...</p>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            const searchInputEl = document.getElementById('certificatesSearchInput');
+            const programFilterEl = document.getElementById('certificatesProgramFilter');
+            const batchFilterEl = document.getElementById('certificatesBatchFilter');
+            const yearFilterEl = document.getElementById('certificatesYearFilter');
+
+            const search = searchInputEl ? searchInputEl.value.trim() : '';
+            const program = programFilterEl ? programFilterEl.value : '';
+            const batch = batchFilterEl ? batchFilterEl.value : '';
+            const year = yearFilterEl ? yearFilterEl.value : '';
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (program) params.append('program', program);
+            if (batch) params.append('batch', batch);
+            if (year) params.append('year', year);
+            params.append('page', certificatesCurrentPage);
+            params.append('per_page', certificatesPerPage);
+
+            fetch(`${certificatesApiUrl}?${params.toString()}`)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to load completion certificates');
+                    }
+                    displayCertificatesResults(data);
+                })
+                .catch(function(error) {
+                    console.error('Error loading completion certificates:', error);
+                    if (tableBody) {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-red-500">
+                                    ${error.message || 'Unable to load completion certificates at this time.'}
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    updateCertificatesPagination(0, 0, 0);
+                });
+        }
+
+        function displayCertificatesResults(data) {
+            const certificates = data.certificates || [];
+            certificatesTotalResults = data.total || (certificates ? certificates.length : 0) || 0;
+            certificatesTotalPages = data.total_pages || 1;
+            certificatesCurrentPage = data.page || 1;
+
+            const tableBody = document.getElementById('certificatesTableBody');
+            if (!tableBody) {
+                return;
+            }
+
+            if (!certificates || certificates.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            <i class="fas fa-graduation-cap text-2xl mb-2"></i>
+                            <p>No completion certificates found for the selected filters.</p>
+                        </td>
+                    </tr>
+                `;
+                updateCertificatesPagination(0, 0, certificatesTotalResults);
+                return;
+            }
+
+            let rowsHtml = '';
+            certificates.forEach(function(cert) {
+                const traineeName = cert.trainee_name || 'N/A';
+                const username = cert.username || '';
+                const programName = cert.program_name || 'N/A';
+                const batch = cert.batch || 'N/A';
+                const year = cert.year || 'N/A';
+                const completionDate = cert.completion_date || 'N/A';
+                const applicantId = cert.applicant_id;
+
+                rowsHtml += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${traineeName}
+                            ${username ? `<div class="text-xs text-gray-500">${username}</div>` : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${programName}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${batch}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${year}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${completionDate}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            ${applicantId ? `
+                                <button onclick="viewCompletionCertificate(${applicantId})" class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </button>
+                            ` : `
+                                <span class="text-gray-400">No certificate</span>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = rowsHtml;
+
+            const startIndex = (certificatesCurrentPage - 1) * certificatesPerPage + 1;
+            const endIndex = startIndex + certificates.length - 1;
+            updateCertificatesPagination(startIndex, endIndex, certificatesTotalResults);
+        }
+
+        function updateCertificatesPagination(start, end, total) {
+            const startEl = document.getElementById('certificatesStartRange');
+            const endEl = document.getElementById('certificatesEndRange');
+            const totalEl = document.getElementById('certificatesTotalResults');
+
+            if (startEl) startEl.textContent = total === 0 ? 0 : start;
+            if (endEl) endEl.textContent = total === 0 ? 0 : end;
+            if (totalEl) totalEl.textContent = total || 0;
+
+            const prevBtn = document.getElementById('certificatesPrevBtn');
+            const nextBtn = document.getElementById('certificatesNextBtn');
+
+            if (prevBtn) {
+                prevBtn.disabled = certificatesCurrentPage <= 1;
+                prevBtn.classList.toggle('opacity-50', certificatesCurrentPage <= 1);
+                prevBtn.classList.toggle('cursor-not-allowed', certificatesCurrentPage <= 1);
+            }
+            if (nextBtn) {
+                nextBtn.disabled = certificatesCurrentPage >= certificatesTotalPages;
+                nextBtn.classList.toggle('opacity-50', certificatesCurrentPage >= certificatesTotalPages);
+                nextBtn.classList.toggle('cursor-not-allowed', certificatesCurrentPage >= certificatesTotalPages);
+            }
+        }
+
+        function previousCertificatesPage() {
+            if (certificatesCurrentPage > 1) {
+                fetchCertificates(certificatesCurrentPage - 1);
+            }
+        }
+
+        function nextCertificatesPage() {
+            if (certificatesCurrentPage < certificatesTotalPages) {
+                fetchCertificates(certificatesCurrentPage + 1);
+            }
+        }
+
+        function viewCompletionCertificate(applicantId) {
+            if (!applicantId) {
+                return;
+            }
+            const url = adminDownloadCertificateBaseUrl + applicantId + '/';
+            window.open(url, '_blank');
         }
 
         // Document Search Functions
@@ -5741,8 +6203,8 @@
                             </button>
                         </div>
                         <div class="mt-2 px-4 py-3">
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <!-- Left Column: Photo and Basic Info -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Left Column: Photo, Personal, Birth, Education -->
                                 <div class="space-y-4">
                                     <div class="text-center bg-gray-50 p-4 rounded-lg">
                                         <img class="mx-auto h-40 w-40 rounded-full object-cover border-4 border-gray-200 shadow-md" 
@@ -5752,8 +6214,7 @@
                                         <h4 class="mt-4 text-lg font-semibold text-gray-900">${profile.full_name}</h4>
                                         <p class="text-sm text-gray-600">Username: ${profile.username || 'N/A'}</p>
                                     </div>
-                                    
-                                    <!-- Personal Information -->
+
                                     <div class="bg-blue-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-blue-900 mb-3 flex items-center">
                                             <i class="fas fa-user mr-2"></i>Personal Information
@@ -5769,8 +6230,7 @@
                                             <div><span class="font-medium text-gray-700">Age:</span> <span class="text-gray-900">${profile.age}</span></div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Birth Information -->
+
                                     <div class="bg-green-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-green-900 mb-3 flex items-center">
                                             <i class="fas fa-birthday-cake mr-2"></i>Birth Information
@@ -5781,11 +6241,23 @@
                                             <div><span class="font-medium text-gray-700">Birthplace City:</span> <span class="text-gray-900">${profile.birthplace_city}</span></div>
                                         </div>
                                     </div>
+
+                                    <div class="bg-teal-50 p-4 rounded-lg">
+                                        <h5 class="font-semibold text-teal-900 mb-3 flex items-center">
+                                            <i class="fas fa-graduation-cap mr-2"></i>Educational & Employment
+                                        </h5>
+                                        <div class="space-y-2 text-sm">
+                                            <div><span class="font-medium text-gray-700">Educational Attainment:</span> <span class="text-gray-900">${profile.educational_attainment}</span></div>
+                                            <div><span class="font-medium text-gray-700">Employment Status:</span> <span class="text-gray-900">${profile.employment_status}</span></div>
+                                            <div><span class="font-medium text-gray-700">Monthly Income:</span> <span class="text-gray-900">${profile.monthly_income}</span></div>
+                                            <div><span class="font-medium text-gray-700">Date Hired:</span> <span class="text-gray-900">${profile.date_hired || 'N/A'}</span></div>
+                                            <div><span class="font-medium text-gray-700">Company Name:</span> <span class="text-gray-900">${profile.company_name}</span></div>
+                                        </div>
+                                    </div>
                                 </div>
-                                
-                                <!-- Middle Column: Contact and Address -->
+
+                                <!-- Right Column: Contact, Address, Program, Classification, Additional -->
                                 <div class="space-y-4">
-                                    <!-- Contact Information -->
                                     <div class="bg-yellow-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-yellow-900 mb-3 flex items-center">
                                             <i class="fas fa-phone mr-2"></i>Contact Information
@@ -5795,8 +6267,7 @@
                                             <div><span class="font-medium text-gray-700">Contact Number:</span> <span class="text-gray-900">${profile.contact_number}</span></div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Address Information -->
+
                                     <div class="bg-indigo-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-indigo-900 mb-3 flex items-center">
                                             <i class="fas fa-map-marker-alt mr-2"></i>Address Information
@@ -5814,25 +6285,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Educational & Employment -->
-                                    <div class="bg-teal-50 p-4 rounded-lg">
-                                        <h5 class="font-semibold text-teal-900 mb-3 flex items-center">
-                                            <i class="fas fa-graduation-cap mr-2"></i>Educational & Employment
-                                        </h5>
-                                        <div class="space-y-2 text-sm">
-                                            <div><span class="font-medium text-gray-700">Educational Attainment:</span> <span class="text-gray-900">${profile.educational_attainment}</span></div>
-                                            <div><span class="font-medium text-gray-700">Employment Status:</span> <span class="text-gray-900">${profile.employment_status}</span></div>
-                                            <div><span class="font-medium text-gray-700">Monthly Income:</span> <span class="text-gray-900">${profile.monthly_income}</span></div>
-                                            <div><span class="font-medium text-gray-700">Date Hired:</span> <span class="text-gray-900">${profile.date_hired || 'N/A'}</span></div>
-                                            <div><span class="font-medium text-gray-700">Company Name:</span> <span class="text-gray-900">${profile.company_name}</span></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Right Column: Programs and Other Info -->
-                                <div class="space-y-4">
-                                    <!-- Program Information -->
+
                                     <div class="bg-purple-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-purple-900 mb-3 flex items-center">
                                             <i class="fas fa-book mr-2"></i>Program Information
@@ -5851,8 +6304,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Classification & Disability -->
+
                                     <div class="bg-pink-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-pink-900 mb-3 flex items-center">
                                             <i class="fas fa-tags mr-2"></i>Classification & Disability
@@ -5871,8 +6323,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Additional Information -->
+
                                     <div class="bg-gray-50 p-4 rounded-lg">
                                         <h5 class="font-semibold text-gray-900 mb-3 flex items-center">
                                             <i class="fas fa-info-circle mr-2"></i>Additional Information
@@ -6620,6 +7071,13 @@
         function refreshTickets() {
             loadTickets();
             showNotification('Tickets refreshed successfully', 'success');
+        }
+
+        // Refresh Activity Log
+        function refreshActivityLog() {
+            // Reload the page to refresh activity logs
+            // In the future, this can be replaced with an AJAX call to fetch new logs
+            location.reload();
         }
 
         // Export tickets
@@ -7446,6 +7904,16 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Admin Accounts Content -->
+        <div id="adminAccountsContent" class="hidden">
+            {% include 'admin_accounts_section.html' %}
+        </div>
+        
+        <!-- Analytics Content -->
+        <div id="analyticsContent" class="hidden">
+            {% include 'analytics_section.html' %}
+        </div>
     </main>
     <script>
         // Sidebar Toggle Functionality
@@ -7562,6 +8030,9 @@
                 case 'approval': return 'bg-green-100 text-green-800';
                 case 'rejection': return 'bg-red-100 text-red-800';
                 case 'application': return 'bg-blue-100 text-blue-800';
+                case 'event_reminder': return 'bg-yellow-100 text-yellow-800';
+                case 'event_upcoming': return 'bg-purple-100 text-purple-800';
+                case 'departmental_event': return 'bg-indigo-100 text-indigo-800';
                 default: return 'bg-gray-100 text-gray-800';
             }
         }
@@ -7910,6 +8381,90 @@
             }
             
             updateApprovedPagination();
+        }
+
+        function handleProgramStatsFilterChange() {
+            const yearSelect = document.getElementById('programYearFilter');
+            const batchSelect = document.getElementById('programBatchFilter');
+
+            const yearValue = yearSelect ? yearSelect.value : '';
+            const batchValue = batchSelect ? batchSelect.value : '';
+
+            try {
+                const url = new URL(window.location.href);
+
+                if (yearValue) {
+                    url.searchParams.set('year', yearValue);
+                } else {
+                    url.searchParams.delete('year');
+                }
+
+                if (batchValue) {
+                    url.searchParams.set('batch', batchValue);
+                } else {
+                    url.searchParams.delete('batch');
+                }
+
+                window.location.href = url.toString();
+            } catch (e) {
+                const query = [];
+                if (yearValue) {
+                    query.push('year=' + encodeURIComponent(yearValue));
+                }
+                if (batchValue) {
+                    query.push('batch=' + encodeURIComponent(batchValue));
+                }
+                const queryString = query.length ? '?' + query.join('&') : '';
+                window.location.search = queryString;
+            }
+        }
+
+        function filterProgramStatsByProgram() {
+            const select = document.getElementById('programNameFilter');
+            const filterValue = select ? select.value : 'all';
+
+            const items = document.querySelectorAll('#programStatsList .program-stats-item');
+            items.forEach(function(item) {
+                const programName = item.getAttribute('data-program-name') || '';
+                if (!filterValue || filterValue === 'all') {
+                    item.style.display = '';
+                } else if (programName === filterValue) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleProgramStatsDetails(buttonElement) {
+            if (!buttonElement) {
+                return;
+            }
+
+            const container = buttonElement.closest('.program-stats-item');
+            if (!container) {
+                return;
+            }
+
+            const details = container.querySelector('.program-stats-details');
+            if (!details) {
+                return;
+            }
+
+            const icon = buttonElement.querySelector('i.fas');
+            const isHidden = details.classList.contains('hidden');
+
+            if (isHidden) {
+                details.classList.remove('hidden');
+                if (icon) {
+                    icon.classList.add('transform', 'rotate-180');
+                }
+            } else {
+                details.classList.add('hidden');
+                if (icon) {
+                    icon.classList.remove('transform', 'rotate-180');
+                }
+            }
         }
 
         // Applicant List Pagination Functions
@@ -8409,6 +8964,9 @@
                         initializeTicketManagement();
                     }
                     break;
+                case 'admin-accounts':
+                    document.getElementById('adminAccountsContent').classList.remove('hidden');
+                    break;
                 case 'accounts':
                     document.getElementById('accountsContent').classList.remove('hidden');
                     // Reinitialize account pagination
@@ -8591,6 +9149,7 @@
             const activeJobsContent = document.getElementById('activeJobsContent');
             const archivedJobsContent = document.getElementById('archivedJobsContent');
             const trainorListContent = document.getElementById('trainorListContent');
+            const analyticsContent = document.getElementById('analyticsContent');
             const overlayPage = document.getElementById('overlayPage');
             const overlayText = document.getElementById('overlayText');
             const goBackBtn = document.getElementById('goBackBtn');
@@ -8611,10 +9170,12 @@
                 activeJobsContent.classList.add('hidden');
                 archivedJobsContent.classList.add('hidden');
                 trainorListContent.classList.add('hidden');
+                if (analyticsContent) analyticsContent.classList.add('hidden');
                 document.getElementById('programManagementContent').classList.add('hidden');
                 document.getElementById('documentManagementContent').classList.add('hidden');
                 document.getElementById('ticketContent').classList.add('hidden');
                 document.getElementById('accountsContent').classList.add('hidden');
+                document.getElementById('adminAccountsContent').classList.add('hidden');
                 overlayPage.classList.remove('active');
             }
 
@@ -8672,6 +9233,20 @@
                         // Initialize ticket management when shown
                         if (typeof initializeTicketManagement === 'function') {
                             initializeTicketManagement();
+                        }
+                        break;
+                    case 'admin-accounts':
+                        document.getElementById('adminAccountsContent').classList.remove('hidden');
+                        break;
+                    case 'analytics':
+                        if (analyticsContent) {
+                            analyticsContent.classList.remove('hidden');
+                            // Initialize analytics charts when the section is shown
+                            setTimeout(() => {
+                                if (typeof initializeAnalyticsCharts === 'function') {
+                                    initializeAnalyticsCharts();
+                                }
+                            }, 100);
                         }
                         break;
                 }
@@ -8735,6 +9310,12 @@
             // Initialize with dashboard
             showContent('dashboard', 'Dashboard');
         });
+
+        // Confirmation for approving applicant from modal
+        function confirmApproveApplication() {
+            return confirm('Are you sure you want to APPROVE this application? This will move the applicant to the Approved Applicants list.');
+        }
+
         // Modal functions for applicant details
         async function openApplicantModal(profileId) {
             try {
@@ -8770,11 +9351,11 @@
             document.getElementById('modal-first-name').value = data.first_name || '';
             document.getElementById('modal-middle-name').value = data.middle_name || '';
             
-            // Address
-            document.getElementById('modal-region-name').value = data.region_name || '';
-            document.getElementById('modal-province-name').value = data.province_name || '';
-            document.getElementById('modal-city-name').value = data.city_name || '';
-            document.getElementById('modal-barangay-name').value = data.barangay_name || '';
+            // Address (prefer *_name, fall back to code fields if needed)
+            document.getElementById('modal-region-name').value = data.region_name || data.region || '';
+            document.getElementById('modal-province-name').value = data.province_name || data.province || '';
+            document.getElementById('modal-city-name').value = data.city_name || data.city || '';
+            document.getElementById('modal-barangay-name').value = data.barangay_name || data.barangay || '';
             document.getElementById('modal-district').value = data.district || '';
             document.getElementById('modal-street').value = data.street || '';
             document.getElementById('modal-email').value = data.email || '';
@@ -8788,51 +9369,108 @@
             document.getElementById('modal-monthly-income').value = data.monthly_income || '';
             document.getElementById('modal-date-hired').value = data.date_hired || '';
             document.getElementById('modal-company-name').value = data.company_name || '';
-            document.getElementById('modal-birthdate').value = data.birthdate || '';
-            document.getElementById('modal-age').value = data.age || '';
+            
+            // Birthdate - format for display if available
+            const birthdateField = document.getElementById('modal-birthdate');
+            if (birthdateField) {
+                if (data.birthdate) {
+                    // Format date from YYYY-MM-DD to readable format
+                    try {
+                        const date = new Date(data.birthdate + 'T00:00:00');
+                        if (!isNaN(date.getTime())) {
+                            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                          'July', 'August', 'September', 'October', 'November', 'December'];
+                            const formattedDate = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+                            birthdateField.value = formattedDate;
+                        } else {
+                            birthdateField.value = data.birthdate;
+                        }
+                    } catch (e) {
+                        birthdateField.value = data.birthdate || '';
+                    }
+                } else {
+                    birthdateField.value = '';
+                }
+            }
+            
+            // Age
+            const ageField = document.getElementById('modal-age');
+            if (ageField) {
+                ageField.value = data.age || '';
+            }
             
             // Birthplace
-            document.getElementById('modal-birthplace-region').value = data.birthplace_regionb_name || '';
-            document.getElementById('modal-birthplace-province').value = data.birthplace_provinceb_name || '';
-            document.getElementById('modal-birthplace-city').value = data.birthplace_cityb_name || '';
+            const birthplaceRegionField = document.getElementById('modal-birthplace-region');
+            if (birthplaceRegionField) {
+                birthplaceRegionField.value = data.birthplace_regionb_name || '';
+            }
+            const birthplaceProvinceField = document.getElementById('modal-birthplace-province');
+            if (birthplaceProvinceField) {
+                birthplaceProvinceField.value = data.birthplace_provinceb_name || '';
+            }
+            const birthplaceCityField = document.getElementById('modal-birthplace-city');
+            if (birthplaceCityField) {
+                birthplaceCityField.value = data.birthplace_cityb_name || '';
+            }
             
             // Other information
             document.getElementById('modal-educational-attainment').value = data.educational_attainment || '';
             document.getElementById('modal-parent-guardian').value = data.parent_guardian || '';
             document.getElementById('modal-permanent-address').value = data.permanent_address || '';
             document.getElementById('modal-course-qualification').value = data.course_or_qualification || '';
+            const scholarshipField = document.getElementById('modal-scholarship');
+            if (scholarshipField) {
+                scholarshipField.value = data.scholarship_package || '';
+            }
             document.getElementById('modal-applicant-name').value = data.applicant_name || '';
             document.getElementById('modal-date-accomplished').value = data.date_accomplished || '';
             
             // Classifications
             const classificationsDiv = document.getElementById('modal-classifications');
-            classificationsDiv.innerHTML = '';
-            if (data.classifications && data.classifications.length > 0) {
-                data.classifications.forEach(classification => {
-                    const span = document.createElement('span');
-                    span.className = 'inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2';
-                    span.textContent = classification.name;
-                    classificationsDiv.appendChild(span);
-                });
-            } else {
-                classificationsDiv.textContent = 'None specified';
+            if (classificationsDiv) {
+                classificationsDiv.innerHTML = '';
+                if (data.classifications && data.classifications.length > 0) {
+                    data.classifications.forEach(classification => {
+                        const span = document.createElement('span');
+                        span.className = 'inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2';
+                        span.textContent = classification.name || classification;
+                        classificationsDiv.appendChild(span);
+                    });
+                } else {
+                    classificationsDiv.textContent = 'None specified';
+                }
             }
             
-            // Disability type
-            document.getElementById('modal-disability-type').textContent = data.disability_type?.name || 'None';
+            // Disability types
+            const disabilityTypeDiv = document.getElementById('modal-disability-type');
+            if (disabilityTypeDiv) {
+                disabilityTypeDiv.innerHTML = '';
+                if (data.disability_types && data.disability_types.length > 0) {
+                    data.disability_types.forEach(disability => {
+                        const span = document.createElement('span');
+                        span.className = 'inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2';
+                        span.textContent = disability.name || disability;
+                        disabilityTypeDiv.appendChild(span);
+                    });
+                } else {
+                    disabilityTypeDiv.textContent = 'None';
+                }
+            }
             
             // Disability causes
             const causesDiv = document.getElementById('modal-disability-causes');
-            causesDiv.innerHTML = '';
-            if (data.disability_causes && data.disability_causes.length > 0) {
-                data.disability_causes.forEach(cause => {
-                    const span = document.createElement('span');
-                    span.className = 'inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2';
-                    span.textContent = cause.name;
-                    causesDiv.appendChild(span);
-                });
-            } else {
-                causesDiv.textContent = 'None';
+            if (causesDiv) {
+                causesDiv.innerHTML = '';
+                if (data.disability_causes && data.disability_causes.length > 0) {
+                    data.disability_causes.forEach(cause => {
+                        const span = document.createElement('span');
+                        span.className = 'inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2';
+                        span.textContent = cause.name || cause;
+                        causesDiv.appendChild(span);
+                    });
+                } else {
+                    causesDiv.textContent = 'None';
+                }
             }
             
             // Profile picture
@@ -8886,11 +9524,11 @@
             document.querySelector('#approvedModal #modal-first-name').value = data.first_name || '';
             document.querySelector('#approvedModal #modal-middle-name').value = data.middle_name || '';
             
-            // Address
-            document.querySelector('#approvedModal #modal-region-name').value = data.region_name || '';
-            document.querySelector('#approvedModal #modal-province-name').value = data.province_name || '';
-            document.querySelector('#approvedModal #modal-city-name').value = data.city_name || '';
-            document.querySelector('#approvedModal #modal-barangay-name').value = data.barangay_name || '';
+            // Address (prefer *_name, fall back to code fields if needed)
+            document.querySelector('#approvedModal #modal-region-name').value = data.region_name || data.region || '';
+            document.querySelector('#approvedModal #modal-province-name').value = data.province_name || data.province || '';
+            document.querySelector('#approvedModal #modal-city-name').value = data.city_name || data.city || '';
+            document.querySelector('#approvedModal #modal-barangay-name').value = data.barangay_name || data.barangay || '';
             document.querySelector('#approvedModal #modal-district').value = data.district || '';
             document.querySelector('#approvedModal #modal-street').value = data.street || '';
             document.querySelector('#approvedModal #modal-email').value = data.email || '';
@@ -9728,6 +10366,12 @@
             document.getElementById('addProgramForm').reset();
             // Reset competencies data
             resetCompetenciesData(false);
+            // Clear image preview
+            const previewContainer = document.getElementById('trainingImagesPreview');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                previewContainer.classList.add('hidden');
+            }
         }
 
         // ==================== PROGRAM COMPETENCIES MANAGEMENT ====================
@@ -10290,7 +10934,123 @@
                     filterPrograms();
                 });
             }
+
+            // Training Images Preview for Add Program Form
+            const trainingImagesInput = document.getElementById('trainingImages');
+            if (trainingImagesInput) {
+                trainingImagesInput.addEventListener('change', function(e) {
+                    previewTrainingImages(e.target.files, 'trainingImagesPreview');
+                });
+            }
+
+            // Training Images Preview for Edit Program Form
+            const editTrainingImagesInput = document.getElementById('editTrainingImages');
+            if (editTrainingImagesInput) {
+                editTrainingImagesInput.addEventListener('change', function(e) {
+                    previewTrainingImages(e.target.files, 'editTrainingImagesPreview');
+                });
+            }
         });
+
+        // Training Images Management Functions
+        function previewTrainingImages(files, previewContainerId) {
+            const previewContainer = document.getElementById(previewContainerId);
+            if (!previewContainer) return;
+
+            // Clear previous previews
+            previewContainer.innerHTML = '';
+            previewContainer.classList.add('hidden');
+
+            if (files && files.length > 0) {
+                previewContainer.classList.remove('hidden');
+                Array.from(files).forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const imgDiv = document.createElement('div');
+                            imgDiv.className = 'relative';
+                            imgDiv.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview ${index + 1}" 
+                                     class="w-full h-24 object-cover rounded border border-gray-300">
+                                <p class="text-xs text-gray-600 mt-1 truncate">${file.name}</p>
+                            `;
+                            previewContainer.appendChild(imgDiv);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }
+
+        // Load existing program images when editing
+        async function loadExistingProgramImages(programId) {
+            const container = document.getElementById('existingImagesContainer');
+            if (!container) return;
+
+            container.innerHTML = '<p class="text-gray-500 text-sm">Loading images...</p>';
+
+            try {
+                const response = await fetch(`/get-program-images/${programId}/`);
+                const data = await response.json();
+                
+                if (data.success && data.images && data.images.length > 0) {
+                    container.innerHTML = '';
+                    data.images.forEach(image => {
+                        const imgDiv = document.createElement('div');
+                        imgDiv.className = 'relative group';
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.className = 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600';
+                        deleteBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+                        deleteBtn.onclick = function() {
+                            deleteProgramImage(image.id, programId, this);
+                        };
+                        
+                        const img = document.createElement('img');
+                        img.src = image.image_url;
+                        img.alt = 'Program Image';
+                        img.className = 'w-full h-24 object-cover rounded border border-gray-300';
+                        
+                        imgDiv.appendChild(img);
+                        imgDiv.appendChild(deleteBtn);
+                        container.appendChild(imgDiv);
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-gray-400 text-sm col-span-3">No images uploaded yet</p>';
+                }
+            } catch (error) {
+                console.error('Error loading program images:', error);
+                container.innerHTML = '<p class="text-red-500 text-sm">Error loading images</p>';
+            }
+        }
+
+        // Delete program image
+        function deleteProgramImage(imageId, programId, buttonElement) {
+            if (!confirm('Are you sure you want to delete this image?')) {
+                return;
+            }
+
+            const imagesToDeleteInput = document.getElementById('imagesToDelete');
+            if (imagesToDeleteInput) {
+                const currentIds = imagesToDeleteInput.value ? imagesToDeleteInput.value.split(',').filter(id => id) : [];
+                if (!currentIds.includes(imageId.toString())) {
+                    currentIds.push(imageId.toString());
+                    imagesToDeleteInput.value = currentIds.join(',');
+                }
+            }
+
+            // Remove from display
+            if (buttonElement) {
+                buttonElement.closest('.relative.group').remove();
+            }
+            
+            // If no images left, show message
+            const container = document.getElementById('existingImagesContainer');
+            if (container && container.children.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm col-span-3">No images remaining (will be deleted on save)</p>';
+            }
+        }
 
         // Program Search/Filter Function
         function filterPrograms() {
@@ -10407,6 +11167,20 @@
             resetCompetenciesData(true);
             // Reset tabs to default (basic)
             switchEditCompetencyTab('basic');
+            // Clear image previews and reset image containers
+            const editPreviewContainer = document.getElementById('editTrainingImagesPreview');
+            if (editPreviewContainer) {
+                editPreviewContainer.innerHTML = '';
+                editPreviewContainer.classList.add('hidden');
+            }
+            const existingImagesContainer = document.getElementById('existingImagesContainer');
+            if (existingImagesContainer) {
+                existingImagesContainer.innerHTML = '';
+            }
+            const imagesToDeleteInput = document.getElementById('imagesToDelete');
+            if (imagesToDeleteInput) {
+                imagesToDeleteInput.value = '';
+            }
         }
 
         function openDeleteProgramModal() {
@@ -10504,6 +11278,24 @@
             // Set form action for editing
             const form = document.getElementById('editProgramForm');
             form.action = `/edit-program/${programId}/`;
+
+            // Load existing program images
+            loadExistingProgramImages(programId);
+
+            // Reset image previews and delete list
+            const imagesToDeleteInput = document.getElementById('imagesToDelete');
+            if (imagesToDeleteInput) {
+                imagesToDeleteInput.value = '';
+            }
+            const editTrainingImagesInput = document.getElementById('editTrainingImages');
+            if (editTrainingImagesInput) {
+                editTrainingImagesInput.value = '';
+            }
+            const editPreviewContainer = document.getElementById('editTrainingImagesPreview');
+            if (editPreviewContainer) {
+                editPreviewContainer.innerHTML = '';
+                editPreviewContainer.classList.add('hidden');
+            }
 
             openEditProgramModal();
         }
@@ -12652,6 +13444,7 @@
         let currentTrimester = 1;
         let events = []; // This will store all events
         let editingEventId = null;
+        let currentEventsView = 'active'; // 'active' or 'past'
 
         // Load events from database
         function loadEvents() {
@@ -12700,14 +13493,97 @@
             location.reload();
         }
 
+        // Handle Admin End Batch button
+        async function handleAdminEndBatch() {
+            // Confirm action
+            if (!confirm('Are you sure you want to end the current batch? This will progress to the next batch and reset all programs to 1st semester.')) {
+                return;
+            }
+
+            const endBatchBtn = document.getElementById('endBatchBtn');
+            if (!endBatchBtn) {
+                alert('Error: End Batch button not found. Please refresh the page.');
+                return;
+            }
+
+            // Show loading state
+            const originalText = endBatchBtn.innerHTML;
+            endBatchBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Ending Batch...';
+            endBatchBtn.disabled = true;
+
+            try {
+                const response = await fetch('/end-batch/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(data.message || 'Batch ended successfully!');
+                    // Reload the page to show updated batch status
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to end batch'));
+                    endBatchBtn.innerHTML = originalText;
+                    endBatchBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error ending batch:', error);
+                alert('An error occurred while ending the batch. Please try again.');
+                endBatchBtn.innerHTML = originalText;
+                endBatchBtn.disabled = false;
+            }
+        }
+
+        // Check for events ending soon and create notifications
+        async function checkEventsEndingSoon() {
+            try {
+                const response = await fetch('/api/events/check-reminders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success && data.reminders_created > 0) {
+                    console.log(`Created ${data.reminders_created} event reminder notification(s)`);
+                    // Reload notifications if bell is available
+                    if (typeof loadNotifications === 'function') {
+                        loadNotifications();
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking events ending soon:', error);
+            }
+        }
+
         // Set up periodic checking for ended enrollment events (every 5 minutes)
         document.addEventListener('DOMContentLoaded', function() {
             // Check batch cycle status periodically
             setInterval(checkForEndedEnrollmentEvents, 5 * 60 * 1000);
             
+            // Check for events ending soon every hour
+            checkEventsEndingSoon(); // Run immediately
+            setInterval(checkEventsEndingSoon, 60 * 60 * 1000); // Then every hour
+            
             // Initialize events from template data
             initializeEventsFromTemplate();
             generateCalendar();
+            
+            // Also check when events are loaded
+            if (typeof loadEvents === 'function') {
+                const originalLoadEvents = loadEvents;
+                loadEvents = function() {
+                    originalLoadEvents();
+                    setTimeout(checkEventsEndingSoon, 1000); // Check after events are loaded
+                };
+            }
         });
 
         // Initialize events from template data
@@ -13013,71 +13889,194 @@
             `;
         }
 
+        // Switch between Active and Past Events tabs
+        function switchEventsTab(view) {
+            currentEventsView = view;
+            const activeTab = document.getElementById('activeEventsTab');
+            const pastTab = document.getElementById('pastEventsTab');
+            const activeTable = document.getElementById('eventsTableBody');
+            const pastTable = document.getElementById('pastEventsTableBody');
+            
+            if (view === 'active') {
+                activeTab.classList.add('border-blue-600', 'text-blue-600');
+                activeTab.classList.remove('border-transparent', 'text-gray-600');
+                pastTab.classList.remove('border-blue-600', 'text-blue-600');
+                pastTab.classList.add('border-transparent', 'text-gray-600');
+                activeTable.classList.remove('hidden');
+                pastTable.classList.add('hidden');
+            } else {
+                pastTab.classList.add('border-blue-600', 'text-blue-600');
+                pastTab.classList.remove('border-transparent', 'text-gray-600');
+                activeTab.classList.remove('border-blue-600', 'text-blue-600');
+                activeTab.classList.add('border-transparent', 'text-gray-600');
+                pastTable.classList.remove('hidden');
+                activeTable.classList.add('hidden');
+            }
+            
+            updateEventsTable();
+        }
+
         function updateEventsTable() {
             const tableBody = document.getElementById('eventsTableBody');
-            if (!tableBody) return;
+            const pastTableBody = document.getElementById('pastEventsTableBody');
+            if (!tableBody || !pastTableBody) return;
             
-            const filteredEvents = events.filter(event => {
-                if (currentCategory === 'all') return true;
-                if (event.category !== currentCategory) return false;
-                if (event.category === 'enrollment') {
-                    return event.batch === currentBatch && event.trimester === currentTrimester;
-                }
-                return true;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Separate active and past events
+            const activeEvents = events.filter(event => {
+                if (!event.endDate) return true;
+                const endDate = new Date(event.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                return endDate >= today;
             });
             
-            if (filteredEvents.length === 0) {
+            const pastEvents = events.filter(event => {
+                if (!event.endDate) return false;
+                const endDate = new Date(event.endDate);
+                endDate.setHours(0, 0, 0, 0);
+                return endDate < today;
+            });
+            
+            // Filter based on category
+            const filterEvents = (eventList) => {
+                return eventList.filter(event => {
+                    if (currentCategory === 'all') return true;
+                    if (event.category !== currentCategory) return false;
+                    if (event.category === 'enrollment') {
+                        return event.batch === currentBatch && event.trimester === currentTrimester;
+                    }
+                    return true;
+                });
+            };
+            
+            const filteredActiveEvents = filterEvents(activeEvents);
+            const filteredPastEvents = filterEvents(pastEvents);
+            
+            // Update active events table
+            if (filteredActiveEvents.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
                         <td colspan="8" class="px-6 py-8 text-center text-gray-500">
                             <i class="fas fa-calendar-times text-4xl mb-2 text-gray-300"></i>
-                            <p class="text-lg">No events found</p>
+                            <p class="text-lg">No active events found</p>
                             <p class="text-sm">Create a new event to get started</p>
                         </td>
                     </tr>
                 `;
-                return;
+            } else {
+                tableBody.innerHTML = filteredActiveEvents.map(event => {
+                    const startDate = new Date(event.startDate).toLocaleDateString();
+                    const endDate = new Date(event.endDate).toLocaleDateString();
+                    const batchTrimester = event.category === 'enrollment' ? 
+                        `Batch ${event.batch} - ${event.trimester}${getOrdinalSuffix(event.trimester)} Sem` : 'N/A';
+                    
+                    // Check if event is ending soon (within 3 days)
+                    const endDateObj = new Date(event.endDate);
+                    endDateObj.setHours(0, 0, 0, 0);
+                    const daysUntilEnd = Math.ceil((endDateObj - today) / (1000 * 60 * 60 * 24));
+                    const endingSoon = daysUntilEnd <= 3 && daysUntilEnd >= 0;
+                    
+                    return `
+                        <tr class="hover:bg-gray-50 ${endingSoon ? 'bg-yellow-50' : ''}" data-event-id="${event.id}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" class="event-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-event-id="${event.id}" value="${event.id}" onchange="updateEventSelection()">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                ${event.title}
+                                ${endingSoon ? `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fas fa-exclamation-triangle mr-1"></i>Ending Soon</span>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${event.category === 'enrollment' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">
+                                    ${event.category}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${startDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${endDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${batchTrimester}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                    ${event.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="selectEventFromTable(${event.id})" class="text-blue-600 hover:text-blue-900 mr-2">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editEvent(${event.id})" class="text-yellow-600 hover:text-yellow-900 mr-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteEvent(${event.id})" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
             
-            tableBody.innerHTML = filteredEvents.map(event => {
-                const startDate = new Date(event.startDate).toLocaleDateString();
-                const endDate = new Date(event.endDate).toLocaleDateString();
-                const batchTrimester = event.category === 'enrollment' ? 
-                    `Batch ${event.batch} - ${event.trimester}${getOrdinalSuffix(event.trimester)} Sem` : 'N/A';
-                
-                return `
-                    <tr class="hover:bg-gray-50" data-event-id="${event.id}">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <input type="checkbox" class="event-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-event-id="${event.id}" value="${event.id}" onchange="updateEventSelection()">
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${event.title}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${event.category === 'enrollment' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">
-                                ${event.category}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${startDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${endDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${batchTrimester}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                                ${event.status}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="selectEventFromTable(${event.id})" class="text-blue-600 hover:text-blue-900 mr-2">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button onclick="editEvent(${event.id})" class="text-yellow-600 hover:text-yellow-900 mr-2">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteEvent(${event.id})" class="text-red-600 hover:text-red-900">
-                                <i class="fas fa-trash"></i>
-                            </button>
+            // Update past events table
+            if (filteredPastEvents.length === 0) {
+                pastTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                            <i class="fas fa-history text-4xl mb-2 text-gray-300"></i>
+                            <p class="text-lg">No past events found</p>
+                            <p class="text-sm">Past events will appear here once they end</p>
                         </td>
                     </tr>
                 `;
-            }).join('');
+            } else {
+                pastTableBody.innerHTML = filteredPastEvents.map(event => {
+                    const startDate = new Date(event.startDate).toLocaleDateString();
+                    const endDate = new Date(event.endDate).toLocaleDateString();
+                    const batchTrimester = event.category === 'enrollment' ? 
+                        `Batch ${event.batch} - ${event.trimester}${getOrdinalSuffix(event.trimester)} Sem` : 'N/A';
+                    
+                    // Calculate days since event ended
+                    const endDateObj = new Date(event.endDate);
+                    endDateObj.setHours(0, 0, 0, 0);
+                    const daysSinceEnd = Math.floor((today - endDateObj) / (1000 * 60 * 60 * 24));
+                    
+                    return `
+                        <tr class="hover:bg-gray-50 bg-gray-50" data-event-id="${event.id}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" class="event-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-event-id="${event.id}" value="${event.id}" onchange="updateEventSelection()">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-700">${event.title}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${event.category === 'enrollment' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">
+                                    ${event.category}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${startDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                ${endDate}
+                                <span class="ml-2 text-xs text-gray-500">(${daysSinceEnd} day${daysSinceEnd !== 1 ? 's' : ''} ago)</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${batchTrimester}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    ${event.status || 'completed'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="selectEventFromTable(${event.id})" class="text-blue-600 hover:text-blue-900 mr-2">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="deleteEvent(${event.id})" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            // Update event count
+            const totalEvents = filteredActiveEvents.length + filteredPastEvents.length;
+            document.getElementById('eventCount').textContent = currentEventsView === 'active' ? filteredActiveEvents.length : filteredPastEvents.length;
         }
 
         function getOrdinalSuffix(num) {

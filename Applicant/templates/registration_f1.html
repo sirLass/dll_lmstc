@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMSTC Learner's Profile Form</title>
     {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'Images/icon.png' %}">
     <script>
         // Define the path to ph.json using Django's static file handling
         const phJsonPath = "{% static 'data/ph.json' %}";
@@ -493,15 +494,16 @@
                 <h2 class="modal-title">Confirm Submission</h2>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to submit your Learner's Profile Form?</p>
-                <p>Please review your information before proceeding.</p>
+                {% include 'registration_f1_review_summary.html' %}
             </div>
             <div class="modal-footer">
-                <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 mr-3" onclick="closeConfirmSubmitModal()">No</button>
+                <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 mr-3" onclick="restartApplicationFromReview()">No</button>
                 <button type="button" class="modal-btn" onclick="confirmFormSubmission()">Yes</button>
             </div>
         </div>
     </div>
+
+    {% include 'registration_f1_underage_modal.html' %}
 
     <form id="learner-profile-form" method="post" action="{% url 'learner_form' %}" enctype="multipart/form-data">
         {% csrf_token %}
@@ -644,7 +646,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <div>
                         <label for="email-facebook" class="form-label">Email Address/Facebook Account:</label>
-                        <input type="email" name="email" id="email-facebook" class="form-input" placeholder="your.email@example.com / facebook.com/yourprofile" oninput="this.value = this.value.toUpperCase()" required>
+                        <input type="email" name="email" id="email-facebook" class="form-input" placeholder="your.email@example.com / facebook.com/yourprofile" value="{% if user_email %}{{ user_email }}{% endif %}" oninput="this.value = this.value.toUpperCase()" required>
                     </div>
                     <div>
                         <label for="contact-no" class="form-label">Contact No:</label>
@@ -1105,6 +1107,7 @@
         function showConfirmSubmitModal() {
             const modal = document.getElementById('confirm-submit-modal');
             if (modal) {
+                buildReviewSummary();
                 modal.classList.remove('hidden');
             }
         }
@@ -1127,6 +1130,170 @@
             } else {
                 showMessageBox("Error: Form not found. Please try again.", 'error');
             }
+        }
+
+        function showUnderageModal(age) {
+            const modal = document.getElementById('underage-modal');
+            const msg = document.getElementById('underage-message');
+            if (msg) {
+                msg.textContent = `Based on the birthdate you entered, your age is ${age}. Applicants must be 18+; your application will be cancelled.`;
+            }
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeUnderageModal() {
+            const modal = document.getElementById('underage-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmUnderageCancel() {
+            closeUnderageModal();
+            // Reuse existing cancellation flow
+            if (typeof confirmCancelApplication === 'function') {
+                confirmCancelApplication();
+            } else {
+                // Fallback: send them to programs page
+                window.location.href = "{% url 'Program_user' %}";
+            }
+        }
+
+        function getCalculatedAge() {
+            const month = document.getElementById('month-birth')?.value;
+            const day = document.getElementById('day-birth')?.value;
+            const year = document.getElementById('year-birth')?.value;
+            if (!month || !day || !year) return null;
+
+            // Month might be name or number depending on populateMonth()
+            const monthMap = {
+                January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+                July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
+            };
+            const m = monthMap[month] || parseInt(month, 10);
+            const d = parseInt(day, 10);
+            const y = parseInt(year, 10);
+            if (!m || !d || !y) return null;
+
+            const today = new Date();
+            const birth = new Date(y, m - 1, d);
+            if (Number.isNaN(birth.getTime())) return null;
+
+            let age = today.getFullYear() - birth.getFullYear();
+            const mm = today.getMonth() - birth.getMonth();
+            if (mm < 0 || (mm === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
+        function enforceLegalAgeOrCancel() {
+            const age = getCalculatedAge();
+            if (age === null) return true; // can't validate yet
+            if (age < 18) {
+                showUnderageModal(age);
+                return false;
+            }
+            return true;
+        }
+
+        function restartApplicationFromReview() {
+            closeConfirmSubmitModal();
+            showMessageBox("You selected No. Redirecting you back to Programs to apply again...", 'info');
+            setTimeout(() => {
+                window.location.href = "{% url 'Program_user' %}";
+            }, 900);
+        }
+
+        function buildReviewSummary() {
+            const container = document.getElementById('review-summary');
+            const form = document.getElementById('learner-profile-form');
+            if (!container || !form) return;
+
+            const processedNames = new Set();
+            const rows = [];
+
+            const cleanLabel = (text) => (text || '').replace(/\s+/g, ' ').trim().replace(/:$/, '');
+            const getLabelFor = (el) => {
+                if (el.id) {
+                    const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+                    if (lbl) return cleanLabel(lbl.textContent);
+                }
+                return cleanLabel(el.name || el.id || 'Field');
+            };
+
+            const addRow = (label, value) => {
+                rows.push({ label: cleanLabel(label), value: (value ?? '').toString().trim() });
+            };
+
+            // Always show program name (course/qualification)
+            const programInput = document.getElementById('course-qualification');
+            if (programInput) {
+                addRow('Program Applied', programInput.value || '—');
+            }
+
+            const elements = Array.from(form.elements || []);
+            for (const el of elements) {
+                if (!el || !el.tagName) continue;
+                if (el.name === 'csrfmiddlewaretoken') continue;
+                if (el.type === 'button' || el.type === 'submit') continue;
+                if (el.type === 'hidden') continue;
+
+                const label = getLabelFor(el);
+
+                // Handle radios/checkbox groups once per name
+                if ((el.type === 'radio' || el.type === 'checkbox') && el.name) {
+                    if (processedNames.has(el.name)) continue;
+                    processedNames.add(el.name);
+
+                    if (el.type === 'radio') {
+                        const checked = form.querySelector(`input[type="radio"][name="${CSS.escape(el.name)}"]:checked`);
+                        addRow(label, checked ? checked.value : '—');
+                        continue;
+                    }
+
+                    // checkbox group
+                    const checked = Array.from(form.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(el.name)}"]:checked`));
+                    const values = checked.map(c => c.value).filter(Boolean);
+                    addRow(label, values.length ? values.join(', ') : '—');
+                    continue;
+                }
+
+                // File input -> filename only
+                if (el.type === 'file') {
+                    const fileName = el.files && el.files.length ? el.files[0].name : '—';
+                    addRow(label, fileName);
+                    continue;
+                }
+
+                // Select -> selected text
+                if (el.tagName.toLowerCase() === 'select') {
+                    const selectedText = el.selectedOptions && el.selectedOptions.length
+                        ? Array.from(el.selectedOptions).map(o => o.textContent.trim()).join(', ')
+                        : '—';
+                    addRow(label, selectedText || '—');
+                    continue;
+                }
+
+                // Default text/textarea/etc
+                addRow(label, el.value || '—');
+            }
+
+            // Render
+            container.innerHTML = '';
+            const dl = document.createElement('dl');
+            dl.className = 'grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3';
+
+            for (const r of rows) {
+                const dt = document.createElement('dt');
+                dt.className = 'text-xs font-semibold text-gray-600';
+                dt.textContent = r.label;
+
+                const dd = document.createElement('dd');
+                dd.className = 'text-sm text-gray-800 break-words';
+                dd.textContent = r.value;
+
+                dl.appendChild(dt);
+                dl.appendChild(dd);
+            }
+
+            container.appendChild(dl);
         }
 
         function updateApplicantPrintedName() {
@@ -1403,19 +1570,33 @@
         async function populateMailingRegions() {
             regionSelect.disabled = true;
             populateDropdown(regionSelect, [], 'Loading Regions...');
+            // Reset dependent selects initially
+            resetSelect(provinceSelect, "Province");
+            resetSelect(municipalitySelect, "Municipality");
+            resetSelect(barangaySelect, "Barangay");
             try {
                 // Ensure data is loaded before attempting to get regions
                 await loadPhData();
                 const regions = getData('regions');
-                populateDropdown(regionSelect, regions, 'Select Region');
+                // Restrict to Region IV-A (CALABARZON)
+                const filteredRegions = regions.filter(r => /CALABARZON/i.test(r.name) || /REGION\s*IV-?A/i.test(r.name));
+                if (filteredRegions.length > 0) {
+                    populateDropdown(regionSelect, filteredRegions, 'Select Region');
+                    regionSelect.value = filteredRegions[0].id;
+                    regionNameInput.value = filteredRegions[0].name;
+                    // Keep region effectively locked by only providing one option, but enabled for form submission
+                    regionSelect.disabled = false;
+                    // Trigger province population for the locked region
+                    regionSelect.dispatchEvent(new Event('change'));
+                } else {
+                    // Fallback: show all if filter failed
+                    populateDropdown(regionSelect, regions, 'Select Region');
+                    regionSelect.disabled = false;
+                }
             } catch (error) {
                 console.error("Error populating mailing regions:", error);
                 populateDropdown(regionSelect, [], 'Error loading regions');
-            } finally {
                 regionSelect.disabled = false;
-                resetSelect(provinceSelect, "Province");
-                resetSelect(municipalitySelect, "Municipality");
-                resetSelect(barangaySelect, "Barangay");
             }
         }
 
@@ -1442,11 +1623,24 @@
             populateDropdown(provinceSelect, [], 'Loading Provinces...');
             try {
                 const provinces = getData('provinces', regionCode);
-                populateDropdown(provinceSelect, provinces, 'Select Province');
+                // Restrict to Quezon only
+                let filteredProvinces = provinces.filter(p => /QUEZON/i.test(p.name));
+                if (filteredProvinces.length === 0) {
+                    // Fallback to whatever is available (to avoid total lockout)
+                    filteredProvinces = provinces;
+                }
+                populateDropdown(provinceSelect, filteredProvinces, 'Select Province');
+                if (filteredProvinces.length > 0) {
+                    provinceSelect.value = filteredProvinces[0].id;
+                    // Keep province effectively locked by only providing one option, but enabled for form submission
+                    provinceSelect.dispatchEvent(new Event('change'));
+                    provinceSelect.disabled = false;
+                } else {
+                    provinceSelect.disabled = false;
+                }
             } catch (error) {
                 console.error("Error populating mailing provinces:", error);
                 populateDropdown(provinceSelect, [], 'Error loading provinces');
-            } finally {
                 provinceSelect.disabled = false;
             }
         });
@@ -1474,11 +1668,24 @@
             populateDropdown(municipalitySelect, [], 'Loading Cities/Municipalities...');
             try {
                 const municipalities = getData('municipalities', regionCode, provinceName);
-                populateDropdown(municipalitySelect, municipalities, 'Select City/Municipality');
+                // Restrict to Lucena City
+                let filteredMunicipalities = municipalities.filter(m => /LUCENA/i.test(m.name));
+                if (filteredMunicipalities.length === 0) {
+                    // Fallback to whatever is available
+                    filteredMunicipalities = municipalities;
+                }
+                populateDropdown(municipalitySelect, filteredMunicipalities, 'Select City/Municipality');
+                if (filteredMunicipalities.length > 0) {
+                    municipalitySelect.value = filteredMunicipalities[0].id;
+                    // Keep city effectively locked by only providing one option, but enabled for form submission
+                    municipalitySelect.dispatchEvent(new Event('change'));
+                    municipalitySelect.disabled = false;
+                } else {
+                    municipalitySelect.disabled = false;
+                }
             } catch (error) {
                 console.error("Error populating mailing municipalities:", error);
                 populateDropdown(municipalitySelect, [], 'Error loading Cities/Municipalities');
-            } finally {
                 municipalitySelect.disabled = false;
             }
         });
@@ -1773,9 +1980,10 @@
          */
         function populateYears() {
             const yearSelect = document.getElementById('year-birth');
-            const currentYear = new Date().getFullYear();
             const years = [];
-            for (let i = currentYear; i >= currentYear - 100; i--) {
+            const maxYear = 2008;
+            const minYear = maxYear - 100;
+            for (let i = maxYear; i >= minYear; i--) {
                 years.push(i);
             }
             populateDropdown(yearSelect, years, 'Select Year');
@@ -1958,6 +2166,11 @@
                     companyName.focus();
                     return false;
                 }
+            }
+
+            // Enforce legal age (18+). If underage, show modal and cancel flow.
+            if (!enforceLegalAgeOrCancel()) {
+                return false;
             }
 
             return true;

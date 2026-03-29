@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard</title>
+    <link rel="icon" type="image/png" href="{% static 'Images/icon.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -1315,7 +1316,13 @@
                 </div>
                 <div class="welcome-text">
                     <p class="greeting">Welcome!</p>
-                    <p class="username">{{ username }}</p>
+                    <p class="username">
+                        {% if profile %}
+                            {{ profile.first_name }}{% if profile.middle_name %} {{ profile.middle_name }}{% endif %} {{ profile.last_name }}
+                        {% else %}
+                            {{ username }}
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="avatar">
                     {% if user_profile_picture %}
@@ -1464,11 +1471,11 @@
                             </div>
                             <div class="text-right">
                                 {% if app.status == "Pending" %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
                                         <i class="fas fa-clock mr-1"></i>Pending
                                     </span>
                                 {% elif app.status == "Accepted" %}
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                                         <i class="fas fa-check-circle mr-1"></i>Accepted
                                     </span>
                                 {% elif app.status == "Declined" %}
@@ -1576,10 +1583,66 @@
                 </div>
             </div>
 
+            <!-- Departmental Events Section -->
+            {% if departmental_events %}
+            <div class="list-container mt-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-building mr-2 text-purple-600"></i>
+                        Departmental Events
+                    </h3>
+                </div>
+
+                <!-- Departmental Events Grid -->
+                <div class="grid gap-4">
+                    {% for event in departmental_events %}
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                                    <i class="fas fa-calendar-alt mr-2 text-purple-600"></i>
+                                    {{ event.title }}
+                                </h4>
+                                {% if event.description %}
+                                <p class="text-gray-600 mb-3 text-sm">{{ event.description }}</p>
+                                {% endif %}
+                                <div class="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
+                                    <span><i class="fas fa-calendar-day mr-1"></i>Start: {{ event.start_date|date:"M j, Y" }}</span>
+                                    <span><i class="fas fa-calendar-check mr-1"></i>End: {{ event.end_date|date:"M j, Y" }}</span>
+                                    {% if event.start_time %}
+                                    <span><i class="fas fa-clock mr-1"></i>{{ event.start_time|time:"g:i A" }}</span>
+                                    {% endif %}
+                                    {% if event.end_time %}
+                                    <span><i class="fas fa-clock mr-1"></i>Until {{ event.end_time|time:"g:i A" }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                    <i class="fas fa-building mr-1"></i>Departmental
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-purple-200">
+                            <div class="flex items-center text-sm">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Active Event
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
         </div>
 
         <!-- Include Edit Marked Fields Modal -->
         {% include 'edit_fields_modal.html' %}
+
+        <!-- Ticket Confirmation Modal -->
+        {% include 'includes/ticket_confirm_modal.html' %}
 
         <!-- Certificate Preview Modal -->
         <div id="certificateModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-60 items-center justify-center">
@@ -5511,70 +5574,176 @@
             });
         });
 
-        // Ticket Form Submission
+        // Ticket Form Submission with confirmation modal
         document.addEventListener('DOMContentLoaded', function() {
             const ticketForm = document.getElementById('ticketForm');
-            
+
+            // Confirmation modal elements
+            const ticketConfirmModal = document.getElementById('ticketConfirmModal');
+            const confirmTicketCategory = document.getElementById('confirmTicketCategory');
+            const confirmTicketPriority = document.getElementById('confirmTicketPriority');
+            const confirmTicketRecipient = document.getElementById('confirmTicketRecipient');
+            const confirmTicketSubject = document.getElementById('confirmTicketSubject');
+            const confirmTicketDescription = document.getElementById('confirmTicketDescription');
+            const confirmTicketAttachmentRow = document.getElementById('confirmTicketAttachmentRow');
+            const confirmTicketAttachment = document.getElementById('confirmTicketAttachment');
+            const cancelTicketConfirm = document.getElementById('cancelTicketConfirm');
+            const closeTicketConfirmModal = document.getElementById('closeTicketConfirmModal');
+            const confirmTicketSend = document.getElementById('confirmTicketSend');
+
+            let pendingTicketData = null;
+
+            function openTicketConfirmModal() {
+                if (!ticketConfirmModal) return;
+                ticketConfirmModal.classList.remove('hidden');
+                ticketConfirmModal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeTicketConfirm() {
+                if (!ticketConfirmModal) return;
+                ticketConfirmModal.classList.add('hidden');
+                ticketConfirmModal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+
+            function formatRecipient(recipient) {
+                if (recipient === 'trainer') return 'My Trainer';
+                if (recipient === 'admin') return 'Admin Support';
+                if (recipient === 'both') return 'Admin & Trainer';
+                return recipient;
+            }
+
+            if (cancelTicketConfirm) {
+                cancelTicketConfirm.addEventListener('click', function() {
+                    closeTicketConfirm();
+                });
+            }
+
+            if (closeTicketConfirmModal) {
+                closeTicketConfirmModal.addEventListener('click', function() {
+                    closeTicketConfirm();
+                });
+            }
+
+            if (ticketConfirmModal) {
+                ticketConfirmModal.addEventListener('click', function(e) {
+                    if (e.target === ticketConfirmModal) {
+                        closeTicketConfirm();
+                    }
+                });
+            }
+
             if (ticketForm) {
-                ticketForm.addEventListener('submit', async function(e) {
+                ticketForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    
-                    // Get form values
-                    const category = document.getElementById('ticketCategory').value;
-                    const priority = document.getElementById('ticketPriority').value;
-                    const recipient = document.getElementById('ticketRecipient').value;
-                    const subject = document.getElementById('ticketSubject').value.trim();
-                    const description = document.getElementById('ticketDescription').value.trim();
+
+                    const categorySelect = document.getElementById('ticketCategory');
+                    const prioritySelect = document.getElementById('ticketPriority');
+                    const recipientInput = document.getElementById('ticketRecipient');
+                    const subjectInput = document.getElementById('ticketSubject');
+                    const descriptionInput = document.getElementById('ticketDescription');
                     const attachmentInput = document.getElementById('ticketAttachment');
-                    
+
+                    const category = categorySelect ? categorySelect.value : '';
+                    const priority = prioritySelect ? prioritySelect.value : '';
+                    const recipient = recipientInput ? recipientInput.value : '';
+                    const subject = subjectInput ? subjectInput.value.trim() : '';
+                    const description = descriptionInput ? descriptionInput.value.trim() : '';
+
                     // Validation
                     if (!category) {
                         showNotificationMessage('Please select a ticket category', 'error');
                         return;
                     }
-                    
+
                     if (!subject) {
                         showNotificationMessage('Please enter a subject', 'error');
                         return;
                     }
-                    
+
                     if (!description) {
                         showNotificationMessage('Please provide a description', 'error');
                         return;
                     }
-                    
-                    // Prepare form data
-                    const formData = {
+
+                    // Save data to send after confirmation
+                    pendingTicketData = {
                         category: category,
                         priority: priority,
                         recipient: recipient,
                         subject: subject,
                         description: description
                     };
-                    
+
+                    // Populate confirmation modal display values
+                    if (categorySelect && confirmTicketCategory) {
+                        const categoryText = categorySelect.options[categorySelect.selectedIndex]?.textContent || category;
+                        confirmTicketCategory.textContent = categoryText;
+                    }
+
+                    if (prioritySelect && confirmTicketPriority) {
+                        const priorityText = prioritySelect.options[prioritySelect.selectedIndex]?.textContent || priority;
+                        confirmTicketPriority.textContent = priorityText;
+                    }
+
+                    if (confirmTicketRecipient) {
+                        confirmTicketRecipient.textContent = formatRecipient(recipient);
+                    }
+
+                    if (confirmTicketSubject) {
+                        confirmTicketSubject.textContent = subject;
+                    }
+
+                    if (confirmTicketDescription) {
+                        confirmTicketDescription.textContent = description;
+                    }
+
+                    if (attachmentInput && confirmTicketAttachmentRow && confirmTicketAttachment) {
+                        if (attachmentInput.files && attachmentInput.files.length > 0) {
+                            confirmTicketAttachmentRow.classList.remove('hidden');
+                            confirmTicketAttachment.textContent = attachmentInput.files[0].name;
+                        } else {
+                            confirmTicketAttachmentRow.classList.add('hidden');
+                            confirmTicketAttachment.textContent = '';
+                        }
+                    }
+
+                    openTicketConfirmModal();
+                });
+            }
+
+            if (confirmTicketSend) {
+                confirmTicketSend.addEventListener('click', async function() {
+                    if (!pendingTicketData) {
+                        closeTicketConfirm();
+                        return;
+                    }
+
                     try {
-                        // Get CSRF token
                         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-                        
-                        // Submit ticket
+
                         const response = await fetch('/create-ticket/', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRFToken': csrftoken
                             },
-                            body: JSON.stringify(formData)
+                            body: JSON.stringify(pendingTicketData)
                         });
-                        
+
                         const data = await response.json();
-                        
+
                         if (data.success) {
                             showNotificationMessage('Ticket submitted successfully! Ticket ID: ' + data.ticket_id, 'success');
-                            
-                            // Reset form
-                            ticketForm.reset();
-                            
-                            // Reload page to show new ticket in the list
+
+                            if (ticketForm) {
+                                ticketForm.reset();
+                            }
+
+                            pendingTicketData = null;
+                            closeTicketConfirm();
+
                             setTimeout(() => {
                                 window.location.reload();
                             }, 2000);

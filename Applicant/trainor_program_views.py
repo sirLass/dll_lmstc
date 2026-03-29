@@ -3,14 +3,28 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
-from .models import TrainerProfile, Programs
+from .models import TrainerProfile, Programs, AdminPermission
 import json
+
+def check_admin_permission(user, permission_name: str) -> bool:
+    """Local helper to avoid circular imports with views.py."""
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    if not user.is_superuser:
+        return False
+    try:
+        perms = AdminPermission.objects.get(user=user)
+        return getattr(perms, permission_name, True)
+    except AdminPermission.DoesNotExist:
+        return True
 
 
 @staff_member_required
 @require_http_methods(["GET"])
 def get_trainer_programs(request, trainer_id):
     """Get all programs assigned to a trainer"""
+    if not check_admin_permission(request.user, 'manage_trainors'):
+        return JsonResponse({'success': False, 'message': 'You do not have permission to manage trainors.'}, status=403)
     try:
         trainer = TrainerProfile.objects.prefetch_related('programs').get(id=trainer_id)
         assigned_programs = list(trainer.programs.values('id', 'program_name'))
@@ -40,6 +54,8 @@ def get_trainer_programs(request, trainer_id):
 @require_http_methods(["POST"])
 def assign_program_to_trainer(request, trainer_id):
     """Assign a program to a trainer"""
+    if not check_admin_permission(request.user, 'manage_trainors'):
+        return JsonResponse({'success': False, 'message': 'You do not have permission to manage trainors.'}, status=403)
     try:
         data = json.loads(request.body)
         program_id = data.get('program_id')
@@ -78,6 +94,8 @@ def assign_program_to_trainer(request, trainer_id):
 @require_http_methods(["POST"])
 def unassign_program_from_trainer(request, trainer_id):
     """Unassign a program from a trainer"""
+    if not check_admin_permission(request.user, 'manage_trainors'):
+        return JsonResponse({'success': False, 'message': 'You do not have permission to manage trainors.'}, status=403)
     try:
         data = json.loads(request.body)
         program_id = data.get('program_id')
@@ -118,6 +136,8 @@ def unassign_program_from_trainer(request, trainer_id):
 @require_http_methods(["POST"])
 def delete_trainer_account(request, trainer_id):
     """Delete a trainer account completely (both TrainerProfile and User)"""
+    if not check_admin_permission(request.user, 'manage_trainors'):
+        return JsonResponse({'success': False, 'message': 'You do not have permission to manage trainors.'}, status=403)
     try:
         trainer = TrainerProfile.objects.select_related('user').get(id=trainer_id)
         user = trainer.user

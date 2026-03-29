@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select Login Type - DLL LMSTC</title>
+    <link rel="icon" type="image/png" href="{% static 'Images/icon.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -37,11 +38,11 @@
             <div class="text-center mb-8">
                 <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">Sign In As</h1>
                 <p class="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto">
-                    Please choose how you want to access the system. Applicants use the Learner Portal, while coordinators and staff use the Coordinator Portal.
+                    Please choose how you want to access the system. Applicants use the Learner Portal, coordinators use the Coordinator Portal, and trainers use the Trainor Portal.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Applicant Card -->
                 <div class="relative group rounded-2xl border border-gray-200 bg-gradient-to-b from-blue-50/80 to-white p-6 sm:p-8 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
                     <div class="absolute -right-8 -top-8 w-32 h-32 bg-blue-500/10 rounded-full group-hover:bg-blue-500/20 transition-colors"></div>
@@ -92,6 +93,33 @@
                         </ul>
                         <a href="{% url 'CoordinatorLogin' %}" class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 rounded-full bg-white text-slate-900 font-semibold text-sm shadow-md hover:bg-slate-100 transition-all">
                             Continue as Coordinator
+                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Trainor Card -->
+                <div class="relative group rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50/80 to-white p-6 sm:p-8 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+                    <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-emerald-500/10 rounded-full group-hover:bg-emerald-500/20 transition-colors"></div>
+                    <div class="relative z-10">
+                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Trainor Portal</h2>
+                        <p class="text-gray-600 text-sm sm:text-base mb-4">
+                            For trainers and instructors who manage training sessions, take attendance, and track learner progress.
+                        </p>
+                        <ul class="text-xs sm:text-sm text-gray-500 space-y-1 mb-5 list-disc list-inside">
+                            <li>Manage training sessions</li>
+                            <li>Take attendance & track progress</li>
+                            <li>Upload learning materials</li>
+                        </ul>
+                        <a href="{% url 'TrainorLogin' %}" class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold text-sm shadow-md hover:from-emerald-700 hover:to-teal-700 transition-all">
+                            Continue as Trainor
                             <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>

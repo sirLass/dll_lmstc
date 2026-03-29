@@ -1,0 +1,47 @@
+<div id="ticketConfirmModal" class="fixed inset-0 hidden z-[2000] items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white rounded-lg shadow w-full max-w-lg">
+    <div class="flex items-start justify-between p-4 border-b border-gray-200">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">Confirm Ticket Submission</h3>
+        <p class="text-sm text-gray-500 mt-1">Please review the details below before sending to your trainer.</p>
+      </div>
+      <button id="closeTicketConfirmModal" class="text-gray-500 hover:text-gray-700" style="background: none; border: none;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="p-4 space-y-4 text-sm">
+      <div class="flex justify-between">
+        <span class="text-gray-500">Category</span>
+        <span id="confirmTicketCategory" class="font-medium text-gray-800"></span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">Priority</span>
+        <span id="confirmTicketPriority" class="font-medium text-gray-800"></span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-500">Recipient</span>
+        <span id="confirmTicketRecipient" class="font-medium text-gray-800"></span>
+      </div>
+      <div>
+        <div class="text-gray-500 mb-1">Subject</div>
+        <div id="confirmTicketSubject" class="font-medium text-gray-800 break-words"></div>
+      </div>
+      <div>
+        <div class="text-gray-500 mb-1">Description</div>
+        <div id="confirmTicketDescription" class="text-gray-800 whitespace-pre-line break-words"></div>
+      </div>
+      <div id="confirmTicketAttachmentRow" class="hidden">
+        <div class="text-gray-500 mb-1">Attachment</div>
+        <div id="confirmTicketAttachment" class="text-gray-800 break-words"></div>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200">
+      <button id="cancelTicketConfirm" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300">No, edit</button>
+      <button id="confirmTicketSend" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+        <i class="fas fa-paper-plane mr-2"></i>Yes, send
+      </button>
+    </div>
+  </div>
+</div>

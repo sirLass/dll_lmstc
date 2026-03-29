@@ -14,14 +14,31 @@ from openpyxl import load_workbook
 
 from .models import (
     Applicant, Programs, DocumentCategory, ManualDocument, PolicyDocument, 
-    Learner_Profile, TrainerProfile, LMSTC_Documents
+    Learner_Profile, TrainerProfile, LMSTC_Documents, AdminPermission
 )
+
+def check_admin_permission(user, permission_name: str) -> bool:
+    """
+    Local helper (kept here to avoid circular imports with views.py).
+    Defaults to True when no AdminPermission record exists (backward compatibility).
+    """
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    if not user.is_superuser:
+        return False
+    try:
+        perms = AdminPermission.objects.get(user=user)
+        return getattr(perms, permission_name, True)
+    except AdminPermission.DoesNotExist:
+        return True
 
 
 @csrf_exempt
 @require_POST
 def upload_document(request):
     """Handle document upload for different document types"""
+    if not check_admin_permission(request.user, 'manage_documents'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
     try:
         document_type = request.POST.get('document_type')
         title = request.POST.get('title')
@@ -879,7 +896,139 @@ def get_bulk_download_documents(request):
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'error': f'Failed to fetch documents: {str(e)}'
+            'error': f'Failed to fetch LMSTC documents: {str(e)}'
+        })
+
+
+def get_completion_certificates(request):
+    """Return completion certificate data for applicants who have passed a program.
+
+    Supports filters:
+    - search: partial match on trainee name, username, or program name
+    - program: program ID
+    - batch: batch number (e.g., "1", "2", "3")
+    - year: enrollment or completion year (int)
+
+    Results are paginated with page and per_page query parameters.
+    """
+    from .models import ApplicantPasser, ApprovedApplicant, ApprovedWalkIn
+    from django.db.models import Q
+    from django.utils import timezone
+
+    try:
+        search_query = (request.GET.get('search') or '').strip()
+        program_id = request.GET.get('program', '').strip()
+        batch = (request.GET.get('batch') or '').strip()
+        year = (request.GET.get('year') or '').strip()
+
+        try:
+            page = int(request.GET.get('page', 1))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            per_page = int(request.GET.get('per_page', 20))
+        except (TypeError, ValueError):
+            per_page = 20
+
+        passers_qs = ApplicantPasser.objects.select_related('applicant', 'program')
+
+        if program_id:
+            try:
+                program_id_int = int(program_id)
+                passers_qs = passers_qs.filter(program_id=program_id_int)
+            except ValueError:
+                passers_qs = passers_qs.none()
+
+        if search_query:
+            passers_qs = passers_qs.filter(
+                Q(trainee_name__icontains=search_query)
+                | Q(program_name__icontains=search_query)
+                | Q(applicant__username__icontains=search_query)
+                | Q(applicant__first_name__icontains=search_query)
+                | Q(applicant__last_name__icontains=search_query)
+            )
+
+        # Build result list with batch/year filters applied in Python to match by program
+        certificates = []
+        batch_filter = batch or None
+        year_filter = None
+        if year:
+            try:
+                year_filter = int(year)
+            except ValueError:
+                year_filter = None
+
+        for passer in passers_qs.order_by('-completion_date'):
+            batch_display = 'N/A'
+            year_value = None
+
+            # Try to get batch/year from ApprovedApplicant first
+            approved_app = ApprovedApplicant.objects.filter(
+                applicant=passer.applicant,
+                program=passer.program
+            ).order_by('-approved_at').first()
+
+            if approved_app:
+                if approved_app.batch_number:
+                    batch_display = f"Batch {approved_app.batch_number}"
+                if approved_app.enrollment_year:
+                    year_value = approved_app.enrollment_year
+            else:
+                # Fallback to ApprovedWalkIn if available
+                walkin_app = ApprovedWalkIn.objects.filter(
+                    applicant=passer.applicant,
+                    program=passer.program
+                ).order_by('-approved_at').first()
+                if walkin_app:
+                    if walkin_app.batch_number:
+                        batch_display = f"Batch {walkin_app.batch_number}"
+                    if walkin_app.enrollment_year:
+                        year_value = walkin_app.enrollment_year
+
+            # If no explicit year from approvals, fall back to completion_date year
+            if year_value is None and passer.completion_date:
+                year_value = passer.completion_date.year
+
+            # Apply batch/year filters (if provided)
+            if batch_filter and batch_display != f"Batch {batch_filter}":
+                continue
+            if year_filter is not None and year_value is not None and year_value != year_filter:
+                continue
+            if year_filter is not None and year_value is None:
+                continue
+
+            completion_str = passer.completion_date.strftime('%Y-%m-%d') if passer.completion_date else 'N/A'
+
+            certificates.append({
+                'id': passer.id,
+                'applicant_id': passer.applicant.id,
+                'username': passer.applicant.username,
+                'trainee_name': passer.trainee_name,
+                'program_id': passer.program.id if passer.program else None,
+                'program_name': passer.program.program_name if passer.program else passer.program_name,
+                'batch': batch_display,
+                'year': year_value,
+                'completion_date': completion_str,
+            })
+
+        total_results = len(certificates)
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        paginated = certificates[start_index:end_index]
+
+        return JsonResponse({
+            'success': True,
+            'certificates': paginated,
+            'total': total_results,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': (total_results + per_page - 1) // per_page,
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Failed to fetch completion certificates: {str(e)}'
         })
 
 
@@ -1004,6 +1153,9 @@ def archive_document(request):
     """Archive a single document (soft delete)"""
     from .models import LMSTC_Documents
     
+    if not check_admin_permission(request.user, 'manage_documents'):
+        return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+    
     try:
         document_id = request.POST.get('document_id')
         document_type = request.POST.get('document_type', 'lmstc')  # lmstc, manual, policy
@@ -1066,6 +1218,9 @@ def delete_document(request):
     import os
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         # Check if user is staff/admin
         if not request.user.is_staff:
             return JsonResponse({'success': False, 'error': 'Permission denied. Only administrators can permanently delete documents.'})
@@ -1157,6 +1312,9 @@ def restore_document(request):
     from .models import LMSTC_Documents
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         document_id = request.POST.get('document_id')
         document_type = request.POST.get('document_type', 'lmstc')
         
@@ -1218,6 +1376,9 @@ def bulk_archive_documents(request):
     import json
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         document_ids = request.POST.get('document_ids')
         document_type = request.POST.get('document_type', 'lmstc')
         
@@ -1284,6 +1445,9 @@ def bulk_delete_documents(request):
     import os
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         # Check if user is staff/admin
         if not request.user.is_staff:
             return JsonResponse({'success': False, 'error': 'Permission denied. Only administrators can permanently delete documents.'})
@@ -1499,6 +1663,9 @@ def archive_document(request):
     from .models import DocumentAuditLog
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         document_type = request.POST.get('document_type')
         document_id = request.POST.get('document_id')
         reason = request.POST.get('reason', '')
@@ -1560,6 +1727,9 @@ def restore_document(request):
     from .models import DocumentAuditLog
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         document_type = request.POST.get('document_type')
         document_id = request.POST.get('document_id')
         
@@ -1617,6 +1787,9 @@ def delete_document(request):
     import os
     
     try:
+        if not check_admin_permission(request.user, 'manage_documents'):
+            return JsonResponse({'success': False, 'error': 'You do not have permission to manage documents.'}, status=403)
+        
         # Check if user is staff/admin
         if not request.user.is_staff:
             return JsonResponse({'success': False, 'error': 'Permission denied. Admin access required.'})

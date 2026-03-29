@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ program.program_name }} - DLL LMSTC</title>
+    <link rel="icon" type="image/png" href="{% static 'Images/icon.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -389,6 +390,19 @@
                             <h2 class="text-3xl font-bold gradient-text">Program Overview</h2>
                         </div>
                         
+                        {% if enrollment_info.is_blocked %}
+                        <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-6 rounded-lg mb-6">
+                            <div class="flex items-start">
+                                <i class="fas fa-lock text-red-500 text-xl mr-3 mt-1"></i>
+                                <div>
+                                    <h3 class="font-bold text-red-800 mb-2">🚫 Application Blocked:</h3>
+                                    <p class="text-red-700 leading-relaxed">
+                                        The enrollment cycle has completed all batches (1, 2, and 3). Applications are currently blocked. Please wait for the administration to open enrollment for the next cycle (Batch 1).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
                         <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 p-6 rounded-lg mb-6">
                             <div class="flex items-start">
                                 <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3 mt-1"></i>
@@ -400,6 +414,7 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
 
                         <div class="space-y-4">
                             <div class="flex items-start space-x-3">
@@ -419,14 +434,28 @@
                         </div>
 
                         <div class="mt-8">
-                            {% if has_reached_limit %}
+                            {% if has_learner_profile %}
+                                <a href="{% url 'Dashboard' %}" class="block w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hover:shadow-xl transform hover:scale-105 text-center">
+                                    <i class="fas fa-tachometer-alt mr-3"></i>Go to Dashboard
+                                </a>
+                            {% elif has_reached_limit %}
                                 <button id="applyBtn" class="w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-gray-400 cursor-not-allowed" disabled>
                                     <i class="fas fa-ban mr-3"></i>Maximum applications reached
                                 </button>
-                            {% elif not enrollment_info.is_active %}
-                                <button id="applyBtn" class="w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white hover:shadow-xl transform hover:scale-105" onclick="showEnrollmentInfoModal()">
-                                    <i class="fas fa-info-circle mr-3"></i>Apply for Next Batch - Click for Info
+                            {% elif enrollment_info.is_blocked %}
+                                <button id="applyBtn" class="w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-red-500 cursor-not-allowed text-white" disabled>
+                                    <i class="fas fa-lock mr-3"></i>Applications Blocked - Cycle Complete
                                 </button>
+                            {% elif not enrollment_info.is_active %}
+                                {% if enrollment_info.current_batch == '1' %}
+                                    <button id="applyBtn" class="w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-gray-400 cursor-not-allowed text-white" disabled>
+                                        <i class="fas fa-clock mr-3"></i>Enrollment Closed - Wait for Batch 1 Enrollment
+                                    </button>
+                                {% else %}
+                                    <button id="applyBtn" class="w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white hover:shadow-xl transform hover:scale-105">
+                                        <i class="fas fa-info-circle mr-3"></i>Apply for Next Batch - Click for Info
+                                    </button>
+                                {% endif %}
                             {% else %}
                                 <button id="applyBtn" class="w-full font-bold px-8 py-4 rounded-full transition-all duration-300 shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white hover:shadow-xl transform hover:scale-105">
                                     <i class="fas fa-rocket mr-3"></i>Apply Now!
@@ -472,33 +501,40 @@
                 <div class="space-y-6">
                     <div class="image-carousel bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20">
                         <div class="carousel-track" id="carouselTrack">
-                            <div class="carousel-slide">
-                                <img src="{% static 'Images/training_A.webp' %}" alt="Training Environment A" class="w-full h-400 object-cover">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
-                                    <div class="p-6 text-white">
-                                        <h3 class="text-xl font-bold mb-2">Modern Training Facilities</h3>
-                                        <p class="text-sm opacity-90">State-of-the-art equipment and learning environment</p>
+                            {% if program.training_image %}
+                                <div class="carousel-slide">
+                                    <img src="{{ program.training_image.url }}" alt="{{ program.program_name }} Training Image" class="w-full h-400 object-cover">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
+                                        <div class="p-6 text-white">
+                                            <h3 class="text-xl font-bold mb-2">{{ program.program_name }}</h3>
+                                            <p class="text-sm opacity-90">Training Environment</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="carousel-slide">
-                                <img src="{% static 'Images/training_B.jpg' %}" alt="Training Environment B" class="w-full h-400 object-cover">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
-                                    <div class="p-6 text-white">
-                                        <h3 class="text-xl font-bold mb-2">Interactive Learning</h3>
-                                        <p class="text-sm opacity-90">Collaborative sessions with expert guidance</p>
+                            {% endif %}
+
+                            {% if program.images.all %}
+                                {% for program_image in program.images.all|slice:":3" %}
+                                    <div class="carousel-slide">
+                                        <img src="{{ program_image.image.url }}" alt="{{ program.program_name }} - Image {{ forloop.counter }}" class="w-full h-400 object-cover">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
+                                            <div class="p-6 text-white">
+                                                <h3 class="text-xl font-bold mb-2">{{ program.program_name }}</h3>
+                                                <p class="text-sm opacity-90">Training Environment</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            {% if not program.training_image and not program.images.all %}
+                                <!-- No image fallback -->
+                                <div class="carousel-slide">
+                                    <div class="w-full h-[400px] flex items-center justify-center bg-gray-100 text-gray-500">
+                                        <span class="font-semibold">No image</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="carousel-slide">
-                                <img src="{% static 'Images/training_C.avif' %}" alt="Training Environment C" class="w-full h-400 object-cover">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
-                                    <div class="p-6 text-white">
-                                        <h3 class="text-xl font-bold mb-2">Practical Application</h3>
-                                        <p class="text-sm opacity-90">Real-world projects and hands-on experience</p>
-                                    </div>
-                                </div>
-                            </div>
+                            {% endif %}
                         </div>
                         
                         <!-- Navigation buttons -->
@@ -509,11 +545,24 @@
                             <i class="fas fa-chevron-right"></i>
                         </button>
                         
-                        <!-- Dots indicator -->
+                        <!-- Dots indicator - dynamically generated -->
                         <div class="carousel-dots" id="carouselDots">
-                            <div class="carousel-dot active" data-slide="0"></div>
-                            <div class="carousel-dot" data-slide="1"></div>
-                            <div class="carousel-dot" data-slide="2"></div>
+                            {% if program.training_image %}
+                                <!-- Dot for the training_image slide at index 0 -->
+                                <div class="carousel-dot active" data-slide="0"></div>
+
+                                {% if program.images.all %}
+                                    {% for program_image in program.images.all|slice:":3" %}
+                                        <div class="carousel-dot" data-slide="{{ forloop.counter }}"></div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% elif program.images.all %}
+                                {% for program_image in program.images.all|slice:":3" %}
+                                    <div class="carousel-dot {% if forloop.first %}active{% endif %}" data-slide="{{ forloop.counter0 }}"></div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="carousel-dot active" data-slide="0"></div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -643,6 +692,9 @@
         </div>
     </section>
     {% endif %}
+
+    <!-- Include Voter Registration Modal -->
+    {% include 'voter_registration_modal.html' %}
 
     <!-- Enhanced Modal -->
     <div id="applyModal" class="fixed inset-0 modal-backdrop flex justify-center items-center z-50 hidden">
@@ -776,7 +828,8 @@
                 this.nextBtn = document.getElementById('nextBtn');
                 this.dots = document.querySelectorAll('.carousel-dot');
                 this.currentIndex = 0;
-                this.totalSlides = 3;
+                // Dynamically calculate total slides based on actual slides in the DOM
+                this.totalSlides = this.track ? this.track.querySelectorAll('.carousel-slide').length : 3;
                 this.autoPlayInterval = null;
                 
                 this.init();
@@ -856,6 +909,13 @@
         const cancelButton = document.getElementById("cancelModal");
         const enrollmentClosedModal = document.getElementById("enrollmentClosedModal");
         const closeEnrollmentModalBtn = document.getElementById("closeEnrollmentModal");
+        const voterRegistrationModal = document.getElementById("voterRegistrationModal");
+        const notLucenahinModal = document.getElementById("notLucenahinModal");
+        const voterYesBtn = document.getElementById("voterYesBtn");
+        const voterNoBtn = document.getElementById("voterNoBtn");
+        const proceedNotLucenahinBtn = document.getElementById("proceedNotLucenahinBtn");
+        const closeNotLucenahinModal = document.getElementById("closeNotLucenahinModal");
+        const learnerProfileFormUrl = "{% url 'learner_form' %}";
         
         // Function to show enrollment info modal
         window.showEnrollmentInfoModal = function() {
@@ -880,12 +940,85 @@
                 }
             });
         }
+
+        // Store flag to track which modal to show after voter confirmation
+        let shouldShowEnrollmentInfo = false;
+
+        // Voter Registration Modal Handlers
+        if (voterYesBtn) {
+            voterYesBtn.addEventListener("click", () => {
+                // Close voter registration modal
+                voterRegistrationModal.classList.add("hidden");
+                
+                // Check if we should show enrollment info modal or regular apply modal
+                if (shouldShowEnrollmentInfo) {
+                    // Show enrollment info modal
+                    window.showEnrollmentInfoModal();
+                    shouldShowEnrollmentInfo = false; // Reset flag
+                } else {
+                    // Show regular apply modal
+                    modal.classList.remove("hidden");
+                }
+            });
+        }
+
+        if (voterNoBtn) {
+            voterNoBtn.addEventListener("click", () => {
+                // Close voter registration modal
+                voterRegistrationModal.classList.add("hidden");
+                // Show not Lucenahin advisory modal
+                notLucenahinModal.classList.remove("hidden");
+                shouldShowEnrollmentInfo = false; // Reset flag
+            });
+        }
+
+        // Proceed to application even if not a Lucena voter
+        if (proceedNotLucenahinBtn) {
+            proceedNotLucenahinBtn.addEventListener("click", () => {
+                window.location.href = learnerProfileFormUrl;
+            });
+        }
+
+        // Close not Lucenahin modal
+        if (closeNotLucenahinModal) {
+            closeNotLucenahinModal.addEventListener("click", () => {
+                notLucenahinModal.classList.add("hidden");
+            });
+        }
+
+        // Close modals when clicking outside
+        if (voterRegistrationModal) {
+            voterRegistrationModal.addEventListener("click", (e) => {
+                if (e.target === voterRegistrationModal) {
+                    voterRegistrationModal.classList.add("hidden");
+                }
+            });
+        }
+
+        if (notLucenahinModal) {
+            notLucenahinModal.addEventListener("click", (e) => {
+                if (e.target === notLucenahinModal) {
+                    notLucenahinModal.classList.add("hidden");
+                }
+            });
+        }
         
-        // Only add event listener if button is not disabled and enrollment is active
-        if (applyButton && !applyButton.disabled && !applyButton.hasAttribute('onclick')) {
+        // Only add event listener if button is not disabled
+        // Show voter registration modal first instead of apply modal directly
+        if (applyButton && !applyButton.disabled) {
             applyButton.addEventListener('click', function(e) {
                 e.preventDefault();
-                modal.classList.remove('hidden');
+                
+                // Check if this button should show enrollment info modal
+                if (this.hasAttribute('onclick') && this.getAttribute('onclick').includes('showEnrollmentInfoModal')) {
+                    shouldShowEnrollmentInfo = true;
+                    this.removeAttribute('onclick'); // Remove to prevent double handling
+                } else {
+                    shouldShowEnrollmentInfo = false;
+                }
+                
+                // Show voter registration modal first
+                voterRegistrationModal.classList.remove('hidden');
             });
         }
 
