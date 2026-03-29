@@ -16,3 +16,5 @@ services:
         value: "dll-lmstc-gza7.onrender.com"
       - key: RENDER
         value: True
+      - key: DATABASE_URL
+        value: "postgresql://postgres:LMSTC_admin01@db.tfxdcasngsmkittftsgr.supabase.co:5432/postgres"
