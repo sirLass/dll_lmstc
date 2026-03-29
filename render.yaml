@@ -5,12 +5,13 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
+      python manage.py migrate
     startCommand: gunicorn DLL_LMSTC.wsgi:application
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DEBUG
-        value: False
+        value: True
       - key: ALLOWED_HOSTS
         value: "dll-lmstc-gza7.onrender.com"
       - key: RENDER
