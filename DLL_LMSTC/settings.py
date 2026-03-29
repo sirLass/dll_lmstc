@@ -84,7 +84,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=DATABASE_URL,
         conn_max_age=600,
-        ssl_require=DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://")
+        ssl_require=(DATABASE_URL or "").startswith("postgres://") or (DATABASE_URL or "").startswith("postgresql://")
     )
 }
 
