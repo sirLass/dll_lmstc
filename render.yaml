@@ -17,4 +17,4 @@ services:
       - key: RENDER
         value: True
       - key: DATABASE_URL
-        value: "postgresql://postgres:LMSTC_admin01@db.tfxdcasngsmkittftsgr.supabase.co:5432/postgres"
+        value: "postgresql://postgres.tfxdcasngsmkittftsgr:LMSTC_admin01@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres"
