@@ -20,7 +20,7 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 # SITE_ID for django-allauth
-SITE_ID = 2
+SITE_ID = 1
 
 # Installed apps
 INSTALLED_APPS = [
