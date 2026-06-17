@@ -6,6 +6,7 @@ db.sqlite3
 media/
 *.log
 .env
+data.json
 *.bak
 *.orig
 .DS_Store

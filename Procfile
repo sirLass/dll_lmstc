@@ -1,1 +1,1 @@
-web: gunicorn DLL_LMSTC.wsgi
+web: gunicorn DLL_LMSTC.wsgi --log-file -
